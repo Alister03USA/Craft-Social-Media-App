@@ -1,19 +1,19 @@
-package coms309;
+package coms309.craftsy;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * Sample Spring Boot Application.
- * 
- * @author Vivek Bengre
+ *
+ * @author Alister Gan
  */
 
 @SpringBootApplication
-public class Application {
-	
+public class CraftsyApplication {
+
     public static void main(String[] args) throws Exception {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(CraftsyApplication.class, args);
     }
 
 }

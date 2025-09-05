@@ -1,6 +1,5 @@
 package coms309.craftsy;
 
-import coms309.Application;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -16,7 +15,7 @@ public class CraftsyApplication {
 
 
         public static void main(String[] args) throws Exception {
-            SpringApplication.run(coms309.Application.class, args);
+            SpringApplication.run(CraftsyApplication.class, args);
         }
 
 
