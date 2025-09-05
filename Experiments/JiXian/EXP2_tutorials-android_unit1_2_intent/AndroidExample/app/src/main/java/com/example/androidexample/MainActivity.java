@@ -11,6 +11,7 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 /*
+test
 
 1. To run this project, open the directory "Android Example", otherwise it may not recognize the file structure properly
 
