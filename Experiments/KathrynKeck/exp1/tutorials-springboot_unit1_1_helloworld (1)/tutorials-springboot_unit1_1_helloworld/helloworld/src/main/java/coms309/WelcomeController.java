@@ -11,10 +11,10 @@ class WelcomeController {
     public String welcome() {
         return "Hello! My name is Kathryn Keck";
     }
-    
+
     @GetMapping("/{name}")
     public String welcome(@PathVariable String name) {
-        return "Hello and welcome to COMS 309: " + name;
+        return "Hello! My name is Kathryn Keck : " + name;
     }
 
     @GetMapping("/create/{item}")
@@ -23,3 +23,4 @@ class WelcomeController {
     @GetMapping("/next/thing")
     public String nextThing(){return "And this is the next thing";}
 }
+
