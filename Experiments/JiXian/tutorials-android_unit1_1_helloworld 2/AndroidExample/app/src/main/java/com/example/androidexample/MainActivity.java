@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // link UI elements
+        // linking UI elements
         messageText = findViewById(R.id.main_msg_txt);
         btnHello = findViewById(R.id.btnHello);
         btnGoodbye = findViewById(R.id.btnGoodbye);
