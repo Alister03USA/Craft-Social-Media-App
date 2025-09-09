@@ -26,4 +26,12 @@
         android:background="@android:drawable/btn_dropdown"
         android:spinnerMode="dropdown"/>
 
+    <Button
+        android:id="@+id/supabutton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="Click me!"
+
+        />
+
 </androidx.appcompat.widget.LinearLayoutCompat>
