@@ -61,6 +61,13 @@ public class MainActivity extends AppCompatActivity {
 
         dropdown.setAdapter(adapter);
 
+        Button button = (Button) findViewById(R.id.supabutton);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+            }
+        });
+
 
 
     }
