@@ -11,22 +11,27 @@
         android:id="@+id/main_msg_txt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Intent Example"
         android:layout_gravity="center"
-        android:layout_marginTop="200dp"
-        android:textSize="30dp"
-        android:textColor="#3F51B5">
+        android:layout_marginTop="100dp"
+        android:layout_marginBottom="50dp"
+        android:textSize="80dp"
+        android:textAllCaps="true"
+
+        android:textColor="#FD53B6" >
     </TextView>
+    <Spinner
+        android:id="@+id/spinner1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown"/>
 
     <Button
-        android:id="@+id/main_counter_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:layout_gravity="center"
-        android:text="To the Counter Activity"
-        android:textSize="20sp"
-        android:textColor="#ffffff">
-    </Button>
+        android:id="@+id/supabutton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="Click me!"
+
+        />
 
 </androidx.appcompat.widget.LinearLayoutCompat>
