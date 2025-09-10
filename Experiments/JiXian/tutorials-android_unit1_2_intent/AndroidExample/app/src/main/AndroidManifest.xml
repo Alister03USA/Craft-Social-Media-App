@@ -22,12 +22,16 @@
             </intent-filter>
         </activity>
 
-        <!-- Add this entry for your AboutActivity -->
-        <activity android:name=".AboutActivity" />
+        <!-- Counter Activity -->
+        <activity
+            android:name=".CounterActivity"
+            android:exported="false" />
 
-        <!-- You might have other activities declared here too -->
+        <!-- About Activity -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false" />
 
     </application>
 
 </manifest>
-    
