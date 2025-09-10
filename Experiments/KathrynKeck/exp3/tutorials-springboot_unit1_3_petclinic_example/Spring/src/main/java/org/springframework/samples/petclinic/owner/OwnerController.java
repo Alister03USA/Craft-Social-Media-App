@@ -18,11 +18,9 @@ package org.springframework.samples.petclinic.owner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,12 +41,13 @@ class OwnerController {
     private final Logger logger = LoggerFactory.getLogger(OwnerController.class);
 
     @RequestMapping(method = RequestMethod.POST, path = "/owners/new")
-    public String saveOwner(Owners owner) {
+    public String saveOwner(@RequestBody Owners owner) {
         ownersRepository.save(owner);
         return "New Owner "+ owner.getFirstName() + " Saved";
     }
+
      // function just to create dummy data
-    @RequestMapping(method = RequestMethod.GET, path = "/owner/create")
+    @RequestMapping(method = RequestMethod.GET, path = "/owners/create")
     public String createDummyData() {
         Owners o1 = new Owners(1, "John", "Doe", "404 Not found", "some numbers");
         Owners o2 = new Owners(2, "Jane", "Doe", "Its a secret", "you wish");
@@ -74,6 +73,25 @@ class OwnerController {
         logger.info("Entered into Controller Layer");
         Optional<Owners> results = ownersRepository.findById(id);
         return results;
+    }
+
+    @RequestMapping(method = RequestMethod.DELETE, path = "/owners/{ownerId}")
+    public String deleteOwner(@PathVariable("ownerId") int id){
+        List<Owners> results = new ArrayList<Owners>();
+        Optional<Owners> deleted = ownersRepository.findById(id);
+        if(deleted.isPresent()){
+            ownersRepository.delete(deleted.get());
+            return "Owner successfully deleted";
+        }
+        else {
+            return "Owner id not found";
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.DELETE, path = "/owners")
+    public String clearOwners(){
+        ownersRepository.deleteAll();
+        return "Data cleared";
     }
 
 }
