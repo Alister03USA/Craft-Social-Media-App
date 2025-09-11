@@ -6,20 +6,20 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp"
-    tools:context=".MainActivity">
+    tools:context=".ResultActivity">
 
-    <EditText
-        android:id="@+id/start_number_input"
-        android:layout_width="200dp"
+    <TextView
+        android:id="@+id/final_text"
+        android:layout_width="255dp"
         android:layout_height="wrap_content"
-        android:hint="Enter start number"
-        android:inputType="number"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="40dp"
+        android:text="Result"
+        android:textSize="30sp" />
 
     <Button
-        android:id="@+id/start_counter_btn"
+        android:id="@+id/back_home_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Go to Counter" />
+        android:text="Back to Home" />
 
 </LinearLayout>
