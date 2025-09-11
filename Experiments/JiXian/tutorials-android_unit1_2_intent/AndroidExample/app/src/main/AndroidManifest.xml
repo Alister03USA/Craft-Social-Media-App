@@ -13,6 +13,7 @@
         android:theme="@style/Theme.AndroidExample"
         tools:targetApi="31">
 
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -23,15 +24,10 @@
         </activity>
 
         <!-- Counter Activity -->
-        <activity
-            android:name=".CounterActivity"
-            android:exported="false" />
+        <activity android:name=".CounterActivity" android:exported="false" />
 
-        <!-- About Activity -->
-        <activity
-            android:name=".AboutActivity"
-            android:exported="false" />
+        <!-- Result Activity -->
+        <activity android:name=".ResultActivity" android:exported="false" />
 
     </application>
-
 </manifest>

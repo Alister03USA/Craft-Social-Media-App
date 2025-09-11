@@ -6,22 +6,20 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp"
-    tools:context=".AboutActivity">
+    tools:context=".ResultActivity">
 
     <TextView
-        android:id="@+id/about_text"
-        android:layout_width="wrap_content"
+        android:id="@+id/final_text"
+        android:layout_width="255dp"
         android:layout_height="wrap_content"
-        android:text="This is the About Page for my modified Intent experiment."
-        android:textSize="20sp"
-        android:textColor="@android:color/black"
-        android:gravity="center"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="40dp"
+        android:text="Result"
+        android:textSize="30sp" />
 
     <Button
-        android:id="@+id/about_back_btn"
+        android:id="@+id/back_home_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Back to Main" />
+        android:text="Back to Home" />
 
 </LinearLayout>
