@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/imgView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:contentDescription="Displayed Image"/>
+    <Button
+        android:id="@+id/btnImageReq"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Image Request"
+        android:padding="10dp"
+        android:textColor="@android:color/white"/>
+</androidx.appcompat.widget.LinearLayoutCompat>

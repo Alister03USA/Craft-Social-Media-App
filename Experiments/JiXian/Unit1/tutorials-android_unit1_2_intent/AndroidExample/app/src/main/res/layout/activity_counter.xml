@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    tools:context=".CounterActivity">
+
+    <TextView
+        android:id="@+id/number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="80sp"
+        android:layout_marginBottom="40dp" />
+
+    <Button
+        android:id="@+id/increase_btn"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="Increase" />
+
+    <Button
+        android:id="@+id/decrease_btn"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="Decrease"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/result_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Result"
+        android:layout_marginTop="40dp" />
+
+</LinearLayout>
