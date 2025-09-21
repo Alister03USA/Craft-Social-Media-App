@@ -1,7 +1,7 @@
-package com.example.craftsy.Controller;
+package com.example.craftsy.SignUpDelete.Controller;
 
-import com.example.craftsy.Entity.Users;
-import com.example.craftsy.Repository.UserRepository;
+import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,15 +22,16 @@ public class UserController {
         return ResponseEntity.ok(savedUser);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
-        Optional<Users> user = userRepository.findById(id);
+    @DeleteMapping("/delete/{username}")
+    public ResponseEntity<String> deleteUser(@PathVariable String username) {
+        Optional<Users> user = userRepository.findByUsername(username);
         if (user.isPresent()) {
-            String username = user.get().getUsername();
-            userRepository.deleteById(id);
-            return ResponseEntity.ok( username + " deleted successfully");
+            userRepository.delete(user.get()); // uses entity, transaction handled automatically
+            return ResponseEntity.ok("User " + username + " deleted successfully");
         } else {
             return ResponseEntity.notFound().build();
         }
     }
+
+
 }
