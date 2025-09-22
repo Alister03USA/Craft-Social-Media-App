@@ -18,21 +18,11 @@ public class LoginEditUserController {
         if(!update.getUsername().isEmpty()) {
             user.setUsername(update.getUsername());
         }
-        if(!update.getBio().isEmpty()) {
-            user.setBio(update.getBio());
-        }
-        if(!update.getCraftSpecialties().isEmpty()) {
-            user.setCraftSpecialties(update.getCraftSpecialties());
-        }
-        if(!update.getEmail().isEmpty()) {
-            user.setEmail(update.getEmail());
-        }
-        if(!update.getDisplayName().isEmpty()) {
-            user.setDisplayName(update.getDisplayName());
-        }
-        if(!update.getPassword().isEmpty()) {
-            user.setPassword(update.getPassword());
-        }
+        user.setBio(update.getBio());
+        user.setCraftSpecialties(update.getCraftSpecialties());
+        user.setEmail(update.getEmail());
+        user.setDisplayName(update.getDisplayName());
+        user.setPassword(update.getPassword());
         user.setFollowers(update.getFollowers());
         user.setFollowing(update.getFollowing());
 
@@ -40,11 +30,14 @@ public class LoginEditUserController {
     }
 
     @GetMapping("/login")
-    String login(@RequestBody String username, @RequestBody String password){
-        LoginEditUser user = loginEditUserRepository.findByUsername(username)
+    String login(@RequestBody LoginEditUser userInfo){
+        if(loginEditUserRepository.findByUsername(userInfo.getUsername()).isEmpty()){
+            return "User not found";
+        }
+        LoginEditUser user = loginEditUserRepository.findByUsername(userInfo.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if(user.getPassword().equals(password)){
-            return username + " successfully logged in.";
+        if(user.getPassword().equals(userInfo.getPassword())){
+            return userInfo.getUsername() + " successfully logged in.";
         }
         else{
             return "Incorrect password";
