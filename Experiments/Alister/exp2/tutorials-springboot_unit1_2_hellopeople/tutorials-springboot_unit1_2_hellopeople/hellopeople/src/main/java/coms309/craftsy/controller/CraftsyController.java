@@ -60,7 +60,7 @@ public class CraftsyController {
     // Test exceptions
     @GetMapping("/oops")
     public String oops() {
-        throw new RuntimeException("Something went wrong!");
+       return ("Something went wrong!");
     }
 
 
