@@ -87,6 +87,8 @@ public class Login extends AppCompatActivity {
 
 
                 Volley.newRequestQueue(Login.this).add(request);
+                //VolleySingleton.getInstance(context).addToRequestQueue(request);
+
             }
         });
     }
