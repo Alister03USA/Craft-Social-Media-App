@@ -18,12 +18,12 @@ import org.json.JSONObject;
 
 public class SignupActivity extends AppCompatActivity {
 
-    private EditText editTextUsername, editTextDisplayName, editTextBio, editTextProfilePic,
+    private EditText editTextUsername, editTextDisplayName, editTextBio,
             editTextCraftSpecialities, editTextEmail, editTextPassword;
     private Button buttonSignup, buttonGoToDelete;
 
     private RequestQueue requestQueue;
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/users/signup";
+    private static final String BASE_URL = "https://0db36f57-ab43-4b34-ac7d-7c900b87234e.mock.pstmn.io/users/signup";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +34,6 @@ public class SignupActivity extends AppCompatActivity {
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextDisplayName = findViewById(R.id.editTextDisplayName);
         editTextBio = findViewById(R.id.editTextBio);
-        editTextProfilePic = findViewById(R.id.editTextProfilePic);
         editTextCraftSpecialities = findViewById(R.id.editTextCraftSpecialities);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
@@ -54,10 +53,17 @@ public class SignupActivity extends AppCompatActivity {
         String username = editTextUsername.getText().toString().trim();
         String displayName = editTextDisplayName.getText().toString().trim();
         String bio = editTextBio.getText().toString().trim();
-        String profilePic = editTextProfilePic.getText().toString().trim();
         String craftSpecialities = editTextCraftSpecialities.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
         String password = editTextPassword.getText().toString().trim();
+
+        // Password strength validation
+        // At least 8 chars, one digit, one lowercase, one uppercase
+        String passwordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
+        if (!password.matches(passwordPattern)) {
+            Toast.makeText(this, "Password too weak! Must be at least 8 chars, include upper, lower, and number.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Username, Email, and Password are required", Toast.LENGTH_SHORT).show();
@@ -70,7 +76,6 @@ public class SignupActivity extends AppCompatActivity {
             jsonBody.put("username", username);
             jsonBody.put("displayName", displayName);
             jsonBody.put("bio", bio);
-            jsonBody.put("profilePic", profilePic);
             jsonBody.put("craftSpecialities", craftSpecialities);
             jsonBody.put("followers", 0);   // default value
             jsonBody.put("following", 0);   // default value

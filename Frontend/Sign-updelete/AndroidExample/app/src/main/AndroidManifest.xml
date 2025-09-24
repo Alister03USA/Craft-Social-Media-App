@@ -23,6 +23,7 @@
             </intent-filter>
         </activity>
 
+
         <activity android:name=".DeleteActivity"
             android:exported="true" />
     </application>
