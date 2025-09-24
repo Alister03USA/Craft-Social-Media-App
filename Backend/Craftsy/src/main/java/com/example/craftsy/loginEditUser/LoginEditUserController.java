@@ -11,22 +11,52 @@ public class LoginEditUserController {
     @Autowired
     LoginEditUserRepository loginEditUserRepository;
 
+    /**
+     * Updates the user information
+     * @param username username of profile to update. Comes from path.
+     * @param update The updated user information. Comes from body.
+     * @return the updated user information
+     */
     @PutMapping("/user/{username}")
     LoginEditUser editUser(@PathVariable String username, @RequestBody LoginEditUser update){
+        //creates user from body. Throws exception if username not found.
         LoginEditUser user = loginEditUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if(!update.getUsername().isEmpty()) {
+        if(update.getUsername() != null) {
             user.setUsername(update.getUsername());
         }
-        user.setBio(update.getBio());
-        user.setCraftSpecialties(update.getCraftSpecialties());
-        user.setEmail(update.getEmail());
-        user.setDisplayName(update.getDisplayName());
-        user.setPassword(update.getPassword());
-        user.setFollowers(update.getFollowers());
-        user.setFollowing(update.getFollowing());
-
+        if(update.getBio() != null) {
+            user.setBio(update.getBio());
+        }
+        if(update.getPassword() != null){
+            if(!isPasswordStrong(update.getPassword())){
+                throw new RuntimeException("Password not strong enough");
+            }
+            user.setPassword(update.getPassword());
+        }
+        if(update.getFollowers() != null){
+            user.setFollowers(update.getFollowers());
+        }
+        if(update.getFollowing() != null){
+            user.setFollowing(update.getFollowing());
+        }
+        if(update.getDisplayName() != null){
+            user.setDisplayName(update.getDisplayName());
+        }
+        if(update.getEmail() != null){
+            user.setEmail(update.getEmail());
+        }
+        if(update.getCraftSpecialties() != null){
+            user.setCraftSpecialties(update.getCraftSpecialties());
+        }
+        loginEditUserRepository.save(user);
         return user;
+    }
+
+    private boolean isPasswordStrong(String password) {
+        // Example rules: at least 8 chars, one uppercase, one lowercase, one number
+        String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
+        return password.matches(pattern);
     }
 
     @GetMapping("/login")

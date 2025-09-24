@@ -15,8 +15,8 @@ public class LoginEditUser {
     private String displayName;
     private String bio;
     private String craftSpecialties;
-    private int followers;
-    private int following;
+    private Integer followers;
+    private Integer following;
     private String email;
     private String password;
 
@@ -54,19 +54,19 @@ public class LoginEditUser {
         this.craftSpecialties = craftSpecialties;
     }
 
-    public int getFollowers() {
+    public Integer getFollowers() {
         return followers;
     }
 
-    public void setFollowers(int followers) {
+    public void setFollowers(Integer followers) {
         this.followers = followers;
     }
 
-    public int getFollowing() {
+    public Integer getFollowing() {
         return following;
     }
 
-    public void setFollowing(int following) {
+    public void setFollowing(Integer following) {
         this.following = following;
     }
 
