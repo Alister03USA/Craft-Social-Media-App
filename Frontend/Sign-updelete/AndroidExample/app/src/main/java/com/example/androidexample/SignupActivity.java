@@ -23,7 +23,7 @@ public class SignupActivity extends AppCompatActivity {
     private Button buttonSignup, buttonGoToDelete;
 
     private RequestQueue requestQueue;
-    private static final String BASE_URL = "https://0db36f57-ab43-4b34-ac7d-7c900b87234e.mock.pstmn.io/users/signup";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/users/signup";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
