@@ -32,6 +32,7 @@ public class Users {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @Column(nullable = false, unique = true)
     private String displayName;
 
     @Column(length = 1000)
@@ -45,7 +46,6 @@ public class Users {
 
     private Integer following = 0;
 
-    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
