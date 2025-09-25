@@ -1,0 +1,76 @@
+package com.example.craftsy.loginEditUser;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+public class LoginEditUserController {
+
+    @Autowired
+    LoginEditUserRepository loginEditUserRepository;
+
+    /**
+     * Updates the user information
+     * @param username username of profile to update. Comes from path.
+     * @param update The updated user information. Comes from body.
+     * @return the updated user information
+     */
+    @PutMapping("/user/{username}")
+    LoginEditUser editUser(@PathVariable String username, @RequestBody LoginEditUser update){
+        //creates user from body. Throws exception if username not found.
+        LoginEditUser user = loginEditUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if(update.getUsername() != null) {
+            user.setUsername(update.getUsername());
+        }
+        if(update.getBio() != null) {
+            user.setBio(update.getBio());
+        }
+        if(update.getPassword() != null){
+            if(!isPasswordStrong(update.getPassword())){
+                throw new RuntimeException("Password not strong enough");
+            }
+            user.setPassword(update.getPassword());
+        }
+        if(update.getFollowers() != null){
+            user.setFollowers(update.getFollowers());
+        }
+        if(update.getFollowing() != null){
+            user.setFollowing(update.getFollowing());
+        }
+        if(update.getDisplayName() != null){
+            user.setDisplayName(update.getDisplayName());
+        }
+        if(update.getEmail() != null){
+            user.setEmail(update.getEmail());
+        }
+        if(update.getCraftSpecialties() != null){
+            user.setCraftSpecialties(update.getCraftSpecialties());
+        }
+        loginEditUserRepository.save(user);
+        return user;
+    }
+
+    private boolean isPasswordStrong(String password) {
+        // Example rules: at least 8 chars, one uppercase, one lowercase, one number
+        String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
+        return password.matches(pattern);
+    }
+
+    @GetMapping("/login")
+    String login(@RequestBody LoginEditUser userInfo){
+        if(loginEditUserRepository.findByUsername(userInfo.getUsername()).isEmpty()){
+            return "User not found";
+        }
+        LoginEditUser user = loginEditUserRepository.findByUsername(userInfo.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if(user.getPassword().equals(userInfo.getPassword())){
+            return userInfo.getUsername() + " successfully logged in.";
+        }
+        else{
+            return "Incorrect password";
+        }
+    }
+}
