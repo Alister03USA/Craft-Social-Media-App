@@ -9,7 +9,26 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Profile Photo:"
+            android:textStyle="bold" />
+
+
+        <!-- Profile Picture -->
+        <ImageView
+            android:id="@+id/profile"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/profile"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="Profile picture"
+            android:background="@android:color/darker_gray"
+            android:padding="2dp" />
 
         <!-- Display Name -->
         <TextView
@@ -23,9 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter display name"
-            android:inputType="textPersonName"
-            android:focusable="true"
-            android:focusableInTouchMode="true" />
+            android:inputType="textPersonName" />
 
         <!-- Username -->
         <TextView
@@ -40,9 +57,69 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter username"
-            android:inputType="textPersonName"
-            android:focusable="true"
-            android:focusableInTouchMode="true" />
+            android:inputType="textPersonName" />
+
+        <!-- Email -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter email"
+            android:inputType="textEmailAddress" />
+
+        <!-- Phone -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone Number"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter phone number"
+            android:inputType="phone" />
+
+        <!-- Date of Birth -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date of Birth"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_dob"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="MM/DD/YYYY"
+            android:focusable="false"
+            android:clickable="true"
+            android:inputType="date" />
+
+        <!-- Location -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter your city"
+            android:inputType="textCapWords" />
 
         <!-- Biography -->
         <TextView
@@ -60,10 +137,7 @@
             android:inputType="textMultiLine"
             android:minLines="3"
             android:gravity="top|start"
-            android:scrollbars="vertical"
-            android:overScrollMode="ifContentScrolls"
-            android:focusable="true"
-            android:focusableInTouchMode="true" />
+            android:scrollbars="vertical" />
 
         <!-- Gender -->
         <TextView

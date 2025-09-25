@@ -22,6 +22,7 @@ public class Login extends AppCompatActivity {
     private EditText passwordEditText;
     private Button loginButton;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,7 +88,7 @@ public class Login extends AppCompatActivity {
 
 
                 Volley.newRequestQueue(Login.this).add(request);
-                //VolleySingleton.getInstance(context).addToRequestQueue(request);
+                //VolleySingleton.getInstance(missingthis!!!).addToRequestQueue(request);
 
             }
         });
