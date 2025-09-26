@@ -40,6 +40,7 @@ public class Users {
 
     private String profilePic;
 
+    @Column(name = "craftSpecialities")
     private String craftSpecialities;
 
     private Integer followers = 0;

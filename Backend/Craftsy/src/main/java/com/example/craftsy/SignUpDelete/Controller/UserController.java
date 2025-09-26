@@ -32,9 +32,10 @@ public class UserController {
                     .body("Password too weak! Must be at least 8 characters, contain uppercase, lowercase, and a number.");
         }
 
-        // Hash password before saving
+    /*    // Hash password before saving
         String hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
+        user.setPassword(hashedPassword);*/
+
 
         Users savedUser = userRepository.save(user);
         return ResponseEntity.ok(savedUser);
