@@ -30,12 +30,6 @@
             android:hint="Bio"
             android:inputType="textMultiLine" />
 
-        <EditText
-            android:id="@+id/editTextProfilePic"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Profile Pic URL"
-            android:inputType="textUri" />
 
         <EditText
             android:id="@+id/editTextCraftSpecialities"
