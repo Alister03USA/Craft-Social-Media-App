@@ -1,51 +1,52 @@
 package com.example.craftsy.feed;
 
+import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "feed")
+@Table(name = "feed",
+        uniqueConstraints = {
+                // The unique constraint now uses the foreign key column (user_fk_username)
+                // and the project name column
+                @UniqueConstraint(columnNames = {"user_fk_username", "projectName"}, name = "UK_project_name_username")
+        })
 public class Feed {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String username;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "user_fk_username",        // 1. The name of the foreign key column in the 'projects' table
+            nullable = false,
+            referencedColumnName = "username"  // 2. The column name in the 'users' table to reference
+    )
+    private Users user;
 
-    @Column(unique = true, nullable = false)
-    private long postID;
-
+    @Column(name = "project_name", nullable = false)
     private String projectName;
     private String projectType;
     private String supplies;
     private String projectDesc;
     private String projectPic;
     private String visibility;
+
+    @Column(nullable = false)
     private LocalDateTime date;
 
     public Feed() {
-        this.date=LocalDateTime.now();
-        postID = id;
     }
 
     public String getUsername() {
-        return username;
+        return user.getUsername();
     }
 
     public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public long getPostID() {
-        return postID;
-    }
-
-    public void setPostID(long postID) {
-        this.postID = postID;
+        this.user.setUsername(username);
     }
 
     public String getProjectName() {
