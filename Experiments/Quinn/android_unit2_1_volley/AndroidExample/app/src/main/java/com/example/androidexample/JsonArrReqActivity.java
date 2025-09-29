@@ -12,57 +12,57 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonArrayRequest;
+
+import org.json.JSONArray;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class StringReqActivity extends AppCompatActivity {
+public class JsonArrReqActivity extends AppCompatActivity {
 
     // UI components
-    private Button btnStringReq;
+    private Button btnJsonArrReq;
     private TextView msgResponse;
 
-    // API URL for fetching string response
-    private static final String URL_STRING_REQ = "https://jsonplaceholder.typicode.com/users/1";
-    // Alternative URLs for testing purposes
-     //public static final String URL_STRING_REQ = "https://2aa87adf-ff7c-45c8-89bc-f3fbfaa16d15.mock.pstmn.io/users/1";
-    //public static final String URL_STRING_REQ = "http://10.0.2.2:8080/users/1";
+    // API URL for fetching JSON data
+    private static final String URL_JSON_ARRAY = "https://jsonplaceholder.typicode.com/users";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_string_req);
+        setContentView(R.layout.activity_json_arr_req);
 
         // Initializing UI components
-        btnStringReq = findViewById(R.id.btnStringReq);
+        btnJsonArrReq = findViewById(R.id.btnJsonArr);
         msgResponse = findViewById(R.id.msgResponse);
 
-        // Setting click listener on the button to trigger the string request
-        btnStringReq.setOnClickListener(new View.OnClickListener() {
+        // Setting click listener on the button to make JSON array request
+        btnJsonArrReq.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                makeStringReq();
+                makeJsonArrayReq();
             }
         });
     }
 
     /**
-     * Makes a string request using Volley library
-     **/
-    private void makeStringReq() {
-        // Creating a new String request
-        StringRequest stringRequest = new StringRequest(
+     * Makes a JSON array request using Volley library
+     */
+    private void makeJsonArrayReq() {
+        // Creating a new JSON array request
+        JsonArrayRequest jsonArrReq = new JsonArrayRequest(
                 Request.Method.GET, // HTTP method (GET request)
-                URL_STRING_REQ, // API URL
-                new Response.Listener<String>() {
+                URL_JSON_ARRAY, // API URL
+                null, // Request body (null for GET request)
+                new Response.Listener<JSONArray>() {
                     @Override
-                    public void onResponse(String response) {
+                    public void onResponse(JSONArray response) {
                         // Log the response for debugging purposes
-                        Log.d("Volley Response", response);
+                        Log.d("Volley Response", response.toString());
 
                         // Display response in the TextView
-                        msgResponse.setText(response);
+                        msgResponse.setText(response.toString());
                     }
                 },
                 new Response.ErrorListener() {
@@ -74,8 +74,7 @@ public class StringReqActivity extends AppCompatActivity {
                         // Show an error message in the UI
                         msgResponse.setText("Failed to load data. Please try again.");
                     }
-                }
-        ) {
+                }) {
             @Override
             public Map<String, String> getHeaders() {
                 // Headers for the request (if needed)
@@ -98,6 +97,6 @@ public class StringReqActivity extends AppCompatActivity {
         };
 
         // Adding request to the Volley request queue
-        VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(stringRequest);
+        VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonArrReq);
     }
 }
