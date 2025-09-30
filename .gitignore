@@ -200,3 +200,7 @@ fabric.properties
 
 !/gradle/wrapper/gradle-wrapper.jar
 .DS_Store
+
+# Ignore nested repository
+2_jubair_3/
+
