@@ -9,9 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "feed",
         uniqueConstraints = {
-                // The unique constraint now uses the foreign key column (user_fk_username)
-                // and the project name column
-                @UniqueConstraint(columnNames = {"user_fk_username", "projectName"}, name = "UK_project_name_username")
+                @UniqueConstraint(columnNames = {"username", "projectName"}, name = "UK_project_name_username")
         })
 public class Feed {
 
@@ -21,7 +19,7 @@ public class Feed {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "user_fk_username",        // 1. The name of the foreign key column in the 'projects' table
+            name = "username",        // 1. The name of the foreign key column in the 'projects' table
             nullable = false,
             referencedColumnName = "username"  // 2. The column name in the 'users' table to reference
     )
@@ -41,12 +39,12 @@ public class Feed {
     public Feed() {
     }
 
-    public String getUsername() {
-        return user.getUsername();
+    public Users getUser() {
+        return user;
     }
 
-    public void setUsername(String username) {
-        this.user.setUsername(username);
+    public void setUser(Users user) {
+        this.user = user;
     }
 
     public String getProjectName() {
