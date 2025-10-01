@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -82,6 +83,39 @@ public class FollowController {
         userRepository.save(following);
 
         return ResponseEntity.ok(followerUsername + " unfollowed " + followingUsername);
+    }
+
+
+    // Get all followers of a user
+    @GetMapping("/{username}/followers")
+    public ResponseEntity<List<String>> getFollowers(@PathVariable String username) {
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        Users user = userOpt.get();
+        List<Follow> followersList = followRepository.findByFollowing(user);
+
+        List<String> followerNames = followersList.stream()
+                .map(f -> f.getFollower().getUsername())
+                .toList();
+
+        return ResponseEntity.ok(followerNames);
+    }
+
+    // Get all users this user is following
+    @GetMapping("/{username}/following")
+    public ResponseEntity<List<String>> getFollowing(@PathVariable String username) {
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        Users user = userOpt.get();
+        List<Follow> followingList = followRepository.findByFollower(user);
+
+        List<String> followingNames = followingList.stream()
+                .map(f -> f.getFollowing().getUsername())
+                .toList();
+
+        return ResponseEntity.ok(followingNames);
     }
 
 
