@@ -20,7 +20,7 @@ public class SignupActivity extends AppCompatActivity {
     private Button btnSignup, btnGoToDelete;
 
     // Adjust port based on backend (8080 or 8443 for HTTPS)
-    private static final String SIGNUP_URL = "https://coms-3090-028.class.las.iastate.edu:8080/users/signup";
+    private static final String SIGNUP_URL = "http://coms-3090-028.class.las.iastate.edu:8080/users/signup";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +64,13 @@ public class SignupActivity extends AppCompatActivity {
                 Request.Method.POST, SIGNUP_URL, body,
                 response -> Toast.makeText(this, "Signup successful!", Toast.LENGTH_SHORT).show(),
                 error -> {
-                    error.printStackTrace();
-                    Toast.makeText(this, "Signup failed: " + error.toString(), Toast.LENGTH_LONG).show();
+                    if (error.networkResponse != null) {
+                        int statusCode = error.networkResponse.statusCode;
+                        String message = new String(error.networkResponse.data);
+                        Toast.makeText(this, "Server error " + statusCode + ": " + message, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Signup failed: " + error.toString(), Toast.LENGTH_LONG).show();
+                    }
                 });
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);

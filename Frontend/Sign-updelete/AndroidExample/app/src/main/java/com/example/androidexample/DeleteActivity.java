@@ -15,7 +15,7 @@ public class DeleteActivity extends AppCompatActivity {
     private EditText etDeleteUsername;
     private Button btnConfirmDelete;
 
-    private static final String DELETE_URL = "https://coms-3090-028.class.las.iastate.edu:8080/users/delete/";
+    private static final String DELETE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/users/delete/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

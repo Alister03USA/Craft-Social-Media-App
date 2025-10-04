@@ -19,14 +19,9 @@
             android:name=".DeleteActivity"
             android:exported="false" />
 
-        <!-- Signup page -->
+        <!-- Signup page (temporary launcher for your demo) -->
         <activity
             android:name=".SignupActivity"
-            android:exported="false" />
-
-        <!-- Login page (Launcher) -->
-        <activity
-            android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,5 +30,4 @@
         </activity>
 
     </application>
-
 </manifest>
