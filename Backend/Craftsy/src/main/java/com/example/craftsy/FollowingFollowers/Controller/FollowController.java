@@ -10,8 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Optional; // Container Object in Java - indicate a value might/might not be present
 
+// Spring automatically converts return values (like strings or lists) to HTTP responses (JSON).
 @RestController
 public class FollowController {
 

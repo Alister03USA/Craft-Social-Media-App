@@ -21,7 +21,7 @@ import org.apache.catalina.User;
 // Create a table in database
 @Entity
 @Getter
-@Setter
+@Setter                                     // Unique Constraints ensure follower_id and following_id cannot appear twice
 @Table(name = "follow", uniqueConstraints = {@UniqueConstraint(columnNames = {"follower_id", "following_id"})})
 public class Follow {
 
@@ -31,10 +31,13 @@ public class Follow {
 
 
     // Store reference to the IDs in the Users Table (ID as foreign Key)
+    // follower_id is the foreign key that references the user who is following
     @ManyToOne
     @JoinColumn(name = "follower_id", nullable = false)
     private Users follower;
 
+
+    // following_id is the foreign key that references the user who is being followed
     @ManyToOne
     @JoinColumn(name = "following_id", nullable = false)
     private Users following;

@@ -9,16 +9,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/users") // sets the base path for all endpoints in this controller.
 public class UserController {
 
+    // Injects an instance of UserRepository so you can use it without manually creating it.
     @Autowired
     private UserRepository userRepository;
 
-
+    // maps the HTTP POST request to the signup
     @PostMapping("/signup")
-    public ResponseEntity<Users> signup(@RequestBody Users user) {
-        Users savedUser = userRepository.save(user);
+    public ResponseEntity<Users> signup(@RequestBody Users user) { // Converts incoming JSON into java object
+        Users savedUser = userRepository.save(user); // java -> SQL
         return ResponseEntity.ok(savedUser);
     }
 
