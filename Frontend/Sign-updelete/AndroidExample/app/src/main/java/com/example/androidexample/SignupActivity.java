@@ -9,90 +9,65 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class SignupActivity extends AppCompatActivity {
 
-    private EditText editTextUsername, editTextDisplayName, editTextBio,
-            editTextCraftSpecialities, editTextEmail, editTextPassword;
-    private Button buttonSignup, buttonGoToDelete;
+    private EditText etUsername, etEmail, etPassword;
+    private Button btnSignup, btnGoToDelete;
 
-    private RequestQueue requestQueue;
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/users/signup";
+    // Adjust port based on backend (8080 or 8443 for HTTPS)
+    private static final String SIGNUP_URL = "https://coms-3090-028.class.las.iastate.edu:8080/users/signup";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
 
-        // Bind views
-        editTextUsername = findViewById(R.id.editTextUsername);
-        editTextDisplayName = findViewById(R.id.editTextDisplayName);
-        editTextBio = findViewById(R.id.editTextBio);
-        editTextCraftSpecialities = findViewById(R.id.editTextCraftSpecialities);
-        editTextEmail = findViewById(R.id.editTextEmail);
-        editTextPassword = findViewById(R.id.editTextPassword);
+        etUsername = findViewById(R.id.etUsername);
+        etEmail = findViewById(R.id.etEmail);
+        etPassword = findViewById(R.id.etPassword);
+        btnSignup = findViewById(R.id.btnSignup);
+        btnGoToDelete = findViewById(R.id.btnGoToDelete);
 
-        buttonSignup = findViewById(R.id.buttonSignup);
-        buttonGoToDelete = findViewById(R.id.buttonGoToDelete);
+        btnSignup.setOnClickListener(v -> signupUser());
 
-        requestQueue = Volley.newRequestQueue(this);
-
-        buttonSignup.setOnClickListener(v -> signupUser());
-
-        buttonGoToDelete.setOnClickListener(v ->
-                startActivity(new Intent(SignupActivity.this, DeleteActivity.class)));
+        btnGoToDelete.setOnClickListener(v -> {
+            Intent intent = new Intent(SignupActivity.this, DeleteActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void signupUser() {
-        String username = editTextUsername.getText().toString().trim();
-        String displayName = editTextDisplayName.getText().toString().trim();
-        String bio = editTextBio.getText().toString().trim();
-        String craftSpecialities = editTextCraftSpecialities.getText().toString().trim();
-        String email = editTextEmail.getText().toString().trim();
-        String password = editTextPassword.getText().toString().trim();
-
-        // Password strength validation
-        // At least 8 chars, one digit, one lowercase, one uppercase
-        String passwordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
-        if (!password.matches(passwordPattern)) {
-            Toast.makeText(this, "Password too weak! Must be at least 8 chars, include upper, lower, and number.", Toast.LENGTH_LONG).show();
-            return;
-        }
+        String username = etUsername.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Username, Email, and Password are required", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Build JSON body
-        JSONObject jsonBody = new JSONObject();
+        JSONObject body = new JSONObject();
         try {
-            jsonBody.put("username", username);
-            jsonBody.put("displayName", displayName);
-            jsonBody.put("bio", bio);
-            jsonBody.put("craftSpecialities", craftSpecialities);
-            jsonBody.put("followers", 0);   // default value
-            jsonBody.put("following", 0);   // default value
-            jsonBody.put("email", email);
-            jsonBody.put("password", password);
+            body.put("username", username);
+            body.put("email", email);
+            body.put("password", password);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.POST,
-                BASE_URL,
-                jsonBody,
-                response -> Toast.makeText(SignupActivity.this, "Signup successful!", Toast.LENGTH_SHORT).show(),
-                error -> Toast.makeText(SignupActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show()
-        );
+                Request.Method.POST, SIGNUP_URL, body,
+                response -> Toast.makeText(this, "Signup successful!", Toast.LENGTH_SHORT).show(),
+                error -> {
+                    error.printStackTrace();
+                    Toast.makeText(this, "Signup failed: " + error.toString(), Toast.LENGTH_LONG).show();
+                });
 
-        requestQueue.add(request);
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 }

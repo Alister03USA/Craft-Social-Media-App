@@ -2,67 +2,64 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:background="@color/login_bg">
 
     <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/signupTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Account"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_black"
+            android:layout_marginBottom="32dp" />
 
         <EditText
-            android:id="@+id/editTextUsername"
+            android:id="@+id/etUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Username"
-            android:inputType="text" />
+            android:inputType="textPersonName"
+            android:backgroundTint="@color/blue_primary"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
 
         <EditText
-            android:id="@+id/editTextDisplayName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Display Name"
-            android:inputType="textPersonName" />
-
-        <EditText
-            android:id="@+id/editTextBio"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Bio"
-            android:inputType="textMultiLine" />
-
-
-        <EditText
-            android:id="@+id/editTextCraftSpecialities"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Craft Specialities"
-            android:inputType="text" />
-
-        <EditText
-            android:id="@+id/editTextEmail"
+            android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Email"
-            android:inputType="textEmailAddress" />
+            android:inputType="textEmailAddress"
+            android:backgroundTint="@color/blue_primary"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
 
         <EditText
-            android:id="@+id/editTextPassword"
+            android:id="@+id/etPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Password"
-            android:inputType="textPassword" />
+            android:inputType="textPassword"
+            android:backgroundTint="@color/blue_primary"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp" />
 
         <Button
-            android:id="@+id/buttonSignup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:id="@+id/btnSignup"
+            style="@style/CraftsyButton"
             android:text="Sign Up" />
 
         <Button
-            android:id="@+id/buttonGoToDelete"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Go to Delete Screen" />
+            android:id="@+id/btnGoToDelete"
+            style="@style/CraftsyButton"
+            android:text="Go to Delete Page" />
 
     </LinearLayout>
 </ScrollView>

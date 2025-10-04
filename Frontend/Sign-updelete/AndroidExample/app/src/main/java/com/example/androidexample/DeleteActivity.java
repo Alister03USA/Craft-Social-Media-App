@@ -8,48 +8,42 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
 public class DeleteActivity extends AppCompatActivity {
 
-    private EditText editTextUsernameDelete;
-    private Button buttonDelete;
+    private EditText etDeleteUsername;
+    private Button btnConfirmDelete;
 
-    private RequestQueue requestQueue;
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/users/delete/{username}";
+    private static final String DELETE_URL = "https://coms-3090-028.class.las.iastate.edu:8080/users/delete/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_delete);
 
-        editTextUsernameDelete = findViewById(R.id.editTextUsernameDelete);
-        buttonDelete = findViewById(R.id.buttonDelete);
+        etDeleteUsername = findViewById(R.id.etDeleteUsername);
+        btnConfirmDelete = findViewById(R.id.btnConfirmDelete);
 
-        requestQueue = Volley.newRequestQueue(this);
-
-        buttonDelete.setOnClickListener(v -> deleteUser());
+        btnConfirmDelete.setOnClickListener(v -> {
+            String username = etDeleteUsername.getText().toString().trim();
+            if (username.isEmpty()) {
+                Toast.makeText(this, "Enter username to delete", Toast.LENGTH_SHORT).show();
+            } else {
+                deleteUser(username);
+            }
+        });
     }
 
-    private void deleteUser() {
-        String username = editTextUsernameDelete.getText().toString().trim();
-
-        if (username.isEmpty()) {
-            Toast.makeText(this, "Enter a username to delete", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String url = BASE_URL + username;
+    private void deleteUser(String username) {
+        String url = DELETE_URL + username;
 
         StringRequest request = new StringRequest(
-                Request.Method.DELETE,
-                url,
-                response -> Toast.makeText(DeleteActivity.this, "User deleted successfully!", Toast.LENGTH_SHORT).show(),
-                error -> Toast.makeText(DeleteActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show()
+                Request.Method.DELETE, url,
+                response -> Toast.makeText(this, "User deleted", Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(this, "Delete failed: " + error.toString(), Toast.LENGTH_LONG).show()
         );
 
-        requestQueue.add(request);
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 }
