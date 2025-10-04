@@ -54,6 +54,7 @@ public class SignupActivity extends AppCompatActivity {
         JSONObject body = new JSONObject();
         try {
             body.put("username", username);
+            body.put("displayName", username); //just for testing
             body.put("email", email);
             body.put("password", password);
         } catch (JSONException e) {
@@ -67,7 +68,19 @@ public class SignupActivity extends AppCompatActivity {
                     if (error.networkResponse != null) {
                         int statusCode = error.networkResponse.statusCode;
                         String message = new String(error.networkResponse.data);
-                        Toast.makeText(this, "Server error " + statusCode + ": " + message, Toast.LENGTH_LONG).show();
+
+                        // Match backend password rejection
+                        if (statusCode == 400 && message.contains("Password too weak")) {
+                            Toast.makeText(this,
+                                    "Password too weak! Must be at least 8 characters, contain uppercase, lowercase, and a number.",
+                                    Toast.LENGTH_LONG).show();
+                        } else if (statusCode == 400) {
+                            Toast.makeText(this, "Bad request: " + message, Toast.LENGTH_LONG).show();
+                        } else if (statusCode >= 500) {
+                            Toast.makeText(this, "Server error: " + message, Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(this, "Unexpected error (" + statusCode + "): " + message, Toast.LENGTH_LONG).show();
+                        }
                     } else {
                         Toast.makeText(this, "Signup failed: " + error.toString(), Toast.LENGTH_LONG).show();
                     }
