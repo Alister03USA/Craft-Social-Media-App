@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/users") // base URL
 public class UserController {
 
     private HashMap<String, User> users = new HashMap<>();
