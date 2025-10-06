@@ -23,10 +23,14 @@ public class UserProfile extends AppCompatActivity {
     // Edit mode fields
     private EditText displayName, username, bio, email, phone, password, birthday;
     private Spinner gender;
+    private String loggedInUsername;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loggedInUsername = getIntent().getStringExtra("username");
+
 
         // Start in VIEW mode
         showProfileView();
@@ -45,7 +49,8 @@ public class UserProfile extends AppCompatActivity {
     }
 
     private void fetchProfileForView() {
-        String url = "https://339e3baf-7060-4ab8-8b4c-fd31c13daeaa.mock.pstmn.io/userprofile";
+        String url = "http://coms-3090-028.class.las.iastate.edu/user/" + loggedInUsername;
+
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
@@ -103,7 +108,8 @@ public class UserProfile extends AppCompatActivity {
     }
 
     private void fetchProfileForEdit() {
-        String url = "https://339e3baf-7060-4ab8-8b4c-fd31c13daeaa.mock.pstmn.io/userprofile";
+        String url = "http://coms-3090-028.class.las.iastate.edu/user/" + loggedInUsername;
+
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
@@ -173,7 +179,8 @@ public class UserProfile extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        String url = "https://339e3baf-7060-4ab8-8b4c-fd31c13daeaa.mock.pstmn.io/update";
+        String url = "http://coms-3090-028.class.las.iastate.edu/user/" + loggedInUsername;
+
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,

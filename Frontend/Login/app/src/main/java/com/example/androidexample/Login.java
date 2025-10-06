@@ -21,6 +21,7 @@ public class Login extends AppCompatActivity {
     private EditText usernameEditText;
     private EditText passwordEditText;
     private Button loginButton;
+    private Button signupButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +31,8 @@ public class Login extends AppCompatActivity {
         usernameEditText = findViewById(R.id.login_username_edt);
         passwordEditText = findViewById(R.id.login_password_edt);
         loginButton = findViewById(R.id.login_login_btn);
+        signupButton = findViewById(R.id.login_signup_btn);
+
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -43,7 +46,7 @@ public class Login extends AppCompatActivity {
                 }
 
 
-                String url = "https://0edeff51-954b-44fa-8456-dcbb9c0c8420.mock.pstmn.io/login";
+                String url = "http://coms-3090-028.class.las.iastate.edu/login";
 
 
 
@@ -66,9 +69,12 @@ public class Login extends AppCompatActivity {
                                 boolean success = response.getBoolean("success");
                                 if (success) {
                                     Toast.makeText(Login.this, "Login successful!", Toast.LENGTH_SHORT).show();
-                                    startActivity(new Intent(Login.this, UserProfile.class));
+                                    Intent intent = new Intent(Login.this, UserProfile.class);
+                                    intent.putExtra("username", username); // pass username to profile
+                                    startActivity(intent);
                                     finish();
-                                } else {
+                                }
+                                else {
                                     Toast.makeText(Login.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                                 }
                             } catch (JSONException e) {
@@ -91,6 +97,14 @@ public class Login extends AppCompatActivity {
 
             }
         });
+        signupButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Login.this, SignupActivity.class);
+                startActivity(intent);
+            }
+        });
+
     }
 }
 
