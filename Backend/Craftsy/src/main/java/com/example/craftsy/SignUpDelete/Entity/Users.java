@@ -39,8 +39,8 @@ public class Users {
 
     private String profilePic;
 
-    @Column(name = "craftSpecialities")
-    private String craftSpecialities;
+    @Column(name = "craftSpecialties")
+    private String craftSpecialties;
 
     private Integer followers = 0;
 
