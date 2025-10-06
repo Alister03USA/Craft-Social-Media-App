@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "feed",
-        uniqueConstraints = {
+        uniqueConstraints = { //ensure projectName must be unique for each username
                 @UniqueConstraint(columnNames = {"username", "projectName"}, name = "UK_project_name_username")
         })
 public class Feed {
@@ -19,9 +19,9 @@ public class Feed {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "username",        // 1. The name of the foreign key column in the 'projects' table
-            nullable = false,
-            referencedColumnName = "username"  // 2. The column name in the 'users' table to reference
+            name = "username", //name of the foreign key column in the 'projects' table
+            nullable = false, //must have username column
+            referencedColumnName = "username" //column name in the 'users' table to reference
     )
     private Users user;
 
@@ -31,6 +31,8 @@ public class Feed {
     private String supplies;
     private String projectDesc;
     private String projectPic;
+
+    @Column(name = "visibility", nullable = false)
     private String visibility;
 
     @Column(nullable = false)

@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FeedRespository extends JpaRepository<Feed, Long> {
-    Optional<List<Feed>> findByUser(Users user);
-    Optional<Feed> findByUserAndProjectName(Users user, String projectName);
+    Optional<List<Feed>> findByUser(Users user); //get list of projects from user
+    Optional<Feed> findByUserAndProjectName(Users user, String projectName); //find a specific project name for a user
 }

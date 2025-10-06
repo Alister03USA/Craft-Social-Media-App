@@ -21,6 +21,13 @@ public class FeedController {
     @Autowired
     UserRepository userRepository;
 
+    /**
+     *
+     * Posts a project to feed
+     * @param username the user posting project
+     * @param project the project being posted
+     * @return the posted project
+     */
     @PostMapping("/feed/{username}")
     Feed postProject(@PathVariable String username, @RequestBody Feed project){
         Users user = userRepository.findByUsername(username)
@@ -31,6 +38,11 @@ public class FeedController {
         return proj;
     }
 
+    /**
+     * Get all projects from the user and the users they follow from most recent to oldest
+     * @param username the user that is posting the project
+     * @return list of projects
+     */
     @GetMapping("/feed/{username}")
     List<Feed> getUserFeed(@PathVariable String username){
         List<Feed> userFeed = new ArrayList<Feed>();
@@ -48,6 +60,12 @@ public class FeedController {
         return userFeed;
     }
 
+    /**
+     * Deletes the given project for given user
+     * @param username user that has posted project
+     * @param projectName name of project to be deleted
+     * @return Post deleted, if successful; Post not found if post doesn't exist; User not found if user doesn't exist
+     */
     @DeleteMapping("/feed/{username}/{projectName}")
     String deleteProject(@PathVariable String username, @PathVariable String projectName){
         Optional<Users> userOpt = userRepository.findByUsername(username);
@@ -64,6 +82,13 @@ public class FeedController {
         return "Post deleted";
     }
 
+    /**
+     * Updates project with given information
+     * @param username the user that posted the project
+     * @param projectName the name of the project to be updated
+     * @param projectUpdated the updated information
+     * @return the updated project
+     */
     @PutMapping("/feed/{username}/{projectName}")
     Feed updateProject(@PathVariable String username, @PathVariable String projectName,
                        @RequestBody Feed projectUpdated){
