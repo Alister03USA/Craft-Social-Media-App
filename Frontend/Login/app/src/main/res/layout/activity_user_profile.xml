@@ -1,0 +1,128 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+
+
+
+    <LinearLayout
+
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+        <Button
+            android:layout_gravity="right"
+            android:id="@+id/login_login_btn"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:background="#4586EF"
+            android:text="Edit User"
+            android:textSize="10sp"
+            android:textColor="#ffffff">
+        </Button>
+
+
+
+        <!-- Profile picture -->
+
+        <ImageView
+            android:id="@+id/profileImage"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/profile"
+            android:scaleType="centerCrop"
+            android:background="@drawable/profile"
+            android:contentDescription="Profile picture" />
+
+        <!-- Display name -->
+        <TextView
+            android:id="@+id/displayName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="John Doe"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp" />
+
+        <!-- Username -->
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="usernamejohndoe"
+            android:textSize="14sp"
+            android:textColor="#777777"
+            android:layout_marginTop="4dp" />
+
+        <!-- Bio -->
+        <TextView
+            android:id="@+id/bio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This is my bio..."
+            android:gravity="center"
+            android:layout_marginTop="8dp" />
+
+        <!-- Follower / Following row -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/followersCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="123 Followers"
+                android:textStyle="bold"
+                android:layout_marginEnd="24dp"/>
+
+            <TextView
+                android:id="@+id/followingCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="200 Following"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <!-- User posts (grid-like) -->
+        <GridLayout
+            android:id="@+id/postsGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="3"
+            android:layout_marginTop="24dp"
+            >
+
+            <!-- Example post thumbnails -->
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:src="@drawable/ic_post_placeholder"
+                android:layout_columnWeight="1"
+                android:scaleType="centerCrop"/>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:src="@drawable/ic_post_placeholder"
+                android:layout_columnWeight="1"
+                android:scaleType="centerCrop"/>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:src="@drawable/ic_post_placeholder"
+                android:layout_columnWeight="1"
+                android:scaleType="centerCrop"/>
+        </GridLayout>
+
+
+    </LinearLayout>
+</ScrollView>
+
