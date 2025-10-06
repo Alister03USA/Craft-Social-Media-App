@@ -1,5 +1,7 @@
 package com.example.craftsy.feed;
 
+import com.example.craftsy.FollowingFollowers.Entity.Follow;
+import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,8 @@ import java.util.Optional;
 @RestController
 public class FeedController {
 
-//    @Autowired
-//    FollowRepository followRepository;
+    @Autowired
+    FollowRepository followRepository;
     @Autowired
     FeedRespository feedRespository;
     @Autowired
@@ -52,10 +54,12 @@ public class FeedController {
         if(optFeed.isPresent()){
             userFeed = optFeed.orElseThrow(() -> new RuntimeException("User not found"));
         }
-//        List<Follow> following = followRepository.findByFollower(user);
-//        for(int i=0; i<following.size(); i++){
-//            userFeed.addAll(feedRespository.findByUser(following.get(i).following));
-//        }
+        List<Follow> following = followRepository.findByFollower(user);
+        for(int i=0; i<following.size(); i++){
+            List<Feed> userFollowing = feedRespository.findByUser(following.get(i).getFollowing())
+                            .orElseThrow(()-> new RuntimeException("Following not found"));
+            userFeed.addAll(userFollowing);
+        }
         userFeed.sort(Comparator.comparing(Feed::getDate).reversed());
         return userFeed;
     }

@@ -65,19 +65,20 @@ public class LoginEditUserController {
     }
 
     /**
-     * Logins user with username and password specified in request body
-     * @param userInfo
+     * Logins user with username and password
+     * @param username username for user
+     * @param password password for user
      * @return User not found, {username} succesfully logged in, Incorrect password
      */
-    @GetMapping("/login")
-    String login(@RequestBody LoginEditUser userInfo){
-        if(loginEditUserRepository.findByUsername(userInfo.getUsername()).isEmpty()){
+    @GetMapping("/login/{username}/{password}")
+    String login(@PathVariable String username, @PathVariable String password){
+        if(loginEditUserRepository.findByUsername(username).isEmpty()){
             return "User not found";
         }
-        LoginEditUser user = loginEditUserRepository.findByUsername(userInfo.getUsername())
+        LoginEditUser user = loginEditUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if(user.getPassword().equals(userInfo.getPassword())){
-            return userInfo.getUsername() + " successfully logged in.";
+        if(user.getPassword().equals(password)){
+            return username + " successfully logged in.";
         }
         else{
             return "Incorrect password";
