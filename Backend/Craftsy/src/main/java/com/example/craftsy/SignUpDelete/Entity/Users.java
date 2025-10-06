@@ -2,7 +2,6 @@ package com.example.craftsy.SignUpDelete.Entity;
 
 
 // JPA -> Map Java classes to Database
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import jakarta.persistence.*;
 
 
