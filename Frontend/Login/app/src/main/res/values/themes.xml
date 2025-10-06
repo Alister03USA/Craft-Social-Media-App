@@ -17,6 +17,10 @@
 
         <!-- Status bar color -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:navigationBarColor">@color/login_bg</item>
+
+        <!-- FIXED: use built-in Android font -->
+        <item name="android:fontFamily">sans-serif</item>
     </style>
 
 </resources>
