@@ -42,4 +42,7 @@ public class Follow {
     @JoinColumn(name = "following_id", nullable = false)
     private Users following;
 
+    @Column(nullable = false)
+    private String status = "PENDING"; // Values: "PENDING" or "ACCEPTED"
+
 }
