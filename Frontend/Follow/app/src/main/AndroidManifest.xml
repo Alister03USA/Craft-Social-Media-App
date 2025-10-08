@@ -15,7 +15,7 @@
         <!-- Notification Center Activity (currently the launcher) -->
         <activity
             android:name=".NotificationCenterActivity"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.Craftsy">
 
         </activity>
@@ -29,6 +29,8 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+
 
         </activity>
     </application>

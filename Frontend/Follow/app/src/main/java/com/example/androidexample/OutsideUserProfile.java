@@ -18,11 +18,10 @@ public class OutsideUserProfile extends AppCompatActivity {
     private enum FollowState { NOT_FOLLOWING, PENDING, FOLLOWING }
     private FollowState currentState = FollowState.NOT_FOLLOWING;
 
-    // Replace with your actual backend base URL
-    private static final String BASE_URL = "https://f3669296-71cb-4a83-9a6f-76b5355210c2.mock.pstmn.io/FollowAnotherUser";
+    private static final String BASE_URL = "https://f3669296-71cb-4a83-9a6f-76b5355210c2.mock.pstmn.io";
 
-    // This would normally be passed in via Intent or loaded from backend
-    private int viewedUserId = 123;
+    // Replace this with whatever username you navigate to this profile with (Intent extra)
+    private String viewedUsername = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,16 +30,25 @@ public class OutsideUserProfile extends AppCompatActivity {
 
         followButton = findViewById(R.id.btn_follow);
 
-        // TODO: fetch actual state from backend (NOT_FOLLOWING, PENDING, FOLLOWING)
-        updateFollowButton();
+        // Example: receive username from previous screen
+        viewedUsername = getIntent().getStringExtra("username");
+
+        if (viewedUsername == null) {
+            Toast.makeText(this, "No username provided", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        // Fetch user profile data when the page loads
+        fetchUserProfile(viewedUsername);
 
         followButton.setOnClickListener(v -> {
             switch (currentState) {
                 case NOT_FOLLOWING:
-                    sendFollowRequest();
+                    sendFollowRequest(viewedUsername);
                     break;
                 case FOLLOWING:
-                    unfollowUser();
+                    unfollowUser(viewedUsername);
                     break;
                 case PENDING:
                     Toast.makeText(this, "Request already sent", Toast.LENGTH_SHORT).show();
@@ -49,33 +57,57 @@ public class OutsideUserProfile extends AppCompatActivity {
         });
     }
 
-    private void updateFollowButton() {
-        switch (currentState) {
-            case NOT_FOLLOWING:
-                followButton.setText("Follow");
-                followButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
-                followButton.setTextColor(getResources().getColor(android.R.color.white));
-                break;
-            case FOLLOWING:
-                followButton.setText("Unfollow");
-                followButton.setBackgroundColor(getResources().getColor(android.R.color.white));
-                followButton.setTextColor(getResources().getColor(android.R.color.black));
-                break;
-            case PENDING:
-                followButton.setText("Pending Request");
-                followButton.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                followButton.setTextColor(getResources().getColor(android.R.color.white));
-                break;
-        }
+    /** ------------------- FETCH USER PROFILE ------------------- **/
+    private void fetchUserProfile(String username) {
+        String url = BASE_URL + "/getUserProfile?username=" + username;
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> {
+                    try {
+                        // Simulated backend response example:
+                        // {
+                        //   "username": "john_doe",
+                        //   "displayName": "John Doe",
+                        //   "isFollowing": false,
+                        //   "isPending": false
+                        // }
+
+                        boolean isFollowing = response.optBoolean("isFollowing", false);
+                        boolean isPending = response.optBoolean("isPending", false);
+
+                        if (isPending) {
+                            currentState = FollowState.PENDING;
+                        } else if (isFollowing) {
+                            currentState = FollowState.FOLLOWING;
+                        } else {
+                            currentState = FollowState.NOT_FOLLOWING;
+                        }
+
+                        updateFollowButton();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, "Error parsing profile data", Toast.LENGTH_SHORT).show();
+                    }
+                },
+                error -> {
+                    Toast.makeText(this, "Failed to load profile info", Toast.LENGTH_SHORT).show();
+                }
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-    private void sendFollowRequest() {
-        //String url = BASE_URL + "/followRequest";
-        String url = BASE_URL;
+    /** ------------------- FOLLOW REQUEST ------------------- **/
+    private void sendFollowRequest(String username) {
+        String url = BASE_URL + "/FollowAnotherUser";
 
         JSONObject body = new JSONObject();
         try {
-            body.put("targetUserId", viewedUserId);
+            body.put("targetUsername", username);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -97,12 +129,13 @@ public class OutsideUserProfile extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-    private void unfollowUser() {
-        String url = BASE_URL + "/unfollow";
+    /** ------------------- UNFOLLOW REQUEST ------------------- **/
+    private void unfollowUser(String username) {
+        String url = BASE_URL + "/FollowAnotherUser/unfollow";
 
         JSONObject body = new JSONObject();
         try {
-            body.put("targetUserId", viewedUserId);
+            body.put("targetUsername", username);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -123,5 +156,25 @@ public class OutsideUserProfile extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
-}
 
+    /** ------------------- UI UPDATE ------------------- **/
+    private void updateFollowButton() {
+        switch (currentState) {
+            case NOT_FOLLOWING:
+                followButton.setText("Follow");
+                followButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
+                followButton.setTextColor(getResources().getColor(android.R.color.white));
+                break;
+            case FOLLOWING:
+                followButton.setText("Unfollow");
+                followButton.setBackgroundColor(getResources().getColor(android.R.color.white));
+                followButton.setTextColor(getResources().getColor(android.R.color.black));
+                break;
+            case PENDING:
+                followButton.setText("Pending Request");
+                followButton.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                followButton.setTextColor(getResources().getColor(android.R.color.white));
+                break;
+        }
+    }
+}
