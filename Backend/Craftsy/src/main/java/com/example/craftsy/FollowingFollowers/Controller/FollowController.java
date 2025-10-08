@@ -96,6 +96,7 @@ public class FollowController {
         // If either User does not exist -> return message
         if (followerOpt.isEmpty() || targetOpt.isEmpty()) {
             Map<String, String> error = new HashMap<>();
+            error.put("status", "error");
             error.put("message", "User not found");
             return ResponseEntity.badRequest().body(error);
         }
@@ -108,6 +109,7 @@ public class FollowController {
         Optional<Follow> existingFollow = followRepository.findByFollowerAndFollowing(follower, target);
         if (existingFollow.isPresent()) {
             Map<String, String> error = new HashMap<>();
+            error.put("status", "error");
             error.put("message", "Already following or request pending");
             return ResponseEntity.badRequest().body(error);
         }
@@ -130,6 +132,7 @@ public class FollowController {
         notificationRepository.save(notification);
 
         Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
         response.put("message", "Follow request sent");
         return ResponseEntity.ok(response);
     }
@@ -149,6 +152,9 @@ public class FollowController {
 
         // if either Username doesn't exist
         if (followerOpt.isEmpty() || targetOpt.isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("status", "error");
+            error.put("message", "User not found");
             return ResponseEntity.notFound().build();
         }
 
@@ -159,6 +165,7 @@ public class FollowController {
         // if the follower_id and following_id does not exist
         if (followOpt.isEmpty()) {
             Map<String, String> error = new HashMap<>();
+            error.put("status", "error");
             error.put("message", "Not following");
             return ResponseEntity.badRequest().body(error);
         }
@@ -180,6 +187,7 @@ public class FollowController {
         }
 
         Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
         response.put("message", "User unfollowed");
         return ResponseEntity.ok(response);
     }
@@ -231,6 +239,7 @@ public class FollowController {
         Optional<Notification> notifOpt = notificationRepository.findById(notificationId);
         if (notifOpt.isEmpty()) {
             Map<String, String> error = new HashMap<>();
+            error.put("status", "error");
             error.put("message", "Notification not found");
             return ResponseEntity.status(404).body(error);
         }
@@ -242,6 +251,7 @@ public class FollowController {
         Optional<Follow> followOpt = followRepository.findById(followId);
         if (followOpt.isEmpty()) {
             Map<String, String> error = new HashMap<>();
+            error.put("status", "error");
             error.put("message", "Follow request not found");
             return ResponseEntity.badRequest().body(error);
         }
@@ -266,6 +276,7 @@ public class FollowController {
             notificationRepository.save(notification);
 
             Map<String, String> response = new HashMap<>();
+            response.put("status", "success");
             response.put("message", "Follow request accepted");
             return ResponseEntity.ok(response);
         } else {
@@ -275,6 +286,7 @@ public class FollowController {
             notificationRepository.delete(notification);
 
             Map<String, String> response = new HashMap<>();
+            response.put("status", "success");
             response.put("message", "Follow request rejected");
             return ResponseEntity.ok(response);
         }
