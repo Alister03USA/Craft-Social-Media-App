@@ -17,9 +17,10 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal">
 
+
             <Button
                 android:layout_gravity="right"
-                android:id="@+id/login_login_btn"
+                android:id="@+id/editProfile"
                 android:layout_width="80dp"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
@@ -27,6 +28,7 @@
                 android:text="Edit User"
                 android:textSize="10sp"
                 android:textColor="#ffffff"/>
+
 
             <ImageView
                 android:id="@+id/profileImage"

@@ -7,6 +7,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.View;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -56,7 +58,7 @@ public class OutsideUserProfile extends BaseActivity {
         }
 
         // Get the viewed user
-        viewedUsername = "alister_gan";
+        viewedUsername = "kkeck";
 
         // Fetch the profile of the viewed user
         fetchViewedUserProfile(viewedUsername);
@@ -80,7 +82,7 @@ public class OutsideUserProfile extends BaseActivity {
     /** ------------------- FETCH VIEWED USER PROFILE ------------------- **/
     private void fetchViewedUserProfile(String targetUsername) {
         // Build URL dynamically
-        String userUrl = "http://coms-3090-028.class.las.iastate.edu:8080/login/alister_gan/Alistergan1234";
+        String userUrl = "http://coms-3090-028.class.las.iastate.edu:8080/login/kkeck/Kkeck1234";
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
@@ -99,11 +101,24 @@ public class OutsideUserProfile extends BaseActivity {
                         // Update UI elements in your ScrollView
                         displayNameTv.setText(displayName);      // TextView with id displayName
                         usernameTv.setText(targetUsername);      // TextView with id username
-                        bioTv.setText(bio);                      // TextView with id bio
 
-                        craftSpecialtiesTv.setText(craftSpecialties);
+                        if (bio == null || bio.equals("null") || bio.isEmpty()) {
+                            bioTv.setVisibility(View.GONE);
+                        } else {
+                            bioTv.setVisibility(View.VISIBLE);
+                            bioTv.setText(bio);
+                        }
 
-                        // Optional: load profile image if backend provides URL
+                        if (craftSpecialties == null || craftSpecialties.equals("null") || craftSpecialties.isEmpty()) {
+                            craftSpecialtiesTv.setVisibility(View.GONE);
+                        } else {
+                            craftSpecialtiesTv.setVisibility(View.VISIBLE);
+                            craftSpecialtiesTv.setText(craftSpecialties);
+                        }
+
+
+
+                        // TODO: load profile image if backend provides URL
                         // String profileImageUrl = response.optString("profileImageUrl", "");
                         // Glide.with(this).load(profileImageUrl).into(profileImageView);
 
@@ -195,17 +210,19 @@ public class OutsideUserProfile extends BaseActivity {
         String displayName = userJson.optString("displayName", userJson.optString("username", ""));
         String username = userJson.optString("username", "");
         String bio = userJson.optString("bio", "");
+        String craftSpecialties = userJson.optString("craftSpecialties","");
 
         displayNameTv.setText(displayName);
         usernameTv.setText(username);
-        bioTv.setText(bio);
+        bioTv.setText(bio != "null" ? bio : "");
+        craftSpecialtiesTv.setText(craftSpecialties != "null" ? craftSpecialties : "");
 
         // TODO: load profile image if backend provides URL
     }
 
     /** ------------------- FOLLOW REQUEST ------------------- **/
     private void sendFollowRequest(String followerUsername, String targetUsername) {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/" +SessionManager.getInstance().getLoggedInUsername() +"/follow/"+ SessionManager.getInstance().gettargetUser();
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/" +followerUsername+"/follow/"+ targetUsername;
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,

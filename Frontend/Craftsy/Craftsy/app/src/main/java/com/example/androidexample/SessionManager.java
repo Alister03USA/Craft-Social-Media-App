@@ -38,4 +38,15 @@ public class SessionManager {
 
     public String getCraftSpecialties() { return craftSpecialties; }
     public void setCraftSpecialties(String craftSpecialties) { this.craftSpecialties = craftSpecialties; }
+    public void logout() {
+        loggedInUsername = null;
+        displayName = null;
+        bio = null;
+        email = null;
+        password = null;
+        craftSpecialties = null;
+        // If you're using SharedPreferences, also clear those:
+        // prefs.edit().clear().apply();
+    }
+
 }

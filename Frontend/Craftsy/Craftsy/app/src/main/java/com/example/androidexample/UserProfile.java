@@ -1,21 +1,25 @@
 package com.example.androidexample;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONException;
+
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.Request;
+import android.content.Intent;
 
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class UserProfile extends BaseActivity {
 
-    private EditText displayName, username, bio, email, password, craftSpecialties;
+    private EditText displayName, username, bio, email, password, craftSpecialties, followersTv,followingTv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +27,43 @@ public class UserProfile extends BaseActivity {
         showProfileView();
 
     }
+    /** ------------------- FETCH FOLLOWERS / FOLLOWING COUNTS ------------------- **/
+    private void fetchFollowersAndFollowing(String username) {
+        // Followers count
+        String followersUrl = "http://coms-3090-028.class.las.iastate.edu:8080/" + username + "/followers";
+        JsonArrayRequest followersRequest = new JsonArrayRequest(
+                Request.Method.GET,
+                followersUrl,
+                null,
+                response -> {
+                    TextView followersTv = findViewById(R.id.followersCount);
+                    followersTv.setText(response.length() + " Followers");
+                },
+                error -> {
+                    TextView followersTv = findViewById(R.id.followersCount);
+                    followersTv.setText("0 Followers");
+                }
+        );
+        VolleySingleton.getInstance(this).addToRequestQueue(followersRequest);
+
+        // Following count
+        String followingUrl = "http://coms-3090-028.class.las.iastate.edu:8080/" + username + "/following";
+        JsonArrayRequest followingRequest = new JsonArrayRequest(
+                Request.Method.GET,
+                followingUrl,
+                null,
+                response -> {
+                    TextView followingTv = findViewById(R.id.followingCount);
+                    followingTv.setText(response.length() + " Following");
+                },
+                error -> {
+                    TextView followingTv = findViewById(R.id.followingCount);
+                    followingTv.setText("0 Following");
+                }
+        );
+        VolleySingleton.getInstance(this).addToRequestQueue(followingRequest);
+    }
+
 
     /** ------------------- VIEW MODE ------------------- **/
     private void showProfileView() {
@@ -34,7 +75,7 @@ public class UserProfile extends BaseActivity {
         TextView bioTv = findViewById(R.id.bio);
         TextView followersTv = findViewById(R.id.followersCount);
         TextView followingTv = findViewById(R.id.followingCount);
-        TextView craftSpecialtyTv = findViewById(R.id.CraftSpecialties);
+        TextView craftSpecialtiesTv = findViewById(R.id.CraftSpecialties);
 
         SessionManager session = SessionManager.getInstance();
 
@@ -44,14 +85,37 @@ public class UserProfile extends BaseActivity {
 
         usernameTv.setText(usernameValue);
         displayNameTv.setText(displayNameValue);
-        bioTv.setText(session.getBio());
-        craftSpecialtyTv.setText(session.getCraftSpecialties());
-        //followersTv.setText(session.getFollowersCount() + " Followers");
-        //followingTv.setText(session.getFollowingCount() + " Following");
+        String bio = session.getBio();
+        String craftSpecialties = session.getCraftSpecialties();
 
-        Button editButton = findViewById(R.id.login_login_btn);
+        if (bio == null || bio.equals("null") || bio.isEmpty()) {
+            bioTv.setVisibility(View.GONE);
+        } else {
+            bioTv.setVisibility(View.VISIBLE);
+            bioTv.setText(bio);
+        }
+
+        if (craftSpecialties == null || craftSpecialties.equals("null") || craftSpecialties.isEmpty()) {
+            craftSpecialtiesTv.setVisibility(View.GONE);
+        } else {
+            craftSpecialtiesTv.setVisibility(View.VISIBLE);
+            craftSpecialtiesTv.setText(craftSpecialties);
+        }
+        fetchFollowersAndFollowing(usernameValue);
+
+
+
+
+
+
+        Button editButton = findViewById(R.id.editProfile);
         editButton.setOnClickListener(v -> showEditProfile());
+
+
+
     }
+
+
 
     /** ------------------- EDIT MODE ------------------- **/
     private void showEditProfile() {
@@ -80,6 +144,16 @@ public class UserProfile extends BaseActivity {
 
         Button saveButton = findViewById(R.id.btn_save_profile);
         saveButton.setOnClickListener(v -> saveProfile());
+        Button logout = findViewById(R.id.logout);
+        logout.setOnClickListener(v -> {
+            session.logout(); // (you’ll add this method if not already there)
+
+            // Navigate to LoginActivity
+            Intent intent = new Intent(UserProfile.this, Login.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     /** ------------------- SAVE PROFILE ------------------- **/
