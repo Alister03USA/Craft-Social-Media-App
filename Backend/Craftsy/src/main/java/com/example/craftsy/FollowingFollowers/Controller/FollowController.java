@@ -189,35 +189,68 @@ public class FollowController {
 
     /**
      * GET /notifications/{username}
-     * Retrieves all notifications for the specified user.
+     * Retrieves all unread notifications for the specified user.
+     * Only one follow request notification per follower is included.
      */
     @GetMapping("/notifications/{username}")
     public ResponseEntity<List<Map<String, Object>>> getNotifications(
             @PathVariable String username) {
 
+        // Fetch the user by username
         Optional<Users> userOpt = userRepository.findByUsername(username);
         if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().build(); // Return 404 if user not found
         }
-
         Users user = userOpt.get();
 
-        // Fetch notifications ordered by latest first
-        List<Notification> notifications = notificationRepository.findByUserAndIsReadFalseOrderByCreatedAtDesc(user);
+        // Fetch unread notifications ordered by newest first
+        List<Notification> notifications = notificationRepository
+                .findByUserAndIsReadFalseOrderByCreatedAtDesc(user);
 
+        // Prepare response list
         List<Map<String, Object>> response = new ArrayList<>();
+        Set<Long> seenFollowerIds = new HashSet<>(); // Track which followers we've already included
+
         for (Notification notif : notifications) {
+            // If this is not a FOLLOW_REQUEST notification, include it directly
+            if (!"FOLLOW_REQUEST".equals(notif.getType())) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", notif.getId());
+                map.put("title", notif.getTitle());
+                map.put("message", notif.getMessage());
+                map.put("read", notif.getIsRead());
+                response.add(map);
+                continue; // Skip to next notification
+            }
+
+            // For FOLLOW_REQUEST notifications, fetch the associated Follow entity
+            Optional<Follow> followOpt = followRepository.findById(notif.getReferenceId());
+            if (followOpt.isEmpty()) continue; // Skip if follow request not found
+
+            Users follower = followOpt.get().getFollower();
+            if (follower == null || seenFollowerIds.contains(follower.getId())) {
+                // Skip if follower is null or we've already included a notification from this follower
+                continue;
+            }
+
+            // Mark this follower as seen
+            seenFollowerIds.add(follower.getId());
+
+            // Add notification to response
             Map<String, Object> map = new HashMap<>();
             map.put("id", notif.getId());
             map.put("title", notif.getTitle());
             map.put("message", notif.getMessage());
-            map.put("type", notif.getType());
             map.put("read", notif.getIsRead());
             response.add(map);
         }
 
+        // Return the final filtered list of notifications
         return ResponseEntity.ok(response);
     }
+
+
+
 
     /**
      * PUT /notifications/respond/{targetUsername}/{followerUsername}/{accepted}

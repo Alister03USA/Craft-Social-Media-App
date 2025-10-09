@@ -33,7 +33,7 @@ public class Notification {
     @Column(nullable = false)
     private String type;
 
-    // References Follow ID or other entity
+    // References Follow ID
     private Long referenceId;
 
     // Has the user read the notification?
