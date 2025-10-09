@@ -61,6 +61,20 @@
             android:focusable="true"
             android:focusableInTouchMode="true" />
 
+        <!-- Birthday -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Birthday"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_birthday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="MM/DD/YYYY"
+            android:inputType="date" />
 
         <!-- Email -->
         <TextView
@@ -76,7 +90,22 @@
             android:layout_height="wrap_content"
             android:hint="Enter email"
             android:inputType="textEmailAddress" />
-        <!-- Craft Specialty -->
+
+        <!-- Phone Number -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone Number"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter phone number"
+            android:inputType="phone" />
+        <!-- Craft Specialties -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -85,12 +114,11 @@
             android:layout_marginTop="16dp" />
 
         <EditText
-            android:id="@+id/edit_craftSpecialties"
+            android:id="@+id/edit_craft_specialties"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter Craft Specialties"
             android:inputType="text" />
-
 
         <!-- Biography -->
         <TextView
@@ -112,6 +140,7 @@
             android:overScrollMode="ifContentScrolls"
             android:focusable="true"
             android:focusableInTouchMode="true" />
+
 
 
         <!-- Save Button -->

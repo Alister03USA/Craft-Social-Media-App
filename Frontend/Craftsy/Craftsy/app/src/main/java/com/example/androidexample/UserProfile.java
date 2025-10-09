@@ -6,24 +6,23 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
+import com.android.volley.Request;
+
 
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Request;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-
 import org.json.JSONException;
 import org.json.JSONObject;
+import com.android.volley.toolbox.JsonObjectRequest;
+
 
 public class UserProfile extends AppCompatActivity {
 
     private EditText displayName, username, bio, email, password, craftSpecialties;
     private String loggedInUsername;
-    private String loggedInPassword; // passed from login
+    private String loggedInPassword;
+    private JSONObject userJson; // ✅ Store user info from login
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,61 +30,47 @@ public class UserProfile extends AppCompatActivity {
         loggedInUsername = getIntent().getStringExtra("username");
         loggedInPassword = getIntent().getStringExtra("password");
 
+        try {
+            String userJsonString = getIntent().getStringExtra("user_json");
+            userJson = new JSONObject(userJsonString);
+        } catch (JSONException e) {
+            Toast.makeText(this, "Error loading user info", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         showProfileView();
     }
 
     /** VIEW MODE **/
     private void showProfileView() {
         setContentView(R.layout.activity_user_profile);
-        fetchProfileForView();
+
+        TextView usernameTv = findViewById(R.id.username);
+        TextView displayNameTv = findViewById(R.id.displayName);
+        TextView bioTv = findViewById(R.id.bio);
+        TextView followersTv = findViewById(R.id.followersCount);
+        TextView followingTv = findViewById(R.id.followingCount);
+        TextView craftSpecialtyTv = findViewById(R.id.CraftSpecialties);
+
+        // ✅ Populate from JSON
+        String usernameValue = getJsonString("username");
+        String displayNameValue = getJsonString("displayName");
+
+        // ✅ If no display name, fall back to username
+        if (displayNameValue == null || displayNameValue.isEmpty() || displayNameValue.equals("null")) {
+            displayNameValue = usernameValue;
+        }
+
+        usernameTv.setText(usernameValue);
+        displayNameTv.setText(displayNameValue);
+        bioTv.setText(getJsonString("bio"));
+        craftSpecialtyTv.setText(getJsonString("craftSpecialty"));
+        followersTv.setText(getJsonCount("followers") + " Followers");
+        followingTv.setText(getJsonCount("following") + " Following");
 
         Button editButton = findViewById(R.id.login_login_btn);
         editButton.setOnClickListener(v -> showEditProfile());
-    }
-
-    private void fetchProfileForView() {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/user/" + loggedInUsername;
-
-
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                response -> {
-                    Log.d("UserProfile" + url, "GET Response: " + response.toString());
-                    try {
-                        // Get JSON data fields
-                        String displayName = response.optString("displayName", "");
-                        String bio = response.optString("bio", "");
-                        String craftSpecialties = response.optString("craftSpecialities", "");
-                        int followers = response.optInt("followers", 0);
-                        int following = response.optInt("following", 0);
-
-                        // Set TextViews
-                        TextView usernameTv = findViewById(R.id.username);
-                        TextView displayNameTv = findViewById(R.id.displayName);
-                        TextView bioTv = findViewById(R.id.bio);
-                        TextView followersTv = findViewById(R.id.followersCount);
-                        TextView followingTv = findViewById(R.id.followingCount);
-
-                        usernameTv.setText(loggedInUsername);
-                        displayNameTv.setText(displayName.isEmpty() ? loggedInUsername : displayName);
-                        bioTv.setText(bio.isEmpty() ? "No bio yet." : bio);
-                        followersTv.setText(followers + " Followers");
-                        followingTv.setText(following + " Following");
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(this, "Error parsing profile info", Toast.LENGTH_LONG).show();
-                    }
-                },
-                error -> {
-                    error.printStackTrace();
-                    Toast.makeText(this, "Failed to load profile info", Toast.LENGTH_LONG).show();
-                }
-        );
-
-        Volley.newRequestQueue(this).add(request);
     }
 
     /** EDIT MODE **/
@@ -97,9 +82,20 @@ public class UserProfile extends AppCompatActivity {
         bio = findViewById(R.id.edit_bio);
         email = findViewById(R.id.edit_email);
         password = findViewById(R.id.edit_password);
-        craftSpecialties = findViewById(R.id.edit_craftSpecialties);
+        craftSpecialties = findViewById(R.id.edit_craft_specialties);
 
-        username.setText(loggedInUsername);
+        // ✅ Prefill edit fields from JSON
+        username.setText(getJsonString("username"));
+        String displayNameValue = getJsonString("displayName");
+        if (displayNameValue == null || displayNameValue.isEmpty() || displayNameValue.equals("null")) {
+            displayNameValue = getJsonString("username");
+        }
+        displayName.setText(displayNameValue);
+
+        bio.setText(getJsonString("bio"));
+        email.setText(getJsonString("email"));
+        password.setText(getJsonString("password"));
+        // craftSpecialty: if your spinner uses index-based selection, you'll handle setting the selected item here
 
         Button saveButton = findViewById(R.id.btn_save_profile);
         saveButton.setOnClickListener(v -> saveProfile());
@@ -112,14 +108,14 @@ public class UserProfile extends AppCompatActivity {
         String biography = bio.getText().toString().trim();
         String mail = email.getText().toString().trim();
         String pass = password.getText().toString().trim();
-        String craftType = craftSpecialties.getText().toString().trim();
+        String craftType = craftSpecialties.getText().toString().trim(); // EditText
 
         if (user.isEmpty() || pass.isEmpty()) {
             Toast.makeText(this, "Username and password are required!", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // Match exactly what backend entity expects (LoginEditUser.java)
+        // Build JSON matching backend model
         JSONObject profileData = new JSONObject();
         try {
             profileData.put("displayName", name);
@@ -130,6 +126,8 @@ public class UserProfile extends AppCompatActivity {
             profileData.put("password", pass);
         } catch (JSONException e) {
             e.printStackTrace();
+            Toast.makeText(this, "Error creating profile JSON", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         String url = "http://coms-3090-028.class.las.iastate.edu:8080/user/" + loggedInUsername;
@@ -139,9 +137,11 @@ public class UserProfile extends AppCompatActivity {
                 url,
                 profileData,
                 response -> {
-                    Toast.makeText(this,
-                            "Profile saved successfully!",
-                            Toast.LENGTH_SHORT).show();
+                    // old-style behavior: store returned JSON and refresh view
+                    Toast.makeText(this, "Profile saved successfully!", Toast.LENGTH_SHORT).show();
+                    userJson = response; // <-- exactly like your old code
+                    // update loggedInUsername if backend returned a new username
+                    loggedInUsername = userJson.optString("username", loggedInUsername);
                     showProfileView();
                 },
                 error -> {
@@ -149,12 +149,29 @@ public class UserProfile extends AppCompatActivity {
                     if (error.networkResponse != null && error.networkResponse.data != null) {
                         message = new String(error.networkResponse.data);
                     }
-                    Toast.makeText(this,
-                            "Error saving profile: " + message,
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Error saving profile: " + message, Toast.LENGTH_LONG).show();
                 }
         );
 
-        Volley.newRequestQueue(this).add(request);
+        // use the same pattern you used previously
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
+    }
+
+
+
+
+    /** Helper methods **/
+    private String getJsonString(String key) {
+        return userJson.optString(key, "");
+    }
+
+    private int getJsonCount(String key) {
+        try {
+            return userJson.has(key) && userJson.getJSONArray(key) != null
+                    ? userJson.getJSONArray(key).length()
+                    : 0;
+        } catch (JSONException e) {
+            return 0;
+        }
     }
 }
