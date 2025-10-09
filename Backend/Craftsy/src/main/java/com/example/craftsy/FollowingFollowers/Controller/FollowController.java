@@ -47,7 +47,7 @@ public class FollowController {
             return ResponseEntity.notFound().build();
         }
 
-        // extract the targetted user
+        // extract the targeted user
         Users targetUser = targetUserOpt.get();
         Optional<Users> viewerUserOpt = userRepository.findByUsername(viewerUsername);
 
