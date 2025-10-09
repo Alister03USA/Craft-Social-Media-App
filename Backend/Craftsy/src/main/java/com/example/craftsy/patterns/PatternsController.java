@@ -5,6 +5,7 @@ import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -45,5 +46,14 @@ public class PatternsController {
         Patterns pattern = optPattern.orElseThrow(()-> new RuntimeException("Pattern not found"));
         patternsRepository.delete(pattern);
         return patternName + " deleted";
+    }
+
+    @GetMapping("/patterns/author/{username}")
+    List<Patterns> getUserPatterns(@PathVariable String username){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<Patterns> patternsList = patternsRepository.findByUser(user)
+                .orElseThrow(()-> new RuntimeException("no patterns for this user"));
+        return patternsList;
     }
 }
