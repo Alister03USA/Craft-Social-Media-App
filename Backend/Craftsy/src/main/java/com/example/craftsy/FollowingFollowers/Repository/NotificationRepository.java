@@ -7,7 +7,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    List<Notification> findByUserOrderByCreatedAtDesc(Users user);
-    // Find a notification by the reference ID (e.g., a Follow ID)
-    Optional<Notification> findByReferenceId(Long referenceId);
+    List<Notification> findByUserAndIsReadFalseOrderByCreatedAtDesc(Users user);    // Find a notification by the reference ID (e.g., a Follow ID)
 }

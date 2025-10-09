@@ -115,7 +115,7 @@ public class FollowController {
             return ResponseEntity.badRequest().body(error);
         }
 
-        // Create new follow request (pending by default)
+        // Create new follow request
         Follow follow = new Follow();
         follow.setFollower(follower);
         follow.setFollowing(target);
@@ -203,7 +203,7 @@ public class FollowController {
         Users user = userOpt.get();
 
         // Fetch notifications ordered by latest first
-        List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user);
+        List<Notification> notifications = notificationRepository.findByUserAndIsReadFalseOrderByCreatedAtDesc(user);
 
         List<Map<String, Object>> response = new ArrayList<>();
         for (Notification notif : notifications) {
