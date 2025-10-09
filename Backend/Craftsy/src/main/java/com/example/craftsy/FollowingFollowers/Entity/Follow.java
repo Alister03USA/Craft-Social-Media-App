@@ -5,7 +5,8 @@ import jakarta.persistence.*;
 
 /**
  * Follow entity represents a follower-following relationship
- * between users, with a status of PENDING or ACCEPTED.
+ * between users. The "accepted" field indicates whether
+ * the follow request has been accepted (true) or is pending (false).
  */
 @Entity
 @Table(name = "follow", uniqueConstraints = {@UniqueConstraint(columnNames = {"follower_id", "following_id"})})
@@ -23,17 +24,21 @@ public class Follow {
     @JoinColumn(name = "following_id", nullable = false)
     private Users following;
 
+    /**
+     * Indicates the status of the follow request.
+     * false = pending, true = accepted
+     */
     @Column(nullable = false)
-    private String status = "PENDING"; // "PENDING" or "ACCEPTED"
+    private boolean accepted = false; // default is pending
 
     // Default constructor
     public Follow() {}
 
     // Full constructor
-    public Follow(Users follower, Users following, String status) {
+    public Follow(Users follower, Users following, boolean accepted) {
         this.follower = follower;
         this.following = following;
-        this.status = status;
+        this.accepted = accepted;
     }
 
     // Getters and Setters
@@ -61,11 +66,11 @@ public class Follow {
         this.following = following;
     }
 
-    public String getStatus() {
-        return status;
+    public boolean isAccepted() {
+        return accepted;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setAccepted(boolean accepted) {
+        this.accepted = accepted;
     }
 }

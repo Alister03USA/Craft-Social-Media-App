@@ -39,9 +39,8 @@ public class Group {
     )
     private Set<Users> members = new HashSet<>();
 
-    // ---------------- Constructors ----------------
+
     public Group() {
-        // No-args constructor required by JPA
     }
 
     public Group(Long id, String groupName, Users groupAdmin, String description,
@@ -55,7 +54,6 @@ public class Group {
         this.members = members != null ? members : new HashSet<>();
     }
 
-    // ---------------- Getters and Setters ----------------
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
