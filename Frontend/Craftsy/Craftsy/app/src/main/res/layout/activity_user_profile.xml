@@ -56,6 +56,15 @@
             android:textSize="14sp"
             android:textColor="#777777"
             android:layout_marginTop="4dp" />
+        <!-- Craft Specialty -->
+        <TextView
+            android:id="@+id/CraftSpecialties"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="I like all crafts!"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp" />
 
         <!-- Bio -->
         <TextView
