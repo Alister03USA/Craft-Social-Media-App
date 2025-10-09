@@ -18,6 +18,10 @@
         android:id="@+id/myFeed"
         android:title="My Feed"
         android:icon="@drawable/ic_c" />
+    <item
+        android:id="@+id/pattern"
+        android:title="My Feed"
+        android:icon="@drawable/ic_c" />
 
 </menu>
 

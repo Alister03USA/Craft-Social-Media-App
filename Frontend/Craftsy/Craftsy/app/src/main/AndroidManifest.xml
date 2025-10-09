@@ -74,7 +74,13 @@
 
 
                 </activity>
-            </application>
+        <!-- Patterns Activity -->
+        <activity
+            android:name=".PatternActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+
+    </application>
 
         </manifest>
 

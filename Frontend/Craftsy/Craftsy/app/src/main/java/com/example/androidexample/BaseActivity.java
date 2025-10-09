@@ -26,6 +26,11 @@ public abstract class BaseActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, NotificationCenterActivity.class);
                 startActivity(intent);
             }
+            else if (id == R.id.pattern) {
+                // Open the NotificationCenterActivity
+                Intent intent = new Intent(this, PatternActivity.class);
+                startActivity(intent);
+            }
             else if (id == R.id.nav_view_user) {
                 // Open OutsideUserProfile
                 Intent intent = new Intent(this, OutsideUserProfile.class);
