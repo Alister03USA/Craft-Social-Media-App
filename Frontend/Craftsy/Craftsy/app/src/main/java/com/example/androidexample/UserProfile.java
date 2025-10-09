@@ -17,7 +17,7 @@ import org.json.JSONObject;
 import com.android.volley.toolbox.JsonObjectRequest;
 
 
-public class UserProfile extends AppCompatActivity {
+public class UserProfile extends BaseActivity {
 
     private EditText displayName, username, bio, email, password, craftSpecialties;
     private String loggedInUsername;
@@ -44,7 +44,9 @@ public class UserProfile extends AppCompatActivity {
 
     /** VIEW MODE **/
     private void showProfileView() {
+
         setContentView(R.layout.activity_user_profile);
+        setupBottomNavigation(R.id.nav_notifications); // or whichever item should be highlighted
 
         TextView usernameTv = findViewById(R.id.username);
         TextView displayNameTv = findViewById(R.id.displayName);
@@ -76,6 +78,7 @@ public class UserProfile extends AppCompatActivity {
     /** EDIT MODE **/
     private void showEditProfile() {
         setContentView(R.layout.activity_user_profile_edit);
+        setupBottomNavigation(R.id.nav_notifications); // or whichever item should be highlighted
 
         displayName = findViewById(R.id.edit_display_name);
         username = findViewById(R.id.edit_username);

@@ -1,8 +1,6 @@
 package com.example.androidexample;
 
 import android.content.Context;
-
-import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
@@ -13,11 +11,13 @@ public class VolleySingleton {
     private RequestQueue requestQueue;
     private static Context ctx;
 
+    // Private constructor ensures only one instance
     private VolleySingleton(Context context) {
         ctx = context.getApplicationContext();
         requestQueue = getRequestQueue();
     }
 
+    // Public method to get the singleton instance
     public static synchronized VolleySingleton getInstance(Context context) {
         if (instance == null) {
             instance = new VolleySingleton(context);
@@ -25,20 +25,17 @@ public class VolleySingleton {
         return instance;
     }
 
+    // Get the request queue (creates it if null)
     public RequestQueue getRequestQueue() {
         if (requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(ctx.getApplicationContext());
+            // Use application context to avoid leaking activities
+            requestQueue = Volley.newRequestQueue(ctx);
         }
         return requestQueue;
     }
 
+    // Convenience method to add requests to the queue
     public <T> void addToRequestQueue(Request<T> req) {
-        // Extend timeout globally for all requests (15 seconds)
-        req.setRetryPolicy(new DefaultRetryPolicy(
-                15000, // timeout in ms
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-
         getRequestQueue().add(req);
     }
 }
