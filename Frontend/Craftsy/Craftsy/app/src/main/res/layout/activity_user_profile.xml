@@ -28,17 +28,6 @@
                 android:text="Edit User"
                 android:textSize="10sp"
                 android:textColor="#ffffff"/>
-            <Button
-                android:id="@+id/buttonFeed"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Feed"
-                android:background="@color/purple_700"
-                android:textColor="@android:color/white"
-                android:layout_marginTop="16dp"
-                android:layout_marginHorizontal="20dp"
-                android:padding="12dp" />
-
 
             <ImageView
                 android:id="@+id/profileImage"

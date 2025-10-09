@@ -14,6 +14,10 @@
         android:id="@+id/nav_my_profile"
         android:title="My Profile"
         android:icon="@drawable/profile" />
+    <item
+        android:id="@+id/myFeed"
+        android:title="My Feed"
+        android:icon="@drawable/profile" />
 
 </menu>
 

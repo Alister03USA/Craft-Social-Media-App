@@ -10,7 +10,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void setupBottomNavigation(int selectedItemId) {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
-        // 🔹 Safety check: if the layout doesn’t include a bottom nav, don’t crash
+        // Safety check: if the layout doesn’t include a bottom nav, don’t crash
         if (bottomNav == null) {
             return;
         }
@@ -22,12 +22,12 @@ public abstract class BaseActivity extends AppCompatActivity {
             if (id == selectedItemId) return true;
 
             if (id == R.id.nav_notif) {
-                // 🔹 Open the NotificationCenterActivity
+                // Open the NotificationCenterActivity
                 Intent intent = new Intent(this, NotificationCenterActivity.class);
                 startActivity(intent);
             }
             else if (id == R.id.nav_view_user) {
-                // 🔹 Open OutsideUserProfile
+                // Open OutsideUserProfile
                 Intent intent = new Intent(this, OutsideUserProfile.class);
 
                 // Pass info
@@ -38,12 +38,21 @@ public abstract class BaseActivity extends AppCompatActivity {
                 startActivity(intent);
             }
             else if (id == R.id.nav_my_profile) {
-                // 🔹 Open OutsideUserProfile
+                //  Open OutsideUserProfile
                 Intent intent = new Intent(this, UserProfile.class);
 
 
                 startActivity(intent);
+            }else if (id == R.id.myFeed) {
+                //  Open FeedActivity
+                Intent intent = new Intent(this, FeedActivity.class);
+
+                String loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
+                intent.putExtra("username", loggedInUsername);
+
+                startActivity(intent);
             }
+
 
             overridePendingTransition(0, 0);
             return true;

@@ -113,17 +113,9 @@ public class UserProfile extends BaseActivity {
         editButton.setOnClickListener(v -> showEditProfile());
 
 
-        //  Feed Button - Go to user's feed
-        Button feedBtn = findViewById(R.id.buttonFeed);
-        feedBtn.setOnClickListener(v -> {
-            String u = userJson != null ? userJson.optString("username", "") : loggedInUsername;
-            if (u == null || u.trim().isEmpty()) u = "katiekeck";
-            Intent i = new Intent(UserProfile.this, FeedActivity.class);
-            i.putExtra("username", u);
-            startActivity(i);
-        });
 
     }
+
 
 
 
