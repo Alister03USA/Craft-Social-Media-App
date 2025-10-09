@@ -21,8 +21,12 @@
         <!-- Login activity is the launcher -->
         <activity
             android:name=".Login"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.Craftsy">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
         </activity>
 
@@ -48,7 +52,7 @@
                 <!-- Notification Center Activity (currently the launcher) -->
                 <activity
                     android:name=".NotificationCenterActivity"
-                    android:exported="true"
+                    android:exported="false"
                     android:theme="@style/Theme.Craftsy">
 
                 </activity>
@@ -56,12 +60,9 @@
                 <!-- User Profile Activity -->
                 <activity
                     android:name=".OutsideUserProfile"
-                    android:exported="true"
+                    android:exported="false"
                     android:theme="@style/Theme.Craftsy" >
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN" />
-                        <category android:name="android.intent.category.LAUNCHER" />
-                    </intent-filter>
+
 
 
 

@@ -82,22 +82,26 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     private void sendFollowerResponse(int notificationId, boolean accepted, ViewHolder holder, int position, String followerName) {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/Backend-following/followers"; // Replace with your backend URL
+        //  Replace with your actual endpoint (example shown)
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/alister_gan/Quinn/true";
 
+        // Prepare the request body
         JSONObject body = new JSONObject();
         try {
-            body.put("notificationId", notificationId);
             body.put("accepted", accepted);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        //  Create a PUT request
         JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.POST,
+                Request.Method.PUT,
                 url,
                 body,
                 response -> {
                     Toast.makeText(context, "Response sent", Toast.LENGTH_SHORT).show();
+
+                    //  Update UI after success
                     if (accepted) {
                         holder.buttonLayout.setVisibility(View.GONE);
                         if (followerName != null) {
@@ -108,9 +112,17 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                         notifyItemRemoved(position);
                     }
                 },
-                error -> Toast.makeText(context, "Failed to send response", Toast.LENGTH_SHORT).show()
+                error -> {
+                    String errorMsg = "Failed to send response";
+                    if (error.networkResponse != null && error.networkResponse.data != null) {
+                        errorMsg += ": " + new String(error.networkResponse.data);
+                    }
+                    Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show();
+                }
         );
 
+        //  Add request to queue
         VolleySingleton.getInstance(context).addToRequestQueue(request);
     }
+
 }

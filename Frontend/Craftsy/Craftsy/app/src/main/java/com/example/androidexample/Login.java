@@ -56,23 +56,26 @@ public class Login extends AppCompatActivity {
                 null,
                 response -> {
                     try {
-                        // ✅ Extract info from JSON
+                        // Extract info from JSON
                         String displayName = response.optString("displayName", username);
                         String bio = response.optString("bio", "");
                         String email = response.optString("email", "");
                         String craftSpecialties = response.optString("craftSpecialties", "");
 
+                        // Save to singleton
+                        SessionManager session = SessionManager.getInstance();
+                        session.setLoggedInUsername(username);
+                        session.setDisplayName(displayName);
+                        session.setBio(bio);
+                        session.setEmail(email);
+                        session.setCraftSpecialties(craftSpecialties);
+                        session.setPassword(password);
+                        session.settargetUser("alister_gan");
+
                         Toast.makeText(this, "Welcome " + displayName + "!", Toast.LENGTH_SHORT).show();
 
-                        // ✅ Send all info (JSON + username/password)
+                        // Navigate to next activity
                         Intent intent = new Intent(Login.this, UserProfile.class);
-                        intent.putExtra("username", username);
-                        intent.putExtra("password", password);
-                        intent.putExtra("user_json", response.toString()); // send entire user object
-                        intent.putExtra("displayName", displayName);
-                        intent.putExtra("bio", bio);
-                        intent.putExtra("email", email);
-                        intent.putExtra("craftSpecialties", craftSpecialties);
                         startActivity(intent);
                         finish();
 
@@ -91,6 +94,6 @@ public class Login extends AppCompatActivity {
                 }
         );
 
-        Volley.newRequestQueue(this).add(request);
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 }
