@@ -2,7 +2,6 @@ package com.example.craftsy.SignUpDelete.Entity;
 
 
 // JPA -> Map Java classes to Database
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import jakarta.persistence.*;
 
 
@@ -40,8 +39,8 @@ public class Users {
 
     private String profilePic;
 
-    @Column(name = "craftSpecialities")
-    private String craftSpecialities;
+    @Column(name = "craftSpecialties")
+    private String craftSpecialties;
 
     private Integer followers = 0;
 

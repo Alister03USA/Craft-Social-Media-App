@@ -53,24 +53,30 @@ public class LoginEditUserController {
         return user;
     }
 
+    /**
+     * private class that confirms if password has at least 8 characters, one uppercase, and one number
+     * @param password
+     * @return
+     */
     private boolean isPasswordStrong(String password) {
         // Example rules: at least 8 chars, one uppercase, one lowercase, one number
         String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
         return password.matches(pattern);
     }
 
-    @GetMapping("/login")
-    String login(@RequestBody LoginEditUser userInfo){
-        if(loginEditUserRepository.findByUsername(userInfo.getUsername()).isEmpty()){
-            return "User not found";
-        }
-        LoginEditUser user = loginEditUserRepository.findByUsername(userInfo.getUsername())
+    /**
+     * Logins user with username and password
+     * @param username username for user
+     * @param password password for user
+     * @return User not found, {username} succesfully logged in, Incorrect password
+     */
+    @GetMapping("/login/{username}/{password}")
+    LoginEditUser login(@PathVariable String username, @PathVariable String password){
+        LoginEditUser user = loginEditUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if(user.getPassword().equals(userInfo.getPassword())){
-            return userInfo.getUsername() + " successfully logged in.";
+        if(!user.getPassword().equals(password)) {
+            throw new RuntimeException("Wrong password!");
         }
-        else{
-            return "Incorrect password";
-        }
+        return user;
     }
 }
