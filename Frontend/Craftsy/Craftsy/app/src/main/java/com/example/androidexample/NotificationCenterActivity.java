@@ -45,7 +45,7 @@ public class NotificationCenterActivity extends BaseActivity {
 
 
     private void fetchNotifications() {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/alister_gan"; // replace with your backend
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/"+SessionManager.getInstance().getLoggedInUsername(); // replace with your backend
 
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
                 Request.Method.GET,

@@ -83,7 +83,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     private void sendFollowerResponse(int notificationId, boolean accepted, ViewHolder holder, int position, String followerName) {
         //  Replace with your actual endpoint (example shown)
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/alister_gan/Quinn/true";
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/respond/alister_gan/Quinn/true";
 
         // Prepare the request body
         JSONObject body = new JSONObject();

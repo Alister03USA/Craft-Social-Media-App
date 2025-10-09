@@ -21,12 +21,13 @@ public class UserProfile extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         showProfileView();
+
     }
 
     /** ------------------- VIEW MODE ------------------- **/
     private void showProfileView() {
         setContentView(R.layout.activity_user_profile);
-        setupBottomNavigation(R.id.nav_notif);
+        setupBottomNavigation(R.id.nav_my_profile);
 
         TextView usernameTv = findViewById(R.id.username);
         TextView displayNameTv = findViewById(R.id.displayName);

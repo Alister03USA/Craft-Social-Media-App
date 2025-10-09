@@ -37,6 +37,13 @@ public abstract class BaseActivity extends AppCompatActivity {
 
                 startActivity(intent);
             }
+            else if (id == R.id.nav_my_profile) {
+                // 🔹 Open OutsideUserProfile
+                Intent intent = new Intent(this, UserProfile.class);
+
+
+                startActivity(intent);
+            }
 
             overridePendingTransition(0, 0);
             return true;

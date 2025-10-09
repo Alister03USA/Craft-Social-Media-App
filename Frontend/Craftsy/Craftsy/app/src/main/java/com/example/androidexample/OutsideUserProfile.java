@@ -20,7 +20,7 @@ import org.json.JSONObject;
 public class OutsideUserProfile extends BaseActivity {
 
     private Button followButton;
-    private TextView displayNameTv, usernameTv, bioTv, followersTv, followingTv;
+    private TextView displayNameTv, usernameTv, bioTv, followersTv, followingTv, craftSpecialtiesTv;
     private ImageView profileImageView;
 
     private enum FollowState { NOT_FOLLOWING, PENDING, FOLLOWING }
@@ -45,8 +45,7 @@ public class OutsideUserProfile extends BaseActivity {
         followersTv = findViewById(R.id.followersCount);
         followingTv = findViewById(R.id.followingCount);
         profileImageView = findViewById(R.id.profileImage);
-        fetchFollowersAndFollowing("alister_gan");
-        sendFollowRequest("alister_gan","Fuji" );
+        craftSpecialtiesTv = findViewById(R.id.craftSpecialties);
 
         // Get logged-in user
         loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
@@ -81,7 +80,7 @@ public class OutsideUserProfile extends BaseActivity {
     /** ------------------- FETCH VIEWED USER PROFILE ------------------- **/
     private void fetchViewedUserProfile(String targetUsername) {
         // Build URL dynamically
-        String userUrl = "http://coms-3090-028.class.las.iastate.edu:8080/login/alister_gan/Alistergan_123";
+        String userUrl = "http://coms-3090-028.class.las.iastate.edu:8080/login/alister_gan/Alistergan1234";
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
@@ -102,8 +101,7 @@ public class OutsideUserProfile extends BaseActivity {
                         usernameTv.setText(targetUsername);      // TextView with id username
                         bioTv.setText(bio);                      // TextView with id bio
 
-                        // If you had a TextView for craft specialties, update it:
-                        // craftSpecialtiesTv.setText(craftSpecialties);
+                        craftSpecialtiesTv.setText(craftSpecialties);
 
                         // Optional: load profile image if backend provides URL
                         // String profileImageUrl = response.optString("profileImageUrl", "");
@@ -170,7 +168,7 @@ public class OutsideUserProfile extends BaseActivity {
     /** ------------------- FOLLOWERS / FOLLOWING ------------------- **/
     private void fetchFollowersAndFollowing(String targetUsername) {
         // Followers
-        String followersUrl = "http://coms-3090-028.class.las.iastate.edu:8080/alister_gan/followers";
+        String followersUrl = "http://coms-3090-028.class.las.iastate.edu:8080/"+targetUsername+"/followers";
         JsonArrayRequest followersRequest = new JsonArrayRequest(
                 Request.Method.GET,
                 followersUrl,

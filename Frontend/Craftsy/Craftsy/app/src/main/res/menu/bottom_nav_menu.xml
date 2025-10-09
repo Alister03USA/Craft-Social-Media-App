@@ -10,6 +10,10 @@
         android:id="@+id/nav_view_user"
         android:title="View User"
         android:icon="@drawable/profile" />
+    <item
+        android:id="@+id/nav_my_profile"
+        android:title="My Profile"
+        android:icon="@drawable/profile" />
 
 </menu>
 
