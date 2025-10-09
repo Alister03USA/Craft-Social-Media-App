@@ -113,21 +113,29 @@
                     android:layout_height="100dp"
                     android:src="@drawable/ic_post_placeholder"
                     android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"
+                    />
 
                 <ImageView
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:src="@drawable/ic_post_placeholder"
                     android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"
+                    />
 
                 <ImageView
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:src="@drawable/ic_post_placeholder"
                     android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"/>
             </GridLayout>
 
         </LinearLayout>

@@ -61,9 +61,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="I like all crafts!"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_marginTop="12dp" />
+                android:textSize="14sp"
+                android:layout_marginTop="4dp" />
 
             <TextView
                 android:id="@+id/bio"
@@ -108,21 +107,27 @@
                     android:layout_height="100dp"
                     android:src="@drawable/ic_post_placeholder"
                     android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"/>
 
                 <ImageView
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:src="@drawable/ic_post_placeholder"
                     android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"/>
 
                 <ImageView
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:src="@drawable/ic_post_placeholder"
                     android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"/>
             </GridLayout>
 
         </LinearLayout>
