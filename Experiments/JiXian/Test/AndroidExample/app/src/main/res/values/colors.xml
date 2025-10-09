@@ -1,9 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shared Colors -->
+    <color name="blue_primary">#2196F3</color>
+    <color name="blue_secondary">#64B5F6</color>
+    <color name="blue_background">#E3F2FD</color>
+
+    <!-- UI Colors -->
+    <color name="login_bg">#E3F2FD</color>
+    <color name="button_blue">#4586EF</color>
+    <color name="button_red">#E53935</color>
+    <color name="text_black">#000000</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_gray">#777777</color>
+    <color name="gray_light">#F5F5F5</color>
+    <color name="black">#000000</color>
+
+    <!-- Craftsy Colors -->
+    <color name="craftsy_primary">#FF6F61</color>
+    <color name="craftsy_card">#FFFFFF</color>
+
+    <!-- Default template compatibility -->
     <color name="purple_200">#BB86FC</color>
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
-    <color name="teal_700">#018786</color>
-    <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
+
+    <!-- Theme compatibility -->
+    <color name="blue_on_primary">@color/text_white</color>
+    <color name="blue_on_secondary">@color/text_black</color>
+    <color name="blue_on_background">@color/text_black</color>
 </resources>

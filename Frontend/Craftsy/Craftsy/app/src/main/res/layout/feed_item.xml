@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/itemRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_margin="8dp"
+    android:background="#F7F9FC">
+
+    <!-- Username -->
+    <TextView
+        android:id="@+id/textUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="username"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="#333333" />
+
+    <!-- Project name -->
+    <TextView
+        android:id="@+id/textProjectName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Project Name"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:layout_marginTop="4dp"
+        android:textColor="#1F5AA6" />
+
+    <!-- Project description -->
+    <TextView
+        android:id="@+id/textProjectDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Project description goes here…"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:textColor="#444444" />
+
+    <!-- Project type -->
+    <TextView
+        android:id="@+id/textProjectType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Type"
+        android:textSize="13sp"
+        android:layout_marginTop="4dp"
+        android:textColor="#666666" />
+
+    <!-- Supplies -->
+    <TextView
+        android:id="@+id/textSupplies"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Supplies"
+        android:textSize="13sp"
+        android:layout_marginTop="2dp"
+        android:textColor="#666666" />
+
+    <!-- Meta: visibility + date -->
+    <TextView
+        android:id="@+id/textMeta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="public • 2025-10-01T12:00:00"
+        android:textSize="12sp"
+        android:layout_marginTop="6dp"
+        android:textColor="#888888" />
+
+</LinearLayout>

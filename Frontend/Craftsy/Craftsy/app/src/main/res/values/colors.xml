@@ -12,6 +12,7 @@
     <color name="text_gray">#777777</color>
     <!-- Default template compatibility -->
     <color name="purple_200">#BB86FC</color>
+    <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
     <!-- Theme compatibility -->
