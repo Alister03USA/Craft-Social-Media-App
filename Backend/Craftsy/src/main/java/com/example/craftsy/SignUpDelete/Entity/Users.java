@@ -29,8 +29,8 @@ public class Users {
     private String profilePic;
 
     // User's craft specialties
-    @Column(name = "craftSpecialities")
-    private String craftSpecialities;
+    @Column(name = "craftSpecialties")
+    private String craftSpecialties;
 
     // Number of followers
     private Integer followers = 0;
@@ -49,13 +49,13 @@ public class Users {
     public Users() {}
 
     // Full constructor
-    public Users(String username, String displayName, String bio, String profilePic, String craftSpecialities,
+    public Users(String username, String displayName, String bio, String profilePic, String craftSpecialties,
                  Integer followers, Integer following, String email, String password) {
         this.username = username;
         this.displayName = displayName;
         this.bio = bio;
         this.profilePic = profilePic;
-        this.craftSpecialities = craftSpecialities;
+        this.craftSpecialties = craftSpecialties;
         this.followers = followers;
         this.following = following;
         this.email = email;
@@ -103,12 +103,12 @@ public class Users {
         this.profilePic = profilePic;
     }
 
-    public String getCraftSpecialities() {
-        return craftSpecialities;
+    public String getCraftSpecialties() {
+        return craftSpecialties;
     }
 
-    public void setCraftSpecialities(String craftSpecialities) {
-        this.craftSpecialities = craftSpecialities;
+    public void setCraftSpecialties(String craftSpecialities) {
+        this.craftSpecialties = craftSpecialities;
     }
 
     public Integer getFollowers() {
