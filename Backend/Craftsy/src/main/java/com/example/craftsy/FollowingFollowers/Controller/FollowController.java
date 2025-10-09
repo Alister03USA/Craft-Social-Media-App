@@ -1,20 +1,19 @@
 package com.example.craftsy.FollowingFollowers.Controller;
 
 import com.example.craftsy.FollowingFollowers.Entity.Follow;
+import com.example.craftsy.FollowingFollowers.Entity.Notification;
 import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+import com.example.craftsy.FollowingFollowers.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
-import com.example.craftsy.FollowingFollowers.Entity.Notification;
-import com.example.craftsy.FollowingFollowers.Repository.NotificationRepository;
+
+import java.util.*;
+import java.util.stream.Collectors; // Add this import at the top
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 public class FollowController {
@@ -197,6 +196,10 @@ public class FollowController {
      * GET /notifications/{username}
      * Gets all notifications for a user
      */
+    /**
+     * GET /notifications/{username}
+     * Gets all notifications for a user
+     */
     @GetMapping("/notifications/{username}")
     public ResponseEntity<List<Map<String, Object>>> getNotifications(
             @PathVariable String username) {
@@ -211,17 +214,16 @@ public class FollowController {
         List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user);
 
         // Convert each notification object into a key-value map
-        List<Map<String, Object>> response = notifications.stream()
-                .map(notif -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", notif.getId());
-                    map.put("title", notif.getTitle());
-                    map.put("message", notif.getMessage());
-                    map.put("type", notif.getType());
-                    map.put("read", notif.getIsRead());
-                    return map;
-                })
-                .toList();
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (Notification notif : notifications) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", notif.getId());
+            map.put("title", notif.getTitle());
+            map.put("message", notif.getMessage());
+            map.put("type", notif.getType());
+            map.put("read", notif.getIsRead());
+            response.add(map);
+        }
 
         return ResponseEntity.ok(response);
     }
@@ -297,44 +299,59 @@ public class FollowController {
 
 
     /**
-     * GET /{username}/followers
-     * Gets accepted followers only
-     */
-    @GetMapping("/{username}/followers")
-    public ResponseEntity<List<String>> getFollowers(@PathVariable String username) {
-        Optional<Users> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
-
-        Users user = userOpt.get();
-        List<Follow> followersList = followRepository.findByFollowing(user);
-
-        // Filter for accepted followers only
-        List<String> followerNames = followersList.stream()
-                .filter(f -> "ACCEPTED".equals(f.getStatus()))
-                .map(f -> f.getFollower().getUsername())
-                .toList();
-
-        return ResponseEntity.ok(followerNames);
-    }
-
-    /**
      * GET /{username}/following
      * Gets accepted following only
      */
     @GetMapping("/{username}/following")
     public ResponseEntity<List<String>> getFollowing(@PathVariable String username) {
         Optional<Users> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(null);
+        }
 
         Users user = userOpt.get();
         List<Follow> followingList = followRepository.findByFollower(user);
 
         // Filter for accepted following only
-        List<String> followingNames = followingList.stream()
-                .filter(f -> "ACCEPTED".equals(f.getStatus()))
-                .map(f -> f.getFollowing().getUsername())
-                .toList();
+        List<String> followingNames = new ArrayList<>();
+        for (Follow f : followingList) {
+            if ("ACCEPTED".equals(f.getStatus())) {
+                String followingUsername = f.getFollowing().getUsername(); // Changed variable name
+                if (followingUsername != null) {
+                    followingNames.add(followingUsername);
+                }
+            }
+        }
 
         return ResponseEntity.ok(followingNames);
+    }
+
+
+    /**
+     * GET /{username}/followers
+     * Gets accepted followers only
+     */
+    @GetMapping("/{username}/followers")
+    public ResponseEntity<List<String>> getFollowers(@PathVariable String username) {
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        Users user = userOpt.get();
+        List<Follow> followersList = followRepository.findByFollowing(user);
+
+        // Filter for accepted followers only
+        List<String> followerNames = new ArrayList<>();
+        for (Follow f : followersList) {
+            if ("ACCEPTED".equals(f.getStatus())) {
+                String followerUsername = f.getFollower().getUsername(); // Changed variable name
+                if (followerUsername != null) {
+                    followerNames.add(followerUsername);
+                }
+            }
+        }
+
+        return ResponseEntity.ok(followerNames);
     }
 }
