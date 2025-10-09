@@ -7,7 +7,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.android.volley.Request;
-
+import android.content.Intent;
+import android.widget.Button;
 
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -53,11 +54,11 @@ public class UserProfile extends AppCompatActivity {
         TextView followingTv = findViewById(R.id.followingCount);
         TextView craftSpecialtyTv = findViewById(R.id.CraftSpecialties);
 
-        // ✅ Populate from JSON
+        //  Populate from JSON
         String usernameValue = getJsonString("username");
         String displayNameValue = getJsonString("displayName");
 
-        // ✅ If no display name, fall back to username
+        //  If no display name, fall back to username
         if (displayNameValue == null || displayNameValue.isEmpty() || displayNameValue.equals("null")) {
             displayNameValue = usernameValue;
         }
@@ -71,6 +72,16 @@ public class UserProfile extends AppCompatActivity {
 
         Button editButton = findViewById(R.id.login_login_btn);
         editButton.setOnClickListener(v -> showEditProfile());
+
+        //  Feed Button - Go to user's feed
+        Button feedBtn = findViewById(R.id.buttonFeed);
+        feedBtn.setOnClickListener(v -> {
+            String u = userJson != null ? userJson.optString("username", "") : loggedInUsername;
+            if (u == null || u.trim().isEmpty()) u = "katiekeck";
+            Intent i = new Intent(UserProfile.this, FeedActivity.class);
+            i.putExtra("username", u);
+            startActivity(i);
+        });
     }
 
     /** EDIT MODE **/
