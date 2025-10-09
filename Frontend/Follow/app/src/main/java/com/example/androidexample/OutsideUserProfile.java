@@ -12,7 +12,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class OutsideUserProfile extends AppCompatActivity {
+public class OutsideUserProfile extends BaseActivity {
 
     private Button followButton;
     private enum FollowState { NOT_FOLLOWING, PENDING, FOLLOWING }

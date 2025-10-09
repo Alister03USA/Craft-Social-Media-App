@@ -61,20 +61,6 @@
             android:focusable="true"
             android:focusableInTouchMode="true" />
 
-        <!-- Birthday -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Birthday"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp" />
-
-        <EditText
-            android:id="@+id/edit_birthday"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="MM/DD/YYYY"
-            android:inputType="date" />
 
         <!-- Email -->
         <TextView
@@ -90,21 +76,21 @@
             android:layout_height="wrap_content"
             android:hint="Enter email"
             android:inputType="textEmailAddress" />
-
-        <!-- Phone Number -->
+        <!-- Craft Specialty -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phone Number"
+            android:text="Craft Specialties"
             android:textStyle="bold"
             android:layout_marginTop="16dp" />
 
         <EditText
-            android:id="@+id/edit_phone"
+            android:id="@+id/edit_craftSpecialties"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter phone number"
-            android:inputType="phone" />
+            android:hint="Enter Craft Specialties"
+            android:inputType="text" />
+
 
         <!-- Biography -->
         <TextView
@@ -127,19 +113,6 @@
             android:focusable="true"
             android:focusableInTouchMode="true" />
 
-        <!-- Gender -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Gender"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp" />
-
-        <Spinner
-            android:id="@+id/spinner_gender"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/gender_options" />
 
         <!-- Save Button -->
         <Button

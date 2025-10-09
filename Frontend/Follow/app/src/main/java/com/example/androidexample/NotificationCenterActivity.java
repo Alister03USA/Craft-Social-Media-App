@@ -18,7 +18,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class NotificationCenterActivity extends AppCompatActivity {
+public class NotificationCenterActivity extends BaseActivity {
 
     private RecyclerView recyclerView;
     private NotificationAdapter adapter;
@@ -37,7 +37,11 @@ public class NotificationCenterActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         fetchNotifications();
+
+        // Setup bottom navigation
+        setupBottomNavigation(R.id.nav_notifications);
     }
+
 
     private void fetchNotifications() {
         String url = "https://fc0b62c0-a286-44d4-91b2-15d38ee511b8.mock.pstmn.io/notifications"; // replace with your backend

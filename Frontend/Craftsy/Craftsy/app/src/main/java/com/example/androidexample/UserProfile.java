@@ -6,6 +6,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -19,8 +21,7 @@ import org.json.JSONObject;
 
 public class UserProfile extends AppCompatActivity {
 
-    private EditText displayName, username, bio, email, password;
-    private Spinner gender;
+    private EditText displayName, username, bio, email, password, craftSpecialties;
     private String loggedInUsername;
     private String loggedInPassword; // passed from login
 
@@ -43,29 +44,45 @@ public class UserProfile extends AppCompatActivity {
     }
 
     private void fetchProfileForView() {
-        //  Reuse login endpoint for GET info
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/login/"
-                + loggedInUsername + "/" + loggedInPassword;
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/user/" + loggedInUsername;
 
-        StringRequest request = new StringRequest(
+
+        JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
                 url,
+                null,
                 response -> {
-                    TextView usernameTv = findViewById(R.id.username);
-                    TextView displayNameTv = findViewById(R.id.displayName);
-                    TextView bioTv = findViewById(R.id.bio);
-                    TextView followersTv = findViewById(R.id.followersCount);
-                    TextView followingTv = findViewById(R.id.followingCount);
+                    Log.d("UserProfile" + url, "GET Response: " + response.toString());
+                    try {
+                        // Get JSON data fields
+                        String displayName = response.optString("displayName", "");
+                        String bio = response.optString("bio", "");
+                        String craftSpecialties = response.optString("craftSpecialities", "");
+                        int followers = response.optInt("followers", 0);
+                        int following = response.optInt("following", 0);
 
-                    usernameTv.setText(loggedInUsername);
-                    displayNameTv.setText("Display: " + loggedInUsername);
-                    bioTv.setText(response);
+                        // Set TextViews
+                        TextView usernameTv = findViewById(R.id.username);
+                        TextView displayNameTv = findViewById(R.id.displayName);
+                        TextView bioTv = findViewById(R.id.bio);
+                        TextView followersTv = findViewById(R.id.followersCount);
+                        TextView followingTv = findViewById(R.id.followingCount);
 
-                    followersTv.setText("0 Followers");
-                    followingTv.setText("0 Following");
+                        usernameTv.setText(loggedInUsername);
+                        displayNameTv.setText(displayName.isEmpty() ? loggedInUsername : displayName);
+                        bioTv.setText(bio.isEmpty() ? "No bio yet." : bio);
+                        followersTv.setText(followers + " Followers");
+                        followingTv.setText(following + " Following");
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, "Error parsing profile info", Toast.LENGTH_LONG).show();
+                    }
                 },
-                error -> Toast.makeText(this,
-                        "Failed to load profile info", Toast.LENGTH_LONG).show()
+                error -> {
+                    error.printStackTrace();
+                    Toast.makeText(this, "Failed to load profile info", Toast.LENGTH_LONG).show();
+                }
         );
 
         Volley.newRequestQueue(this).add(request);
@@ -80,7 +97,7 @@ public class UserProfile extends AppCompatActivity {
         bio = findViewById(R.id.edit_bio);
         email = findViewById(R.id.edit_email);
         password = findViewById(R.id.edit_password);
-        gender = findViewById(R.id.spinner_gender);
+        craftSpecialties = findViewById(R.id.edit_craftSpecialties);
 
         username.setText(loggedInUsername);
 
@@ -95,14 +112,14 @@ public class UserProfile extends AppCompatActivity {
         String biography = bio.getText().toString().trim();
         String mail = email.getText().toString().trim();
         String pass = password.getText().toString().trim();
-        String craftType = gender.getSelectedItem().toString(); // reuse for craftSpecialties
+        String craftType = craftSpecialties.getText().toString().trim();
 
         if (user.isEmpty() || pass.isEmpty()) {
             Toast.makeText(this, "Username and password are required!", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // ✅ Match exactly what backend entity expects (LoginEditUser.java)
+        // Match exactly what backend entity expects (LoginEditUser.java)
         JSONObject profileData = new JSONObject();
         try {
             profileData.put("displayName", name);
