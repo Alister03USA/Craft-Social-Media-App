@@ -17,12 +17,13 @@ public class Group {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true) // no null and no duplicates
     private String groupName;
 
-    @ManyToOne
-    @JoinColumn(name = "group_admin_id", nullable = false)
+    @ManyToOne //Each group has one admin, but one user can be admin of many groups.
+    @JoinColumn(name = "group_admin_id", nullable = false) // foreign key
     private Users groupAdmin;
+
 
     private String description;
 
@@ -32,13 +33,15 @@ public class Group {
     private String craft;
 
     @ManyToMany
-    @JoinTable(
+    @JoinTable( //Creates a join table to manage the many-to-many relationship.
             name = "group_members",
             joinColumns = @JoinColumn(name = "group_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<Users> members = new HashSet<>();
+    private Set<Users> members = new HashSet<>(); //Stores the group members as a set. Initialized to avoid null pointer issues.
 
+    @Column(name = "member_count", nullable = false)
+    private int memberCount  = 0;
 
     public Group() {
     }
@@ -74,4 +77,7 @@ public class Group {
 
     public Set<Users> getMembers() { return members; }
     public void setMembers(Set<Users> members) { this.members = members; }
+
+    public int getMemberCount() { return memberCount; }
+    public void setMemberCount() { this.memberCount = this.members.size(); }
 }
