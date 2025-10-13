@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">Craftsy</string>
+
+    <!-- Example menu string (used in your res/menu/menu_main.xml) -->
+    <string name="action_settings">Settings</string>
+</resources>
