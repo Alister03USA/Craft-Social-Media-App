@@ -1,7 +1,6 @@
 package com.example.androidexample;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -9,12 +8,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
-
-import java.nio.charset.StandardCharsets;
 
 public class Login extends AppCompatActivity {
 
@@ -23,7 +20,7 @@ public class Login extends AppCompatActivity {
     private Button loginButton;
     private Button signupButton;
 
-    private static final String LOGIN_URL = "http://coms-3090-028.class.las.iastate.edu:8080/login";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/login/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,32 +48,52 @@ public class Login extends AppCompatActivity {
             return;
         }
 
-        //  Build URL with query params for GET request
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/login/"
-                + username + "/" + password;
+        String url = BASE_URL + username + "/" + password;
 
-        StringRequest request = new StringRequest(
+        JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
                 url,
+                null,
                 response -> {
-                    String msg = response.trim();
-                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                    try {
+                        // Extract info from JSON
+                        String displayName = response.optString("displayName", username);
+                        String bio = response.optString("bio", "");
+                        String email = response.optString("email", "");
+                        String craftSpecialties = response.optString("craftSpecialties", "");
 
-                    if (msg.toLowerCase().contains("successfully")) {
+                        // Save to singleton
+                        SessionManager session = SessionManager.getInstance();
+                        session.setLoggedInUsername(username);
+                        session.setDisplayName(displayName);
+                        session.setBio(bio);
+                        session.setEmail(email);
+                        session.setCraftSpecialties(craftSpecialties);
+                        session.setPassword(password);
+                        session.settargetUser("alister_gan");
+
+                        Toast.makeText(this, "Welcome " + displayName + "!", Toast.LENGTH_SHORT).show();
+
+                        // Navigate to next activity
                         Intent intent = new Intent(Login.this, UserProfile.class);
-                        intent.putExtra("username", username);
                         startActivity(intent);
                         finish();
+
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Login parse error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 },
                 error -> {
-                    String err = (error.networkResponse != null && error.networkResponse.data != null)
-                            ? new String(error.networkResponse.data)
-                            : error.toString();
-                    Toast.makeText(this, "Login failed: " + err, Toast.LENGTH_LONG).show();
+                    String msg = "Login failed: ";
+                    if (error.networkResponse != null && error.networkResponse.data != null) {
+                        msg += new String(error.networkResponse.data);
+                    } else {
+                        msg += error.getMessage();
+                    }
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
                 }
         );
 
-        Volley.newRequestQueue(this).add(request);
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 }

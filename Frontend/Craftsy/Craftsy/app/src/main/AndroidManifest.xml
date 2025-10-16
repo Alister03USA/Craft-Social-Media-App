@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.androidexample">
 
-    <!-- Internet permission for Volley requests -->
+    <!-- Internet permission for backend API requests -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -15,9 +15,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Craftsy"
-        android:networkSecurityConfig="@xml/network_security_config">
+        android:networkSecurityConfig="@xml/network_security_config"
+        >
 
-        <!-- Login activity is the launcher -->
+        <!-- 🟢 Login Activity (Launcher) -->
         <activity
             android:name=".Login"
             android:exported="true"
@@ -26,25 +27,55 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
-        <!-- Add your UserProfile activity -->
+        <!-- User Profile Activity -->
         <activity
             android:name=".UserProfile"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
+        <!-- Feed Activity (newly added) -->
+        <activity
+            android:name=".FeedActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
-        <!-- Delete page -->
+        <!-- Delete Account Activity -->
         <activity
             android:name=".DeleteActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
-        <!-- Signup page (temporary launcher for your demo) -->
+        <!-- Signup Activity -->
         <activity
             android:name=".SignupActivity"
-            android:exported="false">
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
-        </activity>
-    </application>
-</manifest>
+
+
+                <!-- Notification Center Activity (currently the launcher) -->
+                <activity
+                    android:name=".NotificationCenterActivity"
+                    android:exported="false"
+                    android:theme="@style/Theme.Craftsy">
+
+                </activity>
+
+                <!-- User Profile Activity -->
+                <activity
+                    android:name=".OutsideUserProfile"
+                    android:exported="false"
+                    android:theme="@style/Theme.Craftsy" >
+
+
+
+
+                </activity>
+            </application>
+
+        </manifest>
+
+

@@ -1,26 +1,11 @@
 package com.example.craftsy.SignUpDelete.Entity;
 
-
-// JPA -> Map Java classes to Database
 import jakarta.persistence.*;
 
-
-import lombok.Getter;
-import lombok.Setter;
-
-
-
 /**
- *
- * @author Alister Gan
- *
+ * Users entity represents a registered user in the system.
  */
-
-
-// Create a table in database
 @Entity
-@Getter
-@Setter
 @Table(name = "users")
 public class Users {
 
@@ -28,26 +13,133 @@ public class Users {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Unique username for login
     @Column(nullable = false, unique = true)
     private String username;
 
+    // Display name shown to other users
     @Column(nullable = false, unique = true)
     private String displayName;
 
+    // Short biography
     @Column(length = 1000)
     private String bio;
 
+    // URL or path to profile picture
     private String profilePic;
 
+    // User's craft specialties
     @Column(name = "craftSpecialties")
     private String craftSpecialties;
 
+    // Number of followers
     private Integer followers = 0;
 
+    // Number of users this user is following
     private Integer following = 0;
 
+    // Email address
     private String email;
 
+    // Hashed password
     @Column(nullable = false)
     private String password;
+
+    // Default constructor
+    public Users() {}
+
+    // Full constructor
+    public Users(String username, String displayName, String bio, String profilePic, String craftSpecialties,
+                 Integer followers, Integer following, String email, String password) {
+        this.username = username;
+        this.displayName = displayName;
+        this.bio = bio;
+        this.profilePic = profilePic;
+        this.craftSpecialties = craftSpecialties;
+        this.followers = followers;
+        this.following = following;
+        this.email = email;
+        this.password = password;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getProfilePic() {
+        return profilePic;
+    }
+
+    public void setProfilePic(String profilePic) {
+        this.profilePic = profilePic;
+    }
+
+    public String getCraftSpecialties() {
+        return craftSpecialties;
+    }
+
+    public void setCraftSpecialties(String craftSpecialities) {
+        this.craftSpecialties = craftSpecialities;
+    }
+
+    public Integer getFollowers() {
+        return followers;
+    }
+
+    public void setFollowers(Integer followers) {
+        this.followers = followers;
+    }
+
+    public Integer getFollowing() {
+        return following;
+    }
+
+    public void setFollowing(Integer following) {
+        this.following = following;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

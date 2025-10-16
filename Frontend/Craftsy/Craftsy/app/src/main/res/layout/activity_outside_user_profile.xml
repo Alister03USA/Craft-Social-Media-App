@@ -1,0 +1,152 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Scrollable Profile Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+
+            <!-- Profile picture -->
+            <ImageView
+                android:id="@+id/profileImage"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/profile"
+                android:scaleType="centerCrop"
+                android:background="@drawable/profile"
+                android:contentDescription="Profile picture" />
+
+            <!-- Display name -->
+            <TextView
+                android:id="@+id/displayName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="John Doe"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="12dp" />
+
+            <!-- Username -->
+            <TextView
+                android:id="@+id/username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="usernamejohndoe"
+                android:textSize="14sp"
+                android:textColor="#777777"
+                android:layout_marginTop="4dp" />
+
+            <!-- Bio -->
+            <TextView
+                android:id="@+id/bio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="This is my bio..."
+                android:gravity="center"
+                android:layout_marginTop="8dp" />
+            <!-- Craft Specialites -->
+            <TextView
+                android:id="@+id/craftSpecialties"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="I love all crafts"
+                android:gravity="center"
+                android:layout_marginTop="8dp" />
+
+            <!-- Follower / Following row -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/followersCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="123 Followers"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="24dp"/>
+
+                <TextView
+                    android:id="@+id/followingCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="200 Following"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- Follow Button -->
+            <Button
+                android:id="@+id/btn_follow"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@android:color/holo_blue_light"
+                android:text="Follow"
+                android:textSize="12sp"
+                android:textColor="@android:color/white" />
+
+            <!-- User posts (grid-like) -->
+            <GridLayout
+                android:id="@+id/postsGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3"
+                android:layout_marginTop="24dp">
+
+                <!-- Example post thumbnails -->
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_post_placeholder"
+                    android:layout_columnWeight="1"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"
+                    />
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_post_placeholder"
+                    android:layout_columnWeight="1"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"
+                    />
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_post_placeholder"
+                    android:layout_columnWeight="1"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/post_border"
+                    android:padding="1dp"/>
+            </GridLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Fixed Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/windowBackground"
+        app:menu="@menu/bottom_nav_menu" />
+
+</LinearLayout>
