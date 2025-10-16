@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PatternsRepository extends JpaRepository<Patterns, Long> {
-    Optional<Patterns> findByPatternName(String patternName);
+    Optional<Patterns> findByUserAndPatternName(Users user, String patternName);
     Optional<List<Patterns>> findByUser(Users user);
+    Optional<List<Patterns>> findByPatternNameContaining(String search);
 }

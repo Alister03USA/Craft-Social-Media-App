@@ -1,7 +1,12 @@
 package com.example.craftsy.patterns;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.example.craftsy.patterns.patternsComments.PatternsComments;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "patterns")
@@ -33,6 +38,14 @@ public class Patterns {
     private String description;
 
     private String supplies;
+
+    @Column(nullable = false)
+    private LocalDateTime date;
+
+    @OneToMany(mappedBy = "pattern")
+    @OrderBy("likes DESC")
+    @JsonManagedReference
+    private List<PatternsComments> comments;
 
     public Patterns() {
     }
@@ -99,5 +112,25 @@ public class Patterns {
 
     public void setSupplies(String supplies) {
         this.supplies = supplies;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
+    }
+
+    public List<PatternsComments> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<PatternsComments> comments) {
+        this.comments = comments;
+    }
+
+    public void addComments(PatternsComments comment){
+        this.comments.add(comment);
     }
 }
