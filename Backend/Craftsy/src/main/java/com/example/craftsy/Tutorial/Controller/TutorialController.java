@@ -86,7 +86,7 @@ public class TutorialController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("File upload failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body("File upload failed: " + e.getMessage());
         }
     }
 
@@ -124,10 +124,10 @@ public class TutorialController {
 
 
     /**
-     * GET "/tutorials/{id}/file"
+     * GET "/tutorials/{id}"
      * Fetch the file of the image/videos
      */
-    @GetMapping("/{id}/file")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
         if (tutorialOpt.isEmpty()){
@@ -188,13 +188,87 @@ public class TutorialController {
             map.put("type", t.getType());
 
             // Choose the correct URL
-            String fileUrl = t.getFileUrl() != null ? t.getFileUrl() : "/tutorial/" + t.getId() + "/file";
+            String fileUrl = t.getFileUrl() != null ? t.getFileUrl() : "/tutorial/" + t.getId() + "/file"; // file path
             map.put("fileURL", fileUrl);
             result.add(map);
         }
 
         return ResponseEntity.ok(result);
     }
+
+
+    /**
+     * PUT "/tutorial/{id}"
+     * Update the tutorials
+     */
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // Endpoint expects data in form-data format
+    public ResponseEntity<String> updateTutorials(
+            @PathVariable Long id,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) MultipartFile file // 9nterface that handle file uploads
+            ) {
+        Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
+        if (tutorialOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Tutorial tutorial = tutorialOpt.get();
+
+        // Update fields
+        if (title != null) {
+            tutorial.setTitle(title);
+        }
+
+        if (description != null) {
+            tutorial.setDescription(description);
+        }
+
+        if (category != null) {
+            tutorial.setCategory(category);
+        }
+
+        if (type != null) {
+            tutorial.setType(type);
+        }
+
+        // update new file if provided
+        if (file != null) {
+            try {
+                String uploadDir = "uploads/tutorials";
+                Files.createDirectories((Paths.get(uploadDir)));
+
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir, fileName);
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Delete old file
+                if (tutorial.getFileUrl() != null) {
+                    Files.deleteIfExists(Paths.get(tutorial.getFilePath()));
+                }
+
+                tutorial.setFileName(fileName);
+                tutorial.setFileType(file.getContentType());
+                tutorial.setFilePath(filePath.toString());
+                tutorial.setFileUrl(null);
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return ResponseEntity.badRequest().body("File upload failed: " + e.getMessage());
+            }
+
+
+        }
+
+        tutorialRepository.save(tutorial);
+        return ResponseEntity.ok("Tutorial Updated successfully!");
+
+
+    }
+
 
 
     /**
@@ -223,9 +297,13 @@ public class TutorialController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Failed to delete tutorial: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Failed to delete tutorial: " + e.getMessage());
         }
+
+
     }
+
+
 
 
 
