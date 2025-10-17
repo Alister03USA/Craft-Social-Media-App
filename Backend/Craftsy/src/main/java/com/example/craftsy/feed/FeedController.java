@@ -19,7 +19,7 @@ public class FeedController {
     @Autowired
     FollowRepository followRepository;
     @Autowired
-    FeedRespository feedRespository;
+    FeedRepository feedRepository;
     @Autowired
     UserRepository userRepository;
 
@@ -36,7 +36,7 @@ public class FeedController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         project.setUser(user);
         project.setDate(LocalDateTime.now());
-        Feed proj = feedRespository.save(project);
+        Feed proj = feedRepository.save(project);
         return proj;
     }
 
@@ -50,13 +50,13 @@ public class FeedController {
         List<Feed> userFeed = new ArrayList<Feed>();
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Optional<List<Feed>> optFeed = feedRespository.findByUser(user);
+        Optional<List<Feed>> optFeed = feedRepository.findByUser(user);
         if(optFeed.isPresent()){
             userFeed = optFeed.orElseThrow(() -> new RuntimeException("User not found"));
         }
         List<Follow> following = followRepository.findByFollower(user);
         for(int i=0; i<following.size(); i++){
-            List<Feed> userFollowing = feedRespository.findByUser(following.get(i).getFollowing())
+            List<Feed> userFollowing = feedRepository.findByUser(following.get(i).getFollowing())
                             .orElseThrow(()-> new RuntimeException("Following not found"));
             userFeed.addAll(userFollowing);
         }
@@ -77,12 +77,12 @@ public class FeedController {
             return "User not found";
         }
         Users user = userOpt.orElseThrow(() -> new RuntimeException("User not found"));
-        Optional<Feed> projectOpt = feedRespository.findByUserAndProjectName(user, projectName);
+        Optional<Feed> projectOpt = feedRepository.findByUserAndProjectName(user, projectName);
         if(projectOpt.isEmpty()){
             return "Post not found";
         }
         Feed project = projectOpt.orElseThrow(() -> new RuntimeException("Post not found"));
-        feedRespository.delete(project);
+        feedRepository.delete(project);
         return "Post deleted";
     }
 
@@ -98,7 +98,7 @@ public class FeedController {
                        @RequestBody Feed projectUpdated){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Feed project = feedRespository.findByUserAndProjectName(user, projectName)
+        Feed project = feedRepository.findByUserAndProjectName(user, projectName)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         if(projectUpdated.getProjectName() != null){
             project.setProjectName(projectUpdated.getProjectName());
@@ -118,7 +118,7 @@ public class FeedController {
         if(projectUpdated.getVisibility() != null){
             project.setVisibility(projectUpdated.getVisibility());
         }
-        feedRespository.save(project);
+        feedRepository.save(project);
         return project;
     }
 }

@@ -1,5 +1,7 @@
 package com.example.craftsy.patterns;
 
+import com.example.craftsy.FollowingFollowers.Entity.Follow;
+import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.feed.Feed;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +25,8 @@ public class PatternsController {
     UserRepository userRepository;
     @Autowired
     PatternsCommentsRepository patternsCommentsRepository;
+    @Autowired
+    FollowRepository followRepository;
 
     /**
      * Posts a pattern from username
@@ -69,6 +74,53 @@ public class PatternsController {
                 .orElseThrow(()-> new RuntimeException("no patterns for this user"));
         patternsList.sort(Comparator.comparing(Patterns::getRating).reversed());
         return patternsList;
+    }
+
+    @GetMapping("/patterns/{username}/{patternName}")
+    Patterns getPattern(@PathVariable String username, @PathVariable String patternName){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
+                .orElseThrow(()-> new RuntimeException("Pattern not found"));
+
+        return pattern;
+    }
+
+    @GetMapping("/patterns/{username}")
+    List<Patterns> getFollowersPatterns(@PathVariable String username){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<List<Patterns>> patternsOpt = patternsRepository.findByUser(user);
+        List<Patterns> patterns = new ArrayList<>();
+        if(patternsOpt.isPresent()){
+            patterns = patternsOpt.orElseThrow();
+        }
+        List<Follow> following = followRepository.findByFollower(user);
+        for(int i=0; i<following.size(); i++){
+            List<Patterns> userFollowing = patternsRepository.findByUser(following.get(i).getFollowing())
+                    .orElseThrow(()-> new RuntimeException("Following not found"));
+            patterns.addAll(userFollowing);
+        }
+        patterns.sort(Comparator.comparing(Patterns::getDate).reversed());
+        return patterns;
+    }
+
+    //CHECK THIS
+    @PutMapping("/patterns/rate/{username}/{patternName}")
+    float addRating(@PathVariable String username, @PathVariable String patternName, @RequestBody float rating){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
+                .orElseThrow(()-> new RuntimeException("Pattern not found"));
+        if(pattern.getRating() == 0){
+            pattern.setRating(rating);
+        }
+        else{
+            int numRatings = pattern.getNumRatings() + 1;
+            float newRating = (pattern.getNumRatings() * pattern.getRating()) / numRatings + (rating / numRatings);
+            pattern.setRating(newRating);
+        }
+        return pattern.getRating();
     }
 
     /**

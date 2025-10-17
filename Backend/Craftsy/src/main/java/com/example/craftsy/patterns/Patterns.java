@@ -47,6 +47,8 @@ public class Patterns {
     @JsonManagedReference
     private List<PatternsComments> comments;
 
+    private int numRatings;
+
     public Patterns() {
     }
 
@@ -132,5 +134,13 @@ public class Patterns {
 
     public void addComments(PatternsComments comment){
         this.comments.add(comment);
+    }
+
+    public int getNumRatings() {
+        return numRatings;
+    }
+
+    public void setNumRatings(int numRatings) {
+        this.numRatings = numRatings;
     }
 }
