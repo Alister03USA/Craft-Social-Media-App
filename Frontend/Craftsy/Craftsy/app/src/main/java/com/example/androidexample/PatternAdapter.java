@@ -6,6 +6,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RatingBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,6 +28,7 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
     private Context context;
     private List<Pattern> patterns;
 
+
     public PatternAdapter(Context context, List<Pattern> patterns) {
         this.context = context;
         this.patterns = patterns;
@@ -35,6 +37,7 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
     @NonNull
     @Override
     public PatternViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
         View view = LayoutInflater.from(context).inflate(R.layout.item_pattern, parent, false);
         return new PatternViewHolder(view);
     }
@@ -47,6 +50,9 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
 
 
         holder.patternRating.setRating(pattern.getRating());
+        holder.patternName.setText(pattern.getPatternName());
+        holder.patternType.setText("Type: " + pattern.getPatternType());
+        holder.patternDifficulty.setText("Difficulty: " + pattern.getDifficulty());
 
         holder.submitButton.setOnClickListener(v -> {
             float rating = holder.patternRating.getRating();
@@ -68,6 +74,7 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
         RatingBar patternRating;
         EditText patternComment;
         Button submitButton;
+        TextView patternName, patternType, patternDifficulty;
 
         public PatternViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -75,16 +82,21 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
             patternRating = itemView.findViewById(R.id.patternRating);
             patternComment = itemView.findViewById(R.id.patternComment);
             submitButton = itemView.findViewById(R.id.submitButton);
+            patternName = itemView.findViewById(R.id.patternName);
+            patternType = itemView.findViewById(R.id.patternType);
+            patternDifficulty = itemView.findViewById(R.id.patternDifficulty);
         }
     }
 
     private void submitPatternFeedback(int patternId, float rating, String comment) {
-        String url = "https://yourbackend.com/patterns/" + patternId + "/feedback";
+        String url = "https://your-backend.com/api/patterns/" + patternId + "/feedback";
 
         JSONObject jsonBody = new JSONObject();
         try {
+            jsonBody.put("patternId", patternId);
             jsonBody.put("rating", rating);
             jsonBody.put("comment", comment);
+            jsonBody.put("username", "testUser"); // or dynamically set
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -97,7 +109,8 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
                 error -> Toast.makeText(context, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show()
         );
 
-        Volley.newRequestQueue(context).add(request);
+        VolleySingleton.getInstance(context).addToRequestQueue(request);
     }
+
 }
 

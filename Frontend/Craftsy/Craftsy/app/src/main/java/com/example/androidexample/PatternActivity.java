@@ -40,20 +40,29 @@ public class PatternActivity extends AppCompatActivity {
     }
 
     private void fetchPatterns() {
-        String url = "https://8501387c-656b-4916-bfeb-16a5077c0947.mock.pstmn.io/patterns";
+        String url = "https://your-backend.com/api/patterns";
 
         JsonArrayRequest request = new JsonArrayRequest(
                 Request.Method.GET,
                 url,
                 null,
                 response -> {
+                    patterns.clear();
                     for (int i = 0; i < response.length(); i++) {
                         try {
                             JSONObject obj = response.getJSONObject(i);
                             Pattern pattern = new Pattern(
                                     obj.getInt("id"),
-                                    obj.getString("imageUrl"),
-                                    (float) obj.getDouble("rating")
+                                    obj.getString("patternName"),
+                                    obj.getString("username"),
+                                    obj.getString("patternType"),
+                                    (float) obj.getDouble("rating"),
+                                    obj.getString("patternImage"),
+                                    obj.getString("patternLink"),
+                                    obj.getString("difficulty"),
+                                    obj.getString("description"),
+                                    obj.getString("supplies"),
+                                    obj.getString("date")
                             );
                             patterns.add(pattern);
                         } catch (JSONException e) {
@@ -67,4 +76,5 @@ public class PatternActivity extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
 }

@@ -18,9 +18,16 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="354dp"
-            android:layout_height="237dp"
+            android:layout_width="match_parent"
+            android:layout_height="260dp"
+            android:layout_marginBottom="32dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/rounded_image"
+            android:clipToOutline="true"
+            android:adjustViewBounds="true"
             android:src="@drawable/craftsy" />
+
+
 
 
 
@@ -84,14 +91,10 @@
 
         <Button
             android:id="@+id/login_login_btn"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="10dp"
-            android:background="#4586EF"
-            android:text="  Login  "
-            android:textSize="20sp"
-            android:textColor="#ffffff">
-        </Button>
+            style="@style/CraftsyButton"
+            android:text="Login" />
+
+
 
     </LinearLayout>
     <LinearLayout
@@ -103,12 +106,8 @@
 
         <Button
             android:id="@+id/login_signup_btn"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:background="#6C9BFF"
-            android:text="Sign Up"
-            android:textSize="20sp"
-            android:textColor="#ffffff" />
+            style="@style/CraftsyButton"
+            android:text="Sign Up" />
     </LinearLayout>
 
 
