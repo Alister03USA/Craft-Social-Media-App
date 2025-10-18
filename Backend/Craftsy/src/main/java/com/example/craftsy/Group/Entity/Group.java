@@ -17,6 +17,7 @@ public class Group {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @Column(nullable = false, unique = true) // no null and no duplicates
     private String groupName;
 

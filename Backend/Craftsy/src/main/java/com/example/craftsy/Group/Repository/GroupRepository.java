@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
     Optional<Group> findByGroupName(String groupName);
-    List<Group> findByGroupNameContainingIgnoreCase(String groupName);
+    List<Group> findByGroupNameContainingIgnoreCaseOrGroupAdmin_UsernameContainingIgnoreCase(String groupName, String username);
 }

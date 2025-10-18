@@ -22,8 +22,6 @@ public class Tutorial {
 
     private String description;
 
-    private String type;
-
     private String category; // Knitting, woodcrating, etc
 
     private String fileUrl;
@@ -98,13 +96,6 @@ public class Tutorial {
         this.fileType = fileType;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
 
     public Users getUser() {
         return user;

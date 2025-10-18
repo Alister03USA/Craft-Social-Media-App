@@ -33,7 +33,7 @@ public class TutorialController {
 
 
     /**
-     * Upload the image/video by File
+     * Upload the video by File
      * @param title
      * @param description
      * @param file
@@ -45,7 +45,6 @@ public class TutorialController {
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("category") String category,
-            @RequestParam("type") String type,
             @RequestParam("file") MultipartFile file) { // MultipartFile is a spring class representing an uploaded file
             // Extracts the title, desc, and file from the request
         try {
@@ -77,7 +76,6 @@ public class TutorialController {
             tutorial.setFileType(file.getContentType());
             tutorial.setFilePath(filePath.toString());
             tutorial.setCategory(category);
-            tutorial.setType(type);
             tutorial.setUser(user);
 
             tutorialRepository.save(tutorial);
@@ -99,7 +97,6 @@ public class TutorialController {
             @RequestParam String title,
             @RequestParam String description,
             @RequestParam String category,
-            @RequestParam String type,        // "image" or "video"
             @RequestParam String fileUrl      // URL to external image/video
     ) {
         // Find user
@@ -114,7 +111,6 @@ public class TutorialController {
         tutorial.setTitle(title);
         tutorial.setDescription(description);
         tutorial.setCategory(category);
-        tutorial.setType(type);
         tutorial.setFileUrl(fileUrl); // store URL instead of file path
         tutorial.setUser(user);
         tutorialRepository.save(tutorial);
@@ -125,7 +121,7 @@ public class TutorialController {
 
     /**
      * GET "/tutorials/{id}"
-     * Fetch the file of the image/videos
+     * Fetch the file of the Videos
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
@@ -169,14 +165,14 @@ public class TutorialController {
 
     /**
      * GET {/search?query={}}
-     * Search tutorials by title, description, or category
+     * Search tutorials by username, title, description, or category
      * Returns correct file URL (local or external)
      */
     @GetMapping("/search")
     public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query) {
         List<Tutorial> tutorials = tutorialRepository
-                .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrCategoryContainingIgnoreCase(
-                        query, query, query);
+                .findByUser_UsernameContainingIgnoreCaseOrTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrCategoryContainingIgnoreCase(
+                      query,  query, query, query);
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Tutorial t : tutorials) {
@@ -185,7 +181,6 @@ public class TutorialController {
             map.put("title", t.getTitle());
             map.put("description", t.getDescription());
             map.put("category", t.getCategory());
-            map.put("type", t.getType());
 
             // Choose the correct URL
             String fileUrl = t.getFileUrl() != null ? t.getFileUrl() : "/tutorial/" + t.getId() + "/file"; // file path
@@ -198,6 +193,47 @@ public class TutorialController {
 
 
     /**
+     * GET /tutorial/user/{username}
+     * Fetch all tutorials uploaded by a specific user (For Main Search Tab)
+     */
+    @GetMapping("/user/{username}")
+    public ResponseEntity<List<Map<String, Object>>> getTutorialsByUser(@PathVariable String username) {
+        // 1. Find user
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Users user = userOpt.get();
+
+        // 2. Get tutorials uploaded by this user
+        List<Tutorial> tutorials = tutorialRepository.findByUser(user);
+
+        // 3. Convert to list of maps for response
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Tutorial t : tutorials) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", t.getId());
+            map.put("title", t.getTitle());
+            map.put("description", t.getDescription());
+            map.put("category", t.getCategory());
+            map.put("username", t.getUser().getUsername());
+
+            // ✅ Handle both local and external URLs
+            String fileUrl = (t.getFileUrl() != null)
+                    ? t.getFileUrl()
+                    : "/tutorial/" + t.getId(); // local file endpoint
+            map.put("fileURL", fileUrl);
+
+            result.add(map);
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+
+
+    /**
      * PUT "/tutorial/{id}"
      * Update the tutorials
      */
@@ -207,7 +243,6 @@ public class TutorialController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String type,
             @RequestParam(required = false) MultipartFile file // 9nterface that handle file uploads
             ) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
@@ -230,9 +265,6 @@ public class TutorialController {
             tutorial.setCategory(category);
         }
 
-        if (type != null) {
-            tutorial.setType(type);
-        }
 
         // update new file if provided
         if (file != null) {
