@@ -1,10 +1,14 @@
 package com.example.craftsy.feed;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.example.craftsy.feed.feedComments.FeedComments;
+import com.example.craftsy.patterns.patternsComments.PatternsComments;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "feed",
@@ -25,7 +29,7 @@ public class Feed {
     )
     private Users user;
 
-    @Column(name = "project_name", nullable = false)
+    @Column(nullable = false)
     private String projectName;
     private String projectType;
     private String supplies;
@@ -37,6 +41,11 @@ public class Feed {
 
     @Column(nullable = false)
     private LocalDateTime date;
+
+    @OneToMany(mappedBy = "feed")
+    @OrderBy("likes DESC")
+    @JsonManagedReference
+    private List<FeedComments> comments;
 
     public Feed() {
     }
@@ -104,4 +113,17 @@ public class Feed {
     public void setDate(LocalDateTime date) {
         this.date = date;
     }
+
+    public List<FeedComments> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<FeedComments> comments) {
+        this.comments = comments;
+    }
+
+    public void addComments(FeedComments comment){
+        this.comments.add(comment);
+    }
+
 }

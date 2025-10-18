@@ -4,6 +4,10 @@ import com.example.craftsy.FollowingFollowers.Entity.Follow;
 import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import com.example.craftsy.feed.feedComments.FeedComments;
+import com.example.craftsy.feed.feedComments.FeedCommentsRepository;
+import com.example.craftsy.patterns.Patterns;
+import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +26,8 @@ public class FeedController {
     FeedRepository feedRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    FeedCommentsRepository feedCommentsRepository;
 
     /**
      *
@@ -61,6 +67,18 @@ public class FeedController {
             userFeed.addAll(userFollowing);
         }
         userFeed.sort(Comparator.comparing(Feed::getDate).reversed());
+        return userFeed;
+    }
+
+    @GetMapping("/feed/home/{username}")
+    List<Feed> getUserProjects(@PathVariable String username){
+        List<Feed> userFeed = new ArrayList<Feed>();
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<List<Feed>> optFeed = feedRepository.findByUser(user);
+        if(optFeed.isPresent()){
+            userFeed = optFeed.orElseThrow(() -> new RuntimeException("User not found"));
+        }
         return userFeed;
     }
 
@@ -120,5 +138,68 @@ public class FeedController {
         }
         feedRepository.save(project);
         return project;
+    }
+
+    /**
+     * adds a comment to a pattern
+     * @param username user who posted pattern
+     * @param projectName name of pattern
+     * @param comment comment contents
+     * @return the pattern with new comment
+     */
+    @PostMapping("/feed/{username}/{projectName}/comment")
+    Feed addComment(@PathVariable String username, @PathVariable String projectName,
+                        @RequestBody FeedComments comment){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed project = feedRepository.findByUserAndProjectName(user,projectName)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        comment.setDate(LocalDateTime.now());
+        comment.setFeed(project);
+        feedCommentsRepository.save(comment);
+        return project;
+    }
+
+    /**
+     * delete a comment from a post
+     * @param username
+     * @param projectName
+     * @param id
+     * @return pattern with updated comments
+     */
+    @DeleteMapping("/feed/{username}/{projectName}/{id}")
+    Feed deleteComment(@PathVariable String username, @PathVariable String projectName,
+                           @PathVariable Long id){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed project = feedRepository.findByUserAndProjectName(user,projectName)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        FeedComments comment = feedCommentsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        feedCommentsRepository.delete(comment);
+        return project;
+    }
+
+    /**
+     * like a comment
+     * @param username
+     * @param projectName
+     * @param id
+     * @return updated pattern contents
+     */
+    @PutMapping("/feed/{username}/{projectName}/{id}")
+    Feed likeComment(@PathVariable String username, @PathVariable String projectName,
+                         @PathVariable Long id){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed feed = feedRepository.findByUserAndProjectName(user,projectName)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        FeedComments comment = feedCommentsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        comment.setLikes(comment.getLikes()+1);
+        feedCommentsRepository.save(comment);
+        return feed;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.craftsy.patterns;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.example.craftsy.images.Image;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -48,6 +49,10 @@ public class Patterns {
     private List<PatternsComments> comments;
 
     private int numRatings;
+
+    @OneToMany(mappedBy = "id")
+    @JsonManagedReference
+    private List<Image> images;
 
     public Patterns() {
     }
@@ -142,5 +147,13 @@ public class Patterns {
 
     public void setNumRatings(int numRatings) {
         this.numRatings = numRatings;
+    }
+
+    public List<Image> getImages() {
+        return images;
+    }
+
+    public void setImages(List<Image> images) {
+        this.images = images;
     }
 }
