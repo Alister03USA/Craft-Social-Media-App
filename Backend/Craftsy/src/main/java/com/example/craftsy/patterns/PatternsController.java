@@ -76,6 +76,12 @@ public class PatternsController {
         return patternsList;
     }
 
+    /**
+     * gets a pattern from username with patternName
+     * @param username
+     * @param patternName
+     * @return pattern
+     */
     @GetMapping("/patterns/{username}/{patternName}")
     Patterns getPattern(@PathVariable String username, @PathVariable String patternName){
         Users user = userRepository.findByUsername(username)
@@ -86,6 +92,11 @@ public class PatternsController {
         return pattern;
     }
 
+    /**
+     * get all patterns posted users username follows and themselves
+     * @param username
+     * @return list of patterns from most recently posted to oldest
+     */
     @GetMapping("/patterns/{username}")
     List<Patterns> getFollowersPatterns(@PathVariable String username){
         Users user = userRepository.findByUsername(username)
@@ -105,7 +116,13 @@ public class PatternsController {
         return patterns;
     }
 
-    //CHECK THIS
+    /**
+     * Add a rating to a pattern
+     * @param username user who posted pattern
+     * @param patternName name of pattern to be rated
+     * @param rating
+     * @return the new rating of the pattern
+     */
     @PutMapping("/patterns/rate/{username}/{patternName}")
     float addRating(@PathVariable String username, @PathVariable String patternName, @RequestBody float rating){
         Users user = userRepository.findByUsername(username)
@@ -120,8 +137,12 @@ public class PatternsController {
             float newRating = (pattern.getNumRatings() * pattern.getRating()) / numRatings + (rating / numRatings);
             pattern.setRating(newRating);
         }
+        pattern.setNumRatings(pattern.getNumRatings()+1);
+        patternsRepository.save(pattern);
         return pattern.getRating();
     }
+
+
 
     /**
      * Deletes pattern with patternName
@@ -141,6 +162,13 @@ public class PatternsController {
         return patternName + " deleted";
     }
 
+    /**
+     * adds a comment to a pattern
+     * @param username user who posted pattern
+     * @param patternName name of pattern
+     * @param comment comment contents
+     * @return the pattern with new comment
+     */
     @PostMapping("/patterns/{username}/{patternName}/comment")
     Patterns addComment(@PathVariable String username, @PathVariable String patternName,
                                 @RequestBody PatternsComments comment){
@@ -154,6 +182,13 @@ public class PatternsController {
         return pattern;
     }
 
+    /**
+     * delete a comment from a post
+     * @param username
+     * @param patternName
+     * @param id
+     * @return pattern with updated comments
+     */
     @DeleteMapping("/patterns/{username}/{patternName}/{id}")
     Patterns deleteComment(@PathVariable String username, @PathVariable String patternName,
                          @PathVariable Long id){
@@ -168,6 +203,13 @@ public class PatternsController {
         return pattern;
     }
 
+    /**
+     * like a comment
+     * @param username
+     * @param patternName
+     * @param id
+     * @return updated pattern contents
+     */
     @PutMapping("/patterns/{username}/{patternName}/{id}")
     Patterns likeComment(@PathVariable String username, @PathVariable String patternName,
                          @PathVariable Long id){
