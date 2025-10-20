@@ -25,7 +25,7 @@ public class Feed {
     )
     private Users user;
 
-    @Column(name = "project_name", nullable = false)
+    @Column(nullable = false)
     private String projectName;
     private String projectType;
     private String supplies;
