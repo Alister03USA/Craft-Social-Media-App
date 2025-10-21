@@ -40,7 +40,7 @@ public class PatternActivity extends AppCompatActivity {
     }
 
     private void fetchPatterns() {
-        String url = "https://your-backend.com/api/patterns";
+        String url = "https://fdfe903c-6cbc-44e4-9457-0888ef0861b2.mock.pstmn.io/api/patterns";
 
         JsonArrayRequest request = new JsonArrayRequest(
                 Request.Method.GET,

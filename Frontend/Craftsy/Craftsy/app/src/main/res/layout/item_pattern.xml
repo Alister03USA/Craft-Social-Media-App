@@ -6,7 +6,9 @@
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardElevation="4dp"
+    android:clickable="true"
+    android:foreground="?attr/selectableItemBackground">
 
     <LinearLayout
         android:orientation="vertical"
@@ -14,13 +16,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Image placeholder -->
         <ImageView
             android:id="@+id/patternImage"
             android:layout_width="match_parent"
             android:layout_height="180dp"
+            android:scaleType="centerCrop"
             android:background="@android:color/darker_gray"
             android:contentDescription="Pattern Image" />
+
         <TextView
             android:id="@+id/patternName"
             android:layout_width="wrap_content"
@@ -44,8 +47,6 @@
             android:text="Difficulty"
             android:layout_marginTop="4dp" />
 
-
-        <!-- RatingBar -->
         <RatingBar
             android:id="@+id/patternRating"
             style="?android:attr/ratingBarStyleSmall"
@@ -54,25 +55,5 @@
             android:stepSize="1"
             android:numStars="5"
             android:layout_marginTop="8dp" />
-
-        <!-- Comment EditText -->
-        <EditText
-            android:id="@+id/patternComment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Add a comment"
-            android:layout_marginTop="8dp"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:gravity="top|start" />
-
-        <!-- Submit Button -->
-        <Button
-            android:id="@+id/submitButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Submit"
-            android:layout_marginTop="8dp"/>
     </LinearLayout>
-
 </androidx.cardview.widget.CardView>
