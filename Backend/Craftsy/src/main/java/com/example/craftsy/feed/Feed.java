@@ -2,12 +2,14 @@ package com.example.craftsy.feed;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.feed.feedComments.FeedComments;
+import com.example.craftsy.images.Image;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -46,6 +48,14 @@ public class Feed {
     @OrderBy("likes DESC")
     @JsonManagedReference
     private List<FeedComments> comments;
+
+    @ManyToMany
+    @JoinTable(
+            name = "feed_images",
+            joinColumns = @JoinColumn(name = "feed_id"),
+            inverseJoinColumns = @JoinColumn(name = "image_id")
+    )
+    private List<Image> images = new ArrayList<>();
 
     public Feed() {
     }
@@ -126,4 +136,11 @@ public class Feed {
         this.comments.add(comment);
     }
 
+    public List<Image> getImages() {
+        return images;
+    }
+
+    public void setImages(List<Image> images) {
+        this.images = images;
+    }
 }

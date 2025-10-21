@@ -7,10 +7,14 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "patterns")
+@Table(name = "patterns",
+        uniqueConstraints = { //ensure projectName must be unique for each username
+                @UniqueConstraint(columnNames = {"username", "patternName"}, name = "UK_pattern_name_username")
+        })
 public class Patterns {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,9 +54,13 @@ public class Patterns {
 
     private int numRatings;
 
-    @OneToMany(mappedBy = "id")
-    @JsonManagedReference
-    private List<Image> images;
+    @ManyToMany
+    @JoinTable(
+            name = "pattern_images",
+            joinColumns = @JoinColumn(name = "pattern_id"),
+            inverseJoinColumns = @JoinColumn(name = "image_id")
+    )
+    private List<Image> images = new ArrayList<>();
 
     public Patterns() {
     }

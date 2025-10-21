@@ -1,21 +1,20 @@
 package com.example.craftsy.images;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.example.craftsy.patterns.Patterns;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
 
 @Entity
 public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO) // GenerationType.IDENTITY
-    private int id;
+    private long id;
     private String filePath;
 
     public Image() {}
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

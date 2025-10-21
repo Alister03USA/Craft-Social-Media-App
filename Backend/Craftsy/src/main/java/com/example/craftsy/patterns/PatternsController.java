@@ -5,6 +5,8 @@ import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.feed.Feed;
+import com.example.craftsy.images.Image;
+import com.example.craftsy.images.ImageRepository;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import com.example.craftsy.patterns.patternsComments.PatternsCommentsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,8 @@ public class PatternsController {
     PatternsCommentsRepository patternsCommentsRepository;
     @Autowired
     FollowRepository followRepository;
+    @Autowired
+    ImageRepository imageRepository;
 
     /**
      * Posts a pattern from username
@@ -41,8 +45,29 @@ public class PatternsController {
 
         pattern.setUser(user);
         pattern.setDate(LocalDateTime.now());
+
+        if (pattern.getImages() != null && !pattern.getImages().isEmpty()) {
+            List<Long> imageIds = pattern.getImages().stream()
+                    .map(Image::getId)
+                    .toList();
+            List<Image> existingImages = imageRepository.findAllById(imageIds);
+            pattern.setImages(existingImages);
+        }
+
         Patterns postPattern = patternsRepository.save(pattern);
-        return pattern;
+        return postPattern;
+    }
+
+    @PutMapping("/patterns/{username}/{patternName}")
+    Patterns updatePatternDescription(@PathVariable String username, @PathVariable String patternName, @RequestBody String description){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
+                .orElseThrow(()-> new RuntimeException("Pattern not found"));
+
+        pattern.setDescription(description.replaceAll("^\"|\"$", ""));
+        Patterns updated = patternsRepository.save(pattern);
+        return updated;
     }
 
     /**
@@ -116,19 +141,8 @@ public class PatternsController {
         return patterns;
     }
 
-    /**
-     * Add a rating to a pattern
-     * @param username user who posted pattern
-     * @param patternName name of pattern to be rated
-     * @param rating
-     * @return the new rating of the pattern
-     */
-    @PutMapping("/patterns/rate/{username}/{patternName}")
-    float addRating(@PathVariable String username, @PathVariable String patternName, @RequestBody float rating){
-        Users user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
-                .orElseThrow(()-> new RuntimeException("Pattern not found"));
+
+    private float addRating(Patterns pattern, float rating){
         if(pattern.getRating() == 0){
             pattern.setRating(rating);
         }
@@ -179,6 +193,9 @@ public class PatternsController {
         comment.setDate(LocalDateTime.now());
         comment.setPattern(pattern);
         patternsCommentsRepository.save(comment);
+        if(comment.getRating() != null){
+            addRating(pattern, comment.getRating());
+        }
         return pattern;
     }
 
@@ -210,7 +227,7 @@ public class PatternsController {
      * @param id
      * @return updated pattern contents
      */
-    @PutMapping("/patterns/{username}/{patternName}/{id}")
+    @PutMapping("/patterns/{username}/{patternName}/{id}/like")
     Patterns likeComment(@PathVariable String username, @PathVariable String patternName,
                          @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
@@ -221,6 +238,22 @@ public class PatternsController {
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
         comment.setLikes(comment.getLikes()+1);
+        patternsCommentsRepository.save(comment);
+        return pattern;
+    }
+
+    @PutMapping("patterns/{username}/{patternName}/{id}")
+    Patterns updateComment(@PathVariable String username, @PathVariable String patternName,
+                           @PathVariable Long id, @RequestBody String updatedComment){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)
+                .orElseThrow(() -> new RuntimeException("Pattern not found"));
+        PatternsComments comment = patternsCommentsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        comment.setText(updatedComment.replaceAll("^\"|\"$", ""));
+
         patternsCommentsRepository.save(comment);
         return pattern;
     }

@@ -33,6 +33,8 @@ public class PatternsComments {
     @Column(nullable = false)
     private LocalDateTime date;
 
+    private Integer rating;
+
     public PatternsComments() {
     }
 
@@ -70,5 +72,13 @@ public class PatternsComments {
 
     public Long getId() {
         return id;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
     }
 }

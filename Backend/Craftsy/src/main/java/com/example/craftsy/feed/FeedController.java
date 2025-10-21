@@ -6,6 +6,8 @@ import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.feed.feedComments.FeedComments;
 import com.example.craftsy.feed.feedComments.FeedCommentsRepository;
+import com.example.craftsy.images.Image;
+import com.example.craftsy.images.ImageRepository;
 import com.example.craftsy.patterns.Patterns;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,8 @@ public class FeedController {
     UserRepository userRepository;
     @Autowired
     FeedCommentsRepository feedCommentsRepository;
+    @Autowired
+    ImageRepository imageRepository;
 
     /**
      *
@@ -42,6 +46,15 @@ public class FeedController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         project.setUser(user);
         project.setDate(LocalDateTime.now());
+
+        if (project.getImages() != null && !project.getImages().isEmpty()) {
+            List<Long> imageIds = project.getImages().stream()
+                    .map(Image::getId)
+                    .toList();
+            List<Image> existingImages = imageRepository.findAllById(imageIds);
+            project.setImages(existingImages);
+        }
+
         Feed proj = feedRepository.save(project);
         return proj;
     }
@@ -135,6 +148,13 @@ public class FeedController {
         }
         if(projectUpdated.getVisibility() != null){
             project.setVisibility(projectUpdated.getVisibility());
+        }
+        if (project.getImages() != null && !project.getImages().isEmpty()) {
+            List<Long> imageIds = project.getImages().stream()
+                    .map(Image::getId)
+                    .toList();
+            List<Image> existingImages = imageRepository.findAllById(imageIds);
+            project.setImages(existingImages);
         }
         feedRepository.save(project);
         return project;
