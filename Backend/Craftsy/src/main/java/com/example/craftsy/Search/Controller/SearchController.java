@@ -11,7 +11,7 @@ import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
 import com.example.craftsy.Tutorial.Repository.TutorialRepository;
 import com.example.craftsy.feed.Feed;
-import com.example.craftsy.feed.FeedRespository;
+import com.example.craftsy.feed.FeedRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +32,7 @@ public class SearchController {
     private FollowRepository followRepository;
 
     @Autowired
-    private FeedRespository feedRespository;
+    private FeedRepository feedRespository;
 
     @Autowired
     private TutorialRepository tutorialRepository;
