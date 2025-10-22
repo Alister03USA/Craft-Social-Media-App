@@ -1,15 +1,11 @@
 package com.example.craftsy.feed;
 
-import com.example.craftsy.FollowingFollowers.Entity.Follow;
-import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.feed.feedComments.FeedComments;
 import com.example.craftsy.feed.feedComments.FeedCommentsRepository;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.images.ImageRepository;
-import com.example.craftsy.patterns.Patterns;
-import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,7 +1,9 @@
-package com.example.craftsy.FollowingFollowers.Entity;
+package com.example.craftsy.Notification.Entity;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -21,6 +23,10 @@ public class Notification {
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    private Users sender;
+
     // Title of the notification
     @Column(nullable = false)
     private String title;
@@ -36,6 +42,9 @@ public class Notification {
     // References Follow ID
     private Long referenceId;
 
+    private String referenceType; // e.g., "FOLLOW", "COMMENT", "GROUP"
+
+
     // Has the user read the notification?
     @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
@@ -49,15 +58,17 @@ public class Notification {
     public Notification() {}
 
     // Full constructor
-    public Notification(Users user, String title, String message, String type, Long referenceId, Boolean isRead, Date createdAt) {
+    public Notification(Users user, Users sender, String title, String message, String type, Long referenceId) {
         this.user = user;
+        this.sender = sender;
         this.title = title;
         this.message = message;
         this.type = type;
         this.referenceId = referenceId;
-        this.isRead = isRead;
-        this.createdAt = createdAt;
+        this.isRead = false;
+        this.createdAt = new Date();
     }
+
 
     // Getters and Setters
     public Long getId() {
@@ -124,10 +135,18 @@ public class Notification {
         this.createdAt = createdAt;
     }
 
+    public Users getSender() {
+        return sender;
+    }
     public void setSender(Users sender) {
-        this.user = sender;
+        this.sender = sender;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
     }
 
     public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
     }
 }
