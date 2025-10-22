@@ -25,7 +25,6 @@ public class PatternsComments {
     @JsonBackReference
     private Patterns pattern;
 
-    @Column(nullable = false)
     private String text;
 
     private int likes;
