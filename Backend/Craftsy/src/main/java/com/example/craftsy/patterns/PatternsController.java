@@ -4,7 +4,6 @@ import com.example.craftsy.FollowingFollowers.Entity.Follow;
 import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
-import com.example.craftsy.feed.Feed;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.images.ImageRepository;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
