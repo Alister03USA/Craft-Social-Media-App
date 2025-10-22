@@ -78,11 +78,16 @@
             android:name=".PatternDetailActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" >
-
-
-
-
         </activity>
+        <activity
+            android:name=".CreateReviewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".CreatePatternActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+
         <!-- Patterns Activity -->
         <activity
             android:name=".PatternActivity"

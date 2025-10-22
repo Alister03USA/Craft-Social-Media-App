@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Top handle (slightly above pivot) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,8a2.5,2.5 0 1,0 0,5a2.5,2.5 0 1,0 0,-5z" />
+
+    <!-- Bottom handle (slightly below pivot) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,12a2.5,2.5 0 1,0 0,5a2.5,2.5 0 1,0 0,-5z" />
+
+    <!-- Lower blade -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9.0,13.0 L20.5,19.5 C21.0,19.8 21.4,19.4 21.1,18.9 L19.9,17.1 L11.0,12.5 L9.0,13.0 Z" />
+
+    <!-- Pivot circle -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,12a1,1 0 1,0 0.001,0z" />
+
+    <!-- Upper blade -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9.0,11.0 L20.5,4.5 C21.0,4.2 21.4,4.6 21.1,5.1 L19.9,6.9 L11.0,11.5 L9.0,11.0 Z" />
+
+</vector>

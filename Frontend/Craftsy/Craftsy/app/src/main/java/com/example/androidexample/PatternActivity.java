@@ -1,8 +1,12 @@
 package com.example.androidexample;
+
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
@@ -12,14 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
-import android.util.Log;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.view.View;
 
-public class PatternActivity extends AppCompatActivity {
+public class PatternActivity extends BaseActivity {
 
     private RecyclerView recyclerView;
     private PatternAdapter adapter;
@@ -30,6 +28,15 @@ public class PatternActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pattern);
 
+        // Setup bottom navigation
+        setupBottomNavigation(R.id.pattern);
+
+        // ✅ Connect the toolbar to enable the top-right "Create" button
+        Toolbar toolbar = findViewById(R.id.patternsToolbar);
+        setSupportActionBar(toolbar);
+        setTitle("Patterns");
+
+        // RecyclerView setup
         recyclerView = findViewById(R.id.patternsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -39,6 +46,25 @@ public class PatternActivity extends AppCompatActivity {
         fetchPatterns();
     }
 
+    // ✅ Inflate the top-right "Create Pattern" menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.pattern_feed_menu, menu);
+        return true;
+    }
+
+    // ✅ Handle the "Create Pattern" button click
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.menu_create_pattern) {
+            Intent intent = new Intent(this, CreatePatternActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    // Existing function to fetch patterns from backend
     private void fetchPatterns() {
         String url = "https://fdfe903c-6cbc-44e4-9457-0888ef0861b2.mock.pstmn.io/api/patterns";
 
@@ -76,5 +102,4 @@ public class PatternActivity extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
-
 }
