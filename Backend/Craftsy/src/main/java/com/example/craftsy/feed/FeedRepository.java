@@ -1,5 +1,6 @@
 package com.example.craftsy.feed;
 
+import com.example.craftsy.Group.Entity.Group;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,4 +10,6 @@ import java.util.Optional;
 public interface FeedRepository extends JpaRepository<Feed, Long> {
     Optional<List<Feed>> findByUser(Users user); //get list of projects from user
     Optional<Feed> findByUserAndProjectName(Users user, String projectName); //find a specific project name for a user
+    List<Feed> findByProjectNameContainingIgnoreCaseOrUser_UsernameContainingIgnoreCase(String projectName, String username);
+
 }

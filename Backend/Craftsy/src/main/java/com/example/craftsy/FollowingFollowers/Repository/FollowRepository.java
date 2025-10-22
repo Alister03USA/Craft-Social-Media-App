@@ -12,5 +12,5 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     List<Follow>findByFollower(Users follower); // Finds all follow relationships where a specific user is the follower.
     List<Follow>findByFollowing(Users following); // Finds all follow relationships where a specific user is being followed.
     Optional<Follow> findByFollowerAndFollowing(Users follower, Users following); // Finds a specific follow relationship between two users.
-
+    boolean existsByFollowerAndFollowing(Users follower, Users following); // Check if a follow relationship already exists
 }

@@ -1,9 +1,13 @@
 package com.example.craftsy.Group.Controller;
 
+import com.example.craftsy.FollowingFollowers.Entity.Notification;
 import com.example.craftsy.Group.Entity.Group;
+import com.example.craftsy.Group.Entity.GroupJoinRequest;
+import com.example.craftsy.Group.Repository.GroupJoinRequestRepository;
 import com.example.craftsy.Group.Repository.GroupRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import com.example.craftsy.FollowingFollowers.Repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @RestController
-@RequestMapping("/groups")
 public class GroupController {
 
     @Autowired
@@ -21,6 +24,13 @@ public class GroupController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private GroupJoinRequestRepository groupJoinRequestRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+
     /**
      * POST /groups/create/{adminUsername}
      * This endpoint lets a user create a new group.
@@ -28,8 +38,8 @@ public class GroupController {
      */
     @PostMapping("/create/{adminUsername}")
     public ResponseEntity<Map<String, String>> createGroup(
-            @PathVariable String adminUsername,
-            @RequestBody Group groupRequest) {
+            @PathVariable String adminUsername, // takes value from url path to the parameter
+            @RequestBody Group groupRequest) { // convert the json body from client to Group object
 
         // Find the user who wants to be the admin
         Optional<Users> adminOpt = userRepository.findByUsername(adminUsername);
@@ -133,10 +143,128 @@ public class GroupController {
     }
 
     /**
+     * POST/groups/{username}/join/{group_name}
+     * Public Group - Join directly
+     * Private Group - Sent request (only can be accepted/Declined by Admin)
+     */
+    @PostMapping("/{username}/join/{groupName}")
+    public ResponseEntity<Map<String, String>> joinGroup(
+            @PathVariable String username,
+            @PathVariable String groupName) {
+
+        Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+
+        if (groupOpt.isEmpty() || userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
+        }
+
+        Group group = groupOpt.get();
+        Users user = userOpt.get();
+
+        if (group.getMembers().contains(user)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "User already in group"));
+        }
+
+        Notification notification = new Notification();
+        // public group: add immediately
+        if(!(group.isPrivate())){
+            // Public group: add user immediately
+            group.getMembers().add(user);
+            group.setMemberCount();
+            groupRepository.save(group);
+
+            // Notify admin that user joined
+            notification.setUser(group.getGroupAdmin());
+            notification.setTitle("New Member Joined");
+            notification.setMessage(user.getUsername() + " has joined " + group.getGroupName());
+            notification.setType("GROUP_MEMBER_ADDED");
+            notificationRepository.save(notification);
+
+            return ResponseEntity.ok(Map.of("message", "User added to the group successfully"));
+        }else { // private group
+            // Private group: create join request
+            if (groupJoinRequestRepository.findByGroupAndUser(group, user).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Request already sent"));
+            }
+
+            GroupJoinRequest groupJoinRequest = new GroupJoinRequest();
+            groupJoinRequest.setGroup(group);
+            groupJoinRequest.setUser(user);
+            groupJoinRequestRepository.save(groupJoinRequest);
+
+            // Notify admin that user requested to join
+            notification.setUser(group.getGroupAdmin());
+            notification.setTitle("New Join Request");
+            notification.setMessage(user.getUsername() + " wants to join " + group.getGroupName());
+            notification.setType("GROUP_JOIN_REQUEST");
+            notification.setReferenceId(groupJoinRequest.getId());
+            notificationRepository.save(notification);
+
+            return ResponseEntity.ok(Map.of("message", "Join request sent successfully"));
+        }
+        }
+
+
+
+
+    /**
+     * PUT - /joinRequest/{requestId}/{accepted}
+     * Private Group only - Admin to accept or decline the join request
+     */
+    @PutMapping("/joinRequest/{requestId}/{accepted}")
+    public ResponseEntity<Map<String, String>> handleJoinRequest(
+            @PathVariable Long requestId,
+            @PathVariable boolean accepted) {
+
+        Optional<GroupJoinRequest> requestOpt = groupJoinRequestRepository.findById(requestId);
+        if (requestOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Join request not found"));
+        }
+
+        GroupJoinRequest request = requestOpt.get();
+        Group group = request.getGroup();
+        Users user = request.getUser();
+
+        if (accepted) {
+            group.getMembers().add(user);
+            group.setMemberCount();
+            groupRepository.save(group);
+            request.setAccepted(true);
+            groupJoinRequestRepository.save(request);
+
+            // Notify user
+            Notification notification = new Notification();
+            notification.setUser(user);
+            notification.setTitle("Join Request Accepted");
+            notification.setMessage("You have been added to group: " + group.getGroupName());
+            notification.setType("JOIN_ACCEPTED");
+            notification.setReferenceId(group.getId());
+            notificationRepository.save(notification);
+
+            return ResponseEntity.ok(Map.of("message", "User added to group"));
+        } else {
+            groupJoinRequestRepository.delete(request);
+
+            // Notify user
+            Notification notification = new Notification();
+            notification.setUser(user);
+            notification.setTitle("Join Request Declined");
+            notification.setMessage("Your request to join " + group.getGroupName() + " was declined");
+            notification.setType("JOIN_DECLINED");
+            notification.setReferenceId(group.getId());
+            notificationRepository.save(notification);
+
+            return ResponseEntity.ok(Map.of("message", "Join request declined"));
+        }
+    }
+
+
+    /**
      * DELETE /groups/{groupName}/remove-member/{username}
      * Remove a user from a group. Only admins can do this.
      */
-    @DeleteMapping("/{groupName}/remove-member/{username}")
+    @DeleteMapping("/{groupName}/removeMember/{username}")
     public ResponseEntity<Map<String, String>> removeMember(
             @PathVariable String groupName,
             @PathVariable String username) {
