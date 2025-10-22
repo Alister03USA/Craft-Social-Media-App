@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface FeedRespository extends JpaRepository<Feed, Long> {
+public interface FeedRepository extends JpaRepository<Feed, Long> {
     Optional<List<Feed>> findByUser(Users user); //get list of projects from user
     Optional<Feed> findByUserAndProjectName(Users user, String projectName); //find a specific project name for a user
 }
