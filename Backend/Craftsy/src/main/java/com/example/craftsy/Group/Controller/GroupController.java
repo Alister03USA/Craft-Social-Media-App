@@ -1,13 +1,14 @@
 package com.example.craftsy.Group.Controller;
 
-import com.example.craftsy.FollowingFollowers.Entity.Notification;
 import com.example.craftsy.Group.Entity.Group;
 import com.example.craftsy.Group.Entity.GroupJoinRequest;
 import com.example.craftsy.Group.Repository.GroupJoinRequestRepository;
 import com.example.craftsy.Group.Repository.GroupRepository;
+import com.example.craftsy.Notification.Entity.Notification;
+import com.example.craftsy.Notification.NotificationWebSocket;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
-import com.example.craftsy.FollowingFollowers.Repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -166,23 +167,32 @@ public class GroupController {
             return ResponseEntity.badRequest().body(Map.of("message", "User already in group"));
         }
 
-        Notification notification = new Notification();
         // public group: add immediately
-        if(!(group.isPrivate())){
+        if (!group.isPrivate()) {
             // Public group: add user immediately
             group.getMembers().add(user);
             group.setMemberCount();
             groupRepository.save(group);
 
-            // Notify admin that user joined
-            notification.setUser(group.getGroupAdmin());
-            notification.setTitle("New Member Joined");
-            notification.setMessage(user.getUsername() + " has joined " + group.getGroupName());
-            notification.setType("GROUP_MEMBER_ADDED");
-            notificationRepository.save(notification);
+            // Notify all members
+            for (Users member : group.getMembers()) {
+                if (member.equals(user)) continue; // optional: skip self
+
+                Notification notif = new Notification();
+                notif.setUser(member);
+                notif.setTitle("New Member Joined");
+                notif.setMessage(user.getUsername() + " has joined " + group.getGroupName());
+                notif.setType("GROUP_MEMBER_ADDED");
+                notif.setCreatedAt(new Date());
+                notif.setIsRead(false);
+
+                notificationRepository.save(notif);
+                NotificationWebSocket.pushNotification(member.getUsername(), notif);
+            }
 
             return ResponseEntity.ok(Map.of("message", "User added to the group successfully"));
-        }else { // private group
+
+        } else {
             // Private group: create join request
             if (groupJoinRequestRepository.findByGroupAndUser(group, user).isPresent()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Request already sent"));
@@ -193,13 +203,17 @@ public class GroupController {
             groupJoinRequest.setUser(user);
             groupJoinRequestRepository.save(groupJoinRequest);
 
-            // Notify admin that user requested to join
-            notification.setUser(group.getGroupAdmin());
-            notification.setTitle("New Join Request");
-            notification.setMessage(user.getUsername() + " wants to join " + group.getGroupName());
-            notification.setType("GROUP_JOIN_REQUEST");
-            notification.setReferenceId(groupJoinRequest.getId());
-            notificationRepository.save(notification);
+            Notification notif = new Notification();
+            notif.setUser(group.getGroupAdmin());
+            notif.setTitle("New Join Request");
+            notif.setMessage(user.getUsername() + " wants to join " + group.getGroupName());
+            notif.setType("GROUP_JOIN_REQUEST");
+            notif.setReferenceId(groupJoinRequest.getId());
+            notif.setCreatedAt(new Date());
+            notif.setIsRead(false);
+
+            notificationRepository.save(notif);
+            NotificationWebSocket.pushNotification(group.getGroupAdmin().getUsername(), notif);
 
             return ResponseEntity.ok(Map.of("message", "Join request sent successfully"));
         }
@@ -233,27 +247,48 @@ public class GroupController {
             request.setAccepted(true);
             groupJoinRequestRepository.save(request);
 
-            // Notify user
-            Notification notification = new Notification();
-            notification.setUser(user);
-            notification.setTitle("Join Request Accepted");
-            notification.setMessage("You have been added to group: " + group.getGroupName());
-            notification.setType("JOIN_ACCEPTED");
-            notification.setReferenceId(group.getId());
-            notificationRepository.save(notification);
+            // Notify the new user
+            Notification userNotif = new Notification();
+            userNotif.setUser(user);
+            userNotif.setTitle("Join Request Accepted");
+            userNotif.setMessage("You have been added to group: " + group.getGroupName());
+            userNotif.setType("JOIN_ACCEPTED");
+            userNotif.setReferenceId(group.getId());
+            userNotif.setCreatedAt(new Date());
+            userNotif.setIsRead(false);
+            notificationRepository.save(userNotif);
+            NotificationWebSocket.pushNotification(user.getUsername(), userNotif);
+
+            // Notify all other group members
+            for (Users member : group.getMembers()) {
+                if (member.equals(user)) continue; // skip the new user
+
+                Notification notif = new Notification();
+                notif.setUser(member);
+                notif.setTitle("New Member Joined");
+                notif.setMessage(user.getUsername() + " has joined " + group.getGroupName());
+                notif.setType("GROUP_MEMBER_ADDED");
+                notif.setCreatedAt(new Date());
+                notif.setIsRead(false);
+                notificationRepository.save(notif);
+                NotificationWebSocket.pushNotification(member.getUsername(), notif);
+            }
 
             return ResponseEntity.ok(Map.of("message", "User added to group"));
         } else {
             groupJoinRequestRepository.delete(request);
 
-            // Notify user
-            Notification notification = new Notification();
-            notification.setUser(user);
-            notification.setTitle("Join Request Declined");
-            notification.setMessage("Your request to join " + group.getGroupName() + " was declined");
-            notification.setType("JOIN_DECLINED");
-            notification.setReferenceId(group.getId());
-            notificationRepository.save(notification);
+            Notification notif = new Notification();
+            notif.setUser(user);
+            notif.setTitle("Join Request Declined");
+            notif.setMessage("Your request to join " + group.getGroupName() + " was declined");
+            notif.setType("JOIN_DECLINED");
+            notif.setReferenceId(group.getId());
+            notif.setCreatedAt(new Date());
+            notif.setIsRead(false);
+
+            notificationRepository.save(notif);
+            NotificationWebSocket.pushNotification(user.getUsername(), notif);
 
             return ResponseEntity.ok(Map.of("message", "Join request declined"));
         }
@@ -292,6 +327,16 @@ public class GroupController {
         // Remove the user and save the group
         group.getMembers().remove(user);
         groupRepository.save(group);
+        Notification notif = new Notification();
+        notif.setUser(user);
+        notif.setTitle("Removed from Group");
+        notif.setMessage("You have been removed from " + group.getGroupName());
+        notif.setType("GROUP_MEMBER_REMOVED");
+        notif.setCreatedAt(new Date());
+        notif.setIsRead(false);
+
+        notificationRepository.save(notif);
+        NotificationWebSocket.pushNotification(user.getUsername(), notif);
 
         return ResponseEntity.ok(Map.of("message", "Member removed successfully"));
     }

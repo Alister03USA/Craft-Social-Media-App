@@ -1,7 +1,8 @@
 package com.example.craftsy.Notification.Controller;
 
-import com.example.craftsy.FollowingFollowers.Entity.Notification;
-import com.example.craftsy.FollowingFollowers.Repository.NotificationRepository;
+import com.example.craftsy.Notification.NotificationWebSocket;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
+import com.example.craftsy.Notification.Entity.Notification;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,8 +71,29 @@ public class NotificationController {
         Notification saved = notificationRepository.save(notification);
 
         // Push notification via WebSocket
-     //   NotificationWebSocket.sendNotification(receiverUsername, saved);
+        NotificationWebSocket.pushNotification(receiverUsername, saved);
 
         return ResponseEntity.ok(saved);
     }
+
+    // Get all the notifications from a user
+    @GetMapping("/{username}")
+    public ResponseEntity<List<Notification>> getNotification(@PathVariable String username) {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Username not found"));
+
+        // Fetch all unread notifications
+        List<Notification> unreadNotifications = notificationRepository
+                .findByUserAndIsReadFalseOrderByCreatedAtDesc(user);
+
+        // Mark all fetched notifications as read
+        for (Notification notif : unreadNotifications) {
+            notif.setIsRead(true);
+        }
+        notificationRepository.saveAll(unreadNotifications); // batch save
+
+        return ResponseEntity.ok(unreadNotifications);
+    }
+
+
 }
