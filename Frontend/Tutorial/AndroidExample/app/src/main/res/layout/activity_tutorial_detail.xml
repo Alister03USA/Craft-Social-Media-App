@@ -1,77 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="12dp"
-    android:background="@color/blue_background">
-
-    <TextView
-        android:id="@+id/detailTitle"
-        android:text="Tutorial"
-        android:textStyle="bold"
-        android:textSize="20sp"
-        android:textColor="@color/text_black"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <VideoView
-        android:id="@+id/detailVideo"
-        android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:layout_below="@id/detailTitle"
-        android:layout_marginTop="8dp"/>
-
-    <ImageView
-        android:id="@+id/detailImage"
-        android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:layout_below="@id/detailTitle"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_post_placeholder"/>
-
-    <TextView
-        android:id="@+id/detailDescription"
-        android:layout_below="@id/detailVideo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/text_black"
-        android:layout_marginTop="10dp"/>
-
-    <TextView
-        android:id="@+id/detailCategory"
-        android:layout_below="@id/detailDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/blue_primary"
-        android:layout_marginTop="6dp"/>
+    android:background="@color/blue_background"
+    android:padding="16dp">
 
     <LinearLayout
-        android:id="@+id/detailButtons"
-        android:orientation="horizontal"
-        android:gravity="end"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/detailCategory"
-        android:layout_marginTop="12dp">
+        android:layout_height="wrap_content">
+
+        <VideoView
+            android:id="@+id/videoPreview"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:background="@drawable/ic_post_placeholder"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/tutorialTitleInput"
+            android:hint="Title"
+            android:textColor="@color/text_black"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <EditText
+            android:id="@+id/tutorialDescriptionInput"
+            android:hint="Description"
+            android:textColor="@color/text_black"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <EditText
+            android:id="@+id/tutorialCategoryInput"
+            android:hint="Category"
+            android:textColor="@color/text_black"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <Button
-            android:id="@+id/backToFeedBtn"
-            android:text="Back"
-            android:backgroundTint="@color/blue_secondary"
+            android:id="@+id/editTutorialBtn"
+            android:text="Edit Tutorial"
             android:textColor="@color/text_white"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:backgroundTint="@color/button_blue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
 
         <Button
             android:id="@+id/deleteTutorialBtn"
-            android:text="Delete"
-            android:layout_marginStart="12dp"
-            android:backgroundTint="@color/button_blue"
+            android:text="Delete Tutorial"
             android:textColor="@color/text_white"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:backgroundTint="@color/red_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
     </LinearLayout>
-</RelativeLayout>
+</ScrollView>

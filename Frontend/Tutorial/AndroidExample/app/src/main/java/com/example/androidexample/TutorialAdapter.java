@@ -5,46 +5,59 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
 
 public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.VH> {
 
-    public interface OnClick { void onClick(long id); }
+    public interface OnItemClick {
+        void onClick(TutorialItem item);
+    }
 
     private final List<TutorialItem> data;
-    private final OnClick listener;
+    private final OnItemClick callback;
 
-    public TutorialAdapter(List<TutorialItem> data, OnClick listener) {
+    public TutorialAdapter(List<TutorialItem> data, OnItemClick callback) {
         this.data = data;
-        this.listener = listener;
+        this.callback = callback;
     }
 
     @NonNull
-    @Override public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tutorial_item, parent, false);
-        return new VH(v);
+    @Override
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.tutorial_item, parent, false);
+        return new VH(view);
     }
 
-    @Override public void onBindViewHolder(@NonNull VH h, int pos) {
-        TutorialItem t = data.get(pos);
-        h.title.setText(t.getTitle());
-        h.desc.setText(t.getDescription());
-        h.cat.setText(t.getCategory());
-        h.itemView.setOnClickListener(v -> listener.onClick(t.getId()));
+    @Override
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        TutorialItem item = data.get(position);
+        holder.title.setText(item.getTitle());
+        holder.description.setText(item.getDescription());
+        holder.category.setText(item.getCategory());
+
+        holder.itemView.setOnClickListener(v -> callback.onClick(item));
     }
 
-    @Override public int getItemCount() { return data.size(); }
+    @Override
+    public int getItemCount() {
+        return data.size();
+    }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView title, desc, cat; ImageView thumb;
-        VH(View v) {
-            super(v);
-            title = v.findViewById(R.id.tutorialTitleText);
-            desc  = v.findViewById(R.id.tutorialDescText);
-            cat   = v.findViewById(R.id.tutorialCategoryText);
-            thumb = v.findViewById(R.id.tutorialThumbnail);
+        TextView title, description, category;
+        ImageView thumbnail;
+
+        VH(View itemView) {
+            super(itemView);
+            title = itemView.findViewById(R.id.tutorialTitle);
+            description = itemView.findViewById(R.id.tutorialDescription);
+            category = itemView.findViewById(R.id.tutorialCategory);
+            thumbnail = itemView.findViewById(R.id.tutorialThumbnail);
         }
     }
 }

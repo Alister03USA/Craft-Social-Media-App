@@ -22,4 +22,6 @@
     <color name="blue_on_primary">@color/text_white</color>
     <color name="blue_on_secondary">@color/text_black</color>
     <color name="blue_on_background">@color/text_black</color>
+    <color name="background_light">#F8F9FA</color>
+    <color name="red_error">#D32F2F</color>
 </resources>
