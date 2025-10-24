@@ -120,10 +120,10 @@ public class TutorialController {
 
 
     /**
-     * GET "/tutorial/{id}"
+     * GET "/tutorial/{id}/file"
      * * Fetch the file of the Videos - Optimized for direct streaming
     */
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/file")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
         if (tutorialOpt.isEmpty()) {
