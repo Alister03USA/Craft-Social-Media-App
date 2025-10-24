@@ -1,112 +1,236 @@
 package com.example.androidexample;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.*;
+import android.provider.OpenableColumns;
+import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Upload tutorial either via MP4 file or YouTube/URL.
+ * Connects to Spring backend /tutorial/uploadFile or /uploadUrl
+ */
 public class TutorialUploadActivity extends AppCompatActivity {
 
-    private static final int PICK_VIDEO_REQUEST = 1;
-    private ImageButton uploadIcon;
-    private EditText titleInput, descInput, categoryInput, urlInput;
-    private Switch uploadSwitch;
-    private Button postBtn;
-    private Uri selectedUri;
-    private boolean isUrl = false;
+    private static final String TAG = "TutorialUploadActivity";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial";
+    private static final int PICK_VIDEO_REQUEST = 101;
 
-    private static final String FILE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/uploadFile";
-    private static final String URL_URL = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/uploadUrl";
+    private EditText titleInput, descInput, categoryInput, urlInput;
+    private ImageView btnSelectFile, btnUpload;
+    private ProgressBar progressBar;
+    private Uri selectedFileUri;
+    private final String username = "Fuji"; // ✅ must exist in DB
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutorial_upload);
+        ImageButton btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> finish());
+        titleInput = findViewById(R.id.inputTitle);
+        descInput = findViewById(R.id.inputDescription);
+        categoryInput = findViewById(R.id.inputCategory);
+        urlInput = findViewById(R.id.inputUrl);
+        btnSelectFile = findViewById(R.id.btnSelectFile);
+        btnUpload = findViewById(R.id.btnUpload);
+        progressBar = findViewById(R.id.progressBar);
 
-        uploadIcon = findViewById(R.id.uploadIcon);
-        titleInput = findViewById(R.id.tutorialTitleInput);
-        descInput = findViewById(R.id.tutorialDescriptionInput);
-        categoryInput = findViewById(R.id.tutorialCategoryInput);
-        urlInput = findViewById(R.id.urlInput);
-        uploadSwitch = findViewById(R.id.uploadModeSwitch);
-        postBtn = findViewById(R.id.postTutorialBtn);
+        btnSelectFile.setOnClickListener(v -> openFileChooser());
 
-        uploadSwitch.setOnCheckedChangeListener((v, checked) -> {
-            isUrl = checked;
-            urlInput.setVisibility(checked ? EditText.VISIBLE : EditText.GONE);
-            uploadIcon.setVisibility(checked ? ImageButton.GONE : ImageButton.VISIBLE);
-        });
+        btnUpload.setOnClickListener(v -> {
+            if (!isNetworkConnected()) {
+                Toast.makeText(this, "No Internet connection", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        uploadIcon.setOnClickListener(v -> pickFile());
-        postBtn.setOnClickListener(v -> {
-            if (isUrl) uploadByUrl();
-            else uploadByFile();
+            if (selectedFileUri != null) {
+                uploadFileToBackend();
+            } else if (!urlInput.getText().toString().trim().isEmpty()) {
+                uploadUrlToBackend(urlInput.getText().toString().trim());
+            } else {
+                Toast.makeText(this, "Please select a file or paste a URL", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
-    private void pickFile() {
-        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-        i.setType("video/*");
-        startActivityForResult(i, PICK_VIDEO_REQUEST);
+    // =============================
+    // File chooser
+    // =============================
+    private void openFileChooser() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("video/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Video"), PICK_VIDEO_REQUEST);
     }
 
     @Override
-    protected void onActivityResult(int req, int res, @Nullable Intent data) {
-        super.onActivityResult(req, res, data);
-        if (req == PICK_VIDEO_REQUEST && res == RESULT_OK && data != null)
-            selectedUri = data.getData();
-    }
-
-    private void uploadByFile() {
-        if (selectedUri == null) {
-            Toast.makeText(this, "Select a video", Toast.LENGTH_SHORT).show();
-            return;
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_VIDEO_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
+            selectedFileUri = data.getData();
+            if (selectedFileUri != null) {
+                String name = getFileName(selectedFileUri);
+                Toast.makeText(this, "Selected: " + name, Toast.LENGTH_SHORT).show();
+                btnSelectFile.setImageResource(android.R.drawable.ic_menu_upload);
+            }
         }
-        VolleyMultipartRequest req = new VolleyMultipartRequest(Request.Method.POST, FILE_URL,
-                r -> Toast.makeText(this, "Uploaded!", Toast.LENGTH_SHORT).show(),
-                e -> Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show()) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> p = new HashMap<>();
-                p.put("username", "Fuji");
-                p.put("title", titleInput.getText().toString());
-                p.put("description", descInput.getText().toString());
-                p.put("category", categoryInput.getText().toString());
-                return p;
-            }
-
-            @Override
-            protected Map<String, DataPart> getByteData() {
-                Map<String, DataPart> p = new HashMap<>();
-                p.put("file", new DataPart("video.mp4", FileUtils.getFileDataFromUri(getApplicationContext(), selectedUri)));
-                return p;
-            }
-        };
-        Volley.newRequestQueue(this).add(req);
     }
 
-    private void uploadByUrl() {
-        StringRequest req = new StringRequest(Request.Method.POST, URL_URL,
-                r -> Toast.makeText(this, "Uploaded via URL!", Toast.LENGTH_SHORT).show(),
-                e -> Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show()) {
+    private String getFileName(Uri uri) {
+        String result = null;
+        try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                result = cursor.getString(nameIndex);
+            }
+        }
+        if (result == null) result = "video.mp4";
+        return result;
+    }
+
+    // =============================
+    // Upload MP4 file
+    // =============================
+    private void uploadFileToBackend() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        try {
+            byte[] fileData = getFileDataFromUri(selectedFileUri);
+            String fileName = getFileName(selectedFileUri);
+
+            VolleyMultipartRequest request = new VolleyMultipartRequest(
+                Request.Method.POST,
+                BASE_URL + "/uploadFile",
+                response -> {
+                    progressBar.setVisibility(View.GONE);
+                    String resp = new String(response.data, StandardCharsets.UTF_8);
+                    Log.d(TAG, "✅ Upload success: " + resp);
+                    Toast.makeText(this, "Upload success!", Toast.LENGTH_SHORT).show();
+                },
+                error -> {
+                    progressBar.setVisibility(View.GONE);
+                    NetworkResponse res = error.networkResponse;
+                    if (res != null && res.data != null) {
+                        String err = new String(res.data, StandardCharsets.UTF_8);
+                        Log.e(TAG, "❌ Upload failed: " + err);
+                        Toast.makeText(this, "Server error: " + err, Toast.LENGTH_LONG).show();
+                    } else {
+                        Log.e(TAG, "Upload failed: " + error.toString());
+                        Toast.makeText(this, "Upload failed: " + error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                },
+                getFormParams(),
+                getByteData(fileName, fileData)
+            );
+
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(this, "File read failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private byte[] getFileDataFromUri(Uri uri) throws IOException {
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[1024];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(data)) != -1) {
+            buffer.write(data, 0, bytesRead);
+        }
+        return buffer.toByteArray();
+    }
+
+    // =============================
+    // Upload via YouTube / URL
+    // =============================
+    private void uploadUrlToBackend(String videoUrl) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        StringRequest request = new StringRequest(
+                Request.Method.POST,
+                BASE_URL + "/uploadUrl",
+                response -> {
+                    progressBar.setVisibility(View.GONE);
+                    Log.d(TAG, "✅ URL upload response: " + response);
+                    Toast.makeText(this, "Tutorial uploaded via URL!", Toast.LENGTH_SHORT).show();
+                },
+                error -> {
+                    progressBar.setVisibility(View.GONE);
+                    NetworkResponse res = error.networkResponse;
+                    if (res != null && res.data != null) {
+                        String err = new String(res.data, StandardCharsets.UTF_8);
+                        Log.e(TAG, "❌ URL upload failed: " + err);
+                        Toast.makeText(this, "Server error: " + err, Toast.LENGTH_LONG).show();
+                    } else {
+                        Log.e(TAG, "Upload failed: " + error.toString());
+                        Toast.makeText(this, "Upload failed: " + error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }) {
             @Override
             protected Map<String, String> getParams() {
-                Map<String, String> p = new HashMap<>();
-                p.put("username", "Fuji");
-                p.put("title", titleInput.getText().toString());
-                p.put("description", descInput.getText().toString());
-                p.put("category", categoryInput.getText().toString());
-                p.put("fileUrl", urlInput.getText().toString());
-                return p;
+                Map<String, String> params = new HashMap<>();
+                params.put("username", username);
+                params.put("title", titleInput.getText().toString().trim());
+                params.put("description", descInput.getText().toString().trim());
+                params.put("category", categoryInput.getText().toString().trim());
+                params.put("fileUrl", videoUrl);
+                return params;
             }
         };
-        Volley.newRequestQueue(this).add(req);
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
+    }
+
+    // =============================
+    // Network connectivity
+    // =============================
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
+
+    // =============================
+    // Helper methods for VolleyMultipartRequest params
+    // =============================
+    public Map<String, String> getFormParams() {
+        Map<String, String> params = new HashMap<>();
+        params.put("username", username);
+        params.put("title", titleInput.getText().toString().trim());
+        params.put("description", descInput.getText().toString().trim());
+        params.put("category", categoryInput.getText().toString().trim());
+        return params;
+    }
+
+    private Map<String, VolleyMultipartRequest.DataPart> getByteData(String fileName, byte[] fileData) {
+        Map<String, VolleyMultipartRequest.DataPart> params = new HashMap<>();
+        params.put("file", new VolleyMultipartRequest.DataPart(fileName, fileData, "video/mp4"));
+        return params;
     }
 }

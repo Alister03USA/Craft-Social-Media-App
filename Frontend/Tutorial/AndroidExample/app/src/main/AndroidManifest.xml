@@ -3,7 +3,8 @@
     package="com.example.androidexample">
 
     <!-- Internet permission -->
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- Access to local storage for file uploads -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -31,6 +32,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".EditTutorialActivity"
+            android:exported="false"
+            android:label="Edit Tutorial" />
         <!-- Tutorial Upload Page -->
         <activity
             android:name=".TutorialUploadActivity"

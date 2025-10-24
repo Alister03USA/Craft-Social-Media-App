@@ -1,26 +1,22 @@
 package com.example.androidexample;
 
 import android.content.ContentResolver;
-import android.content.Context;
 import android.net.Uri;
-
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class FileUtils {
-    public static byte[] getFileDataFromUri(Context ctx, Uri uri) {
-        try {
-            ContentResolver cr = ctx.getContentResolver();
-            InputStream is = cr.openInputStream(uri);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int r;
-            while ((r = is.read(buf)) != -1) bos.write(buf, 0, r);
-            is.close();
-            return bos.toByteArray();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new byte[]{};
+    public static byte[] readBytes(ContentResolver resolver, Uri uri) throws IOException {
+        InputStream inputStream = resolver.openInputStream(uri);
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+        int len;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
         }
+        inputStream.close();
+        return byteBuffer.toByteArray();
     }
 }

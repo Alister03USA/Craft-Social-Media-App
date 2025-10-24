@@ -1,6 +1,7 @@
 package com.example.androidexample;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+/**
+ * Adapter for RecyclerView that displays tutorial items in TutorialFeed.
+ * Properly forwards tutorial details to TutorialDetailActivity.
+ */
 public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.ViewHolder> {
 
     public interface OnItemClickListener {
@@ -40,11 +45,21 @@ public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.ViewHo
         TutorialItem item = tutorialList.get(position);
 
         holder.title.setText(item.getTitle());
-        holder.category.setText(item.getCategory());
-        holder.username.setText("@" + item.getUsername());
-        holder.description.setText(item.getDescription());
+        holder.category.setText(item.getCategory() != null ? item.getCategory() : "");
+        holder.username.setText(item.getUsername() != null ? "@" + item.getUsername() : "@Unknown");
+        holder.description.setText(item.getDescription() != null ? item.getDescription() : "");
 
-        holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
+        // --- Click to open TutorialDetailActivity ---
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, TutorialDetailActivity.class);
+            intent.putExtra("id", item.getId());
+            intent.putExtra("title", item.getTitle());
+            intent.putExtra("description", item.getDescription());
+            intent.putExtra("category", item.getCategory());
+            intent.putExtra("fileUrl", item.getFileURL());  // ✅ now matches backend JSON "fileURL"
+            intent.putExtra("username", item.getUsername());
+            context.startActivity(intent);
+        });
     }
 
     @Override
@@ -52,6 +67,7 @@ public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.ViewHo
         return tutorialList.size();
     }
 
+    // --- ViewHolder ---
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, category, username, description;
         ImageView thumbnail;

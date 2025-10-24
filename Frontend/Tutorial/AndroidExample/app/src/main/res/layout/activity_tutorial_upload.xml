@@ -1,148 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/blue_background"
-    android:padding="16dp">
+    android:background="@color/craftsy_background">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <!-- Back button -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="12dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_arrow_back"
+        android:contentDescription="Back"
+        app:tint="@color/dark_text" />
+
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_below="@id/btnBack"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal">
+        android:layout_height="match_parent"
+        android:padding="24dp">
 
-        <!-- Profile back button -->
-        <ImageButton
-            android:id="@+id/backToProfileBtn"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/rounded_button"
-            android:src="@android:drawable/ic_menu_revert"
-            android:contentDescription="Back to Profile"
-            app:tint="@color/blue_primary"
-            android:layout_marginBottom="10dp" />
-
-        <!-- Upload Type Switch -->
         <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:gravity="center_horizontal">
 
-            <TextView
+            <!-- Title input -->
+            <EditText
+                android:id="@+id/inputTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tutorial Title"
+                android:inputType="text"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Category input -->
+            <EditText
+                android:id="@+id/inputCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Category"
+                android:layout_marginTop="8dp"
+                android:inputType="text"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Description input -->
+            <EditText
+                android:id="@+id/inputDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Description"
+                android:layout_marginTop="8dp"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:gravity="top"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Video URL input -->
+            <EditText
+                android:id="@+id/inputUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Or paste YouTube / video URL"
+                android:layout_marginTop="16dp"
+                android:inputType="textUri"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Select file button -->
+            <ImageView
+                android:id="@+id/btnSelectFile"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="16dp"
+                android:src="@drawable/ic_upload"
+                android:contentDescription="Select video"
+                android:background="@drawable/rounded_bg_gray"
+                android:padding="16dp" />
+
+            <!-- Upload button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnUpload"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Upload via File"
-                android:textColor="@color/text_black"
-                android:textSize="14sp"
-                android:layout_marginEnd="6dp"/>
+                android:layout_marginTop="32dp"
+                android:src="@drawable/ic_upload_arrow"
+                app:backgroundTint="@color/craftsy_accent" />
 
-            <Switch
-                android:id="@+id/uploadModeSwitch"
+            <!-- Progress bar -->
+            <ProgressBar
+                android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
-                android:textOff="File"
-                android:textOn="URL"
-                android:textColor="@color/text_black" />
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Upload via URL"
-                android:textColor="@color/text_black"
-                android:textSize="14sp"
-                android:layout_marginStart="6dp"/>
         </LinearLayout>
-
-        <!-- Upload icon -->
-        <ImageButton
-            android:id="@+id/uploadIcon"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@drawable/ic_post_placeholder"
-            android:background="@drawable/tutorial_card_background"
-            android:contentDescription="Upload Video"
-            app:tint="@color/blue_primary"
-            android:layout_marginBottom="20dp" />
-
-        <!-- URL Input Field (hidden by default) -->
-        <EditText
-            android:id="@+id/urlInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Paste video URL here"
-            android:visibility="gone"
-            android:background="@drawable/search_input_bg"
-            android:textColor="@color/text_black"
-            android:textColorHint="@color/text_gray"
-            android:padding="12dp"
-            android:layout_marginBottom="12dp"/>
-
-        <!-- Tutorial Title -->
-        <EditText
-            android:id="@+id/tutorialTitleInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Enter tutorial title"
-            android:background="@drawable/search_input_bg"
-            android:textColor="@color/text_black"
-            android:textColorHint="@color/text_gray"
-            android:padding="12dp"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Tutorial Category -->
-        <EditText
-            android:id="@+id/tutorialCategoryInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Enter tutorial category (e.g., Knitting, Woodcraft)"
-            android:background="@drawable/search_input_bg"
-            android:textColor="@color/text_black"
-            android:textColorHint="@color/text_gray"
-            android:padding="12dp"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Tutorial Description -->
-        <EditText
-            android:id="@+id/tutorialDescriptionInput"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:gravity="top"
-            android:hint="Enter tutorial description"
-            android:background="@drawable/search_input_bg"
-            android:textColor="@color/text_black"
-            android:textColorHint="@color/text_gray"
-            android:padding="12dp"
-            android:layout_marginBottom="20dp"/>
-
-        <!-- Edit and Post Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:layout_marginTop="10dp">
-
-            <Button
-                android:id="@+id/editTutorialBtn"
-                android:layout_width="120dp"
-                android:layout_height="wrap_content"
-                android:text="Edit"
-                android:backgroundTint="@color/blue_secondary"
-                android:textColor="@color/text_white"
-                android:layout_marginEnd="20dp"/>
-
-            <Button
-                android:id="@+id/postTutorialBtn"
-                android:layout_width="120dp"
-                android:layout_height="wrap_content"
-                android:text="Post"
-                android:backgroundTint="@color/button_blue"
-                android:textColor="@color/text_white"/>
-        </LinearLayout>
-
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</RelativeLayout>
