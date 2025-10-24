@@ -20,7 +20,7 @@
             android:background="@drawable/rounded_button"
             android:src="@android:drawable/ic_menu_revert"
             android:contentDescription="Back to Profile"
-            android:tint="@color/blue_primary"
+            app:tint="@color/blue_primary"
             android:layout_marginBottom="10dp" />
 
         <!-- Upload Type Switch -->
@@ -65,7 +65,7 @@
             android:src="@drawable/ic_post_placeholder"
             android:background="@drawable/tutorial_card_background"
             android:contentDescription="Upload Video"
-            android:tint="@color/blue_primary"
+            app:tint="@color/blue_primary"
             android:layout_marginBottom="20dp" />
 
         <!-- URL Input Field (hidden by default) -->

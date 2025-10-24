@@ -1,46 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/tutorial_card_background"
-    android:orientation="vertical"
-    android:padding="10dp"
-    android:layout_margin="8dp">
+    android:layout_margin="8dp"
+    card_view:cardCornerRadius="10dp"
+    card_view:cardElevation="4dp"
+    android:backgroundTint="@color/blue_background">
 
-    <ImageView
-        android:id="@+id/tutorialThumbnail"
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="12dp"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_post_placeholder"
-        android:contentDescription="Tutorial Thumbnail" />
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/tutorialTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="Tutorial Title"
-        android:textColor="@color/text_black"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        <!-- Thumbnail -->
+        <ImageView
+            android:id="@+id/tutorialThumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_post_placeholder"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/tutorial_thumbnail" />
 
-    <TextView
-        android:id="@+id/tutorialCategory"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Category"
-        android:textColor="@color/text_gray"
-        android:textSize="14sp" />
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tutorialTitle"
+            android:text="@string/tutorial_title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_black"
+            android:layout_marginBottom="4dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-    <TextView
-        android:id="@+id/tutorialDescription"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Tutorial Description"
-        android:textColor="@color/text_black"
-        android:textSize="13sp"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        <!-- Username -->
+        <TextView
+            android:id="@+id/tutorialUsername"
+            android:text="@string/tutorial_username"
+            android:textSize="14sp"
+            android:textColor="@color/text_gray"
+            android:layout_marginBottom="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-</LinearLayout>
+        <!-- Category -->
+        <TextView
+            android:id="@+id/tutorialCategory"
+            android:text="@string/tutorial_category"
+            android:textSize="14sp"
+            android:textColor="@color/blue_primary"
+            android:layout_marginBottom="6dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/tutorialDescription"
+            android:text="@string/tutorial_description"
+            android:textColor="@color/text_black"
+            android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

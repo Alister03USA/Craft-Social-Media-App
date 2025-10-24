@@ -4,115 +4,124 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.material.button.MaterialButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.Request;
-import com.android.volley.toolbox.JsonArrayRequest;
-
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Displays a grid of tutorials belonging to a specific user.
- * When clicked, each tutorial opens TutorialDetailActivity for detailed view.
- */
 public class TutorialFeedActivity extends AppCompatActivity {
 
-    private RecyclerView tutorialRecyclerView;
-    private TutorialAdapter tutorialAdapter;
-    private ProgressBar progressBar;
-    private List<TutorialItem> tutorialList;
+    private static final String TAG = "TutorialFeed";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/search?query=";
 
-    // Replace with your COMS309 server URL
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/user/";
-    private String username = "Fuji"; // Replace with logged-in user if available
+    private RecyclerView recyclerView;
+    private ProgressBar progressBar;
+    private EditText searchInput;
+    private MaterialButton searchButton;
+
+    private List<TutorialItem> tutorialList;
+    private TutorialAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutorial_feed);
 
-        // Initialize UI components
-        tutorialRecyclerView = findViewById(R.id.tutorialRecyclerView);
+        recyclerView = findViewById(R.id.tutorialRecyclerView);
         progressBar = findViewById(R.id.progressBar);
+        searchInput = findViewById(R.id.searchInput);
+        searchButton = findViewById(R.id.searchButton);
 
-        // Initialize list and adapter
         tutorialList = new ArrayList<>();
-        tutorialAdapter = new TutorialAdapter(tutorialList, item -> {
-            Intent intent = new Intent(TutorialFeedActivity.this, TutorialDetailActivity.class);
-            intent.putExtra("tutorialId", item.getId());
+
+        adapter = new TutorialAdapter(this, tutorialList, item -> {
+            Intent intent = new Intent(this, TutorialDetailActivity.class);
+            intent.putExtra("id", item.getId());
+            intent.putExtra("title", item.getTitle());
+            intent.putExtra("description", item.getDescription());
+            intent.putExtra("category", item.getCategory());
+            intent.putExtra("fileUrl", item.getFileUrl());
+            intent.putExtra("filePath", item.getFilePath());
             intent.putExtra("username", item.getUsername());
+            Log.d(TAG, "Opening detail for: " + item.getTitle() +
+                    " | fileUrl=" + item.getFileUrl() +
+                    " | filePath=" + item.getFilePath());
             startActivity(intent);
         });
 
-        tutorialRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        tutorialRecyclerView.setAdapter(tutorialAdapter);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        recyclerView.setAdapter(adapter);
 
-        // Fetch data from backend
-        fetchTutorials();
+        // Load tutorials
+        fetchTutorials("");
+
+        searchButton.setOnClickListener(v -> {
+            String query = searchInput.getText().toString().trim();
+            fetchTutorials(query);
+        });
     }
 
-    /**
-     * Fetches tutorials for the given username from the backend.
-     */
-    private void fetchTutorials() {
+    private void fetchTutorials(String query) {
         progressBar.setVisibility(View.VISIBLE);
-        String url = BASE_URL + username;
-
-        Log.d("TutorialFeedActivity", "Fetching tutorials from: " + url);
+        String url = BASE_URL + query;
+        Log.d(TAG, "Fetching tutorials from: " + url);
 
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
-                    progressBar.setVisibility(View.GONE);
-                    parseTutorials(response);
+                    tutorialList.clear();
+                    parseResponse(response);
                 },
                 error -> {
                     progressBar.setVisibility(View.GONE);
-                    Log.e("TutorialFeedActivity", "Fetch failed: " + error.toString());
-                    Toast.makeText(this, "Failed to fetch tutorials", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Volley error: " + error.getMessage(), error);
+                    Toast.makeText(this, "Failed to load tutorials", Toast.LENGTH_SHORT).show();
                 });
 
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+        Volley.newRequestQueue(this).add(request);
     }
 
-    /**
-     * Parses the JSON array response and updates RecyclerView.
-     */
-    private void parseTutorials(JSONArray response) {
+    private void parseResponse(JSONArray response) {
         try {
-            tutorialList.clear();
+            Log.d(TAG, "Raw JSON response: " + response);
 
             for (int i = 0; i < response.length(); i++) {
                 JSONObject obj = response.getJSONObject(i);
 
-                long id = obj.getLong("id");
+                long id = obj.optLong("id", -1);
                 String title = obj.optString("title", "Untitled");
-                String description = obj.optString("description", "");
-                String category = obj.optString("category", "");
-                String fileURL = obj.optString("fileURL", "");
-                String username = obj.optString("username", this.username);
+                String description = obj.optString("description", "No description");
+                String category = obj.optString("category", "Uncategorized");
 
-                TutorialItem item = new TutorialItem(id, title, description, category, fileURL, username);
-                tutorialList.add(item);
+                // ✅ match backend's field name
+                String fileUrl = obj.optString("fileURL", null);
+
+                // username optional
+                String username = obj.optString("username", "Unknown");
+
+                tutorialList.add(new TutorialItem(id, title, description, category, fileUrl, null, username));
+                Log.d(TAG, "Added: " + title + " | fileURL=" + fileUrl);
             }
 
-            if (tutorialList.isEmpty()) {
-                Toast.makeText(this, "No tutorials found", Toast.LENGTH_SHORT).show();
-            }
-
-            tutorialAdapter.notifyDataSetChanged();
-
-        } catch (Exception e) {
-            Log.e("TutorialFeedActivity", "Parsing error", e);
-            Toast.makeText(this, "Error parsing tutorials", Toast.LENGTH_SHORT).show();
+            adapter.notifyDataSetChanged();
+        } catch (JSONException e) {
+            Log.e(TAG, "JSON parse error", e);
+        } finally {
+            progressBar.setVisibility(View.GONE);
         }
     }
 }

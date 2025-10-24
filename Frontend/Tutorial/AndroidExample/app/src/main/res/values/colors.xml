@@ -1,27 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Shared Colors -->
-    <color name="blue_primary">#2196F3</color>
-    <color name="blue_secondary">#64B5F6</color>
-    <color name="blue_background">#E3F2FD</color>
+    <!-- Craftsy Primary Brand Colors -->
+    <color name="blue_primary">#2196F3</color>        <!-- Craftsy Main Blue -->
+    <color name="blue_secondary">#64B5F6</color>      <!-- Light Accent Blue -->
+    <color name="blue_background">#E3F2FD</color>     <!-- Background Blue (Feed & Tutorial Pages) -->
 
-    <!-- UI Colors -->
-    <color name="login_bg">#E3F2FD</color>
-    <color name="button_blue">#4586FC</color>
-    <color name="text_black">#000000</color>
-    <color name="text_white">#FFFFFF</color>
-    <color name="text_gray">#777777</color>
+    <!-- UI Elements -->
+    <color name="login_bg">#E3F2FD</color>            <!-- Login / Form Background -->
+    <color name="button_blue">#4586FC</color>         <!-- Buttons & Action Highlights -->
+    <color name="button_blue_pressed">#1976D2</color> <!-- Darker shade on press -->
 
-    <!-- Default template compatibility -->
+    <!-- Text Colors -->
+    <color name="text_black">#000000</color>          <!-- Default Text -->
+    <color name="text_white">#FFFFFF</color>          <!-- White Text (on buttons, cards) -->
+    <color name="text_gray">#777777</color>           <!-- Secondary Info Text -->
+    <color name="text_light_gray">#BDBDBD</color>     <!-- Hint / Placeholder Text -->
+
+    <!-- Structural / Layout Backgrounds -->
+    <color name="card_background">#FFFFFF</color>     <!-- Card Background (Feed Items, Tutorials) -->
+    <color name="background_light">#F8F9FA</color>    <!-- App Light Background -->
+
+    <!--  System Theme Compatibility -->
     <color name="purple_200">#BB86FC</color>
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
 
-    <!-- Theme compatibility -->
-    <color name="blue_on_primary">@color/text_white</color>
-    <color name="blue_on_secondary">@color/text_black</color>
-    <color name="blue_on_background">@color/text_black</color>
-    <color name="background_light">#F8F9FA</color>
-    <color name="red_error">#D32F2F</color>
+    <!-- Light/Dark Contrast Mappings -->
+    <color name="blue_on_primary">@color/text_white</color>       <!-- Text color on blue buttons -->
+    <color name="blue_on_secondary">@color/text_black</color>     <!-- Text color on secondary -->
+    <color name="blue_on_background">@color/text_black</color>    <!-- Text color on background -->
+
+    <!-- Feedback Colors -->
+    <color name="red_error">#D32F2F</color>           <!-- Error Text / Delete Buttons -->
+    <color name="success_green">#4CAF50</color>       <!-- Success Message -->
+    <color name="warning_orange">#FF9800</color>      <!-- Warnings / Alerts -->
+
+    <!-- Neutral Shadows and Borders -->
+    <color name="divider_gray">#DDDDDD</color>        <!-- Divider Line -->
+    <color name="shadow_gray">#33000000</color>       <!-- Subtle Card Shadow -->
+
+    <color name="white">#FFFFFF</color>
 </resources>

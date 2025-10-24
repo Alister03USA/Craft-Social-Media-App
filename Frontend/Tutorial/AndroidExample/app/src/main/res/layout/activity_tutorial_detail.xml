@@ -1,59 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/blue_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/blue_background"
     android:padding="16dp">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
 
+        <!-- Title -->
+        <!-- Hardcoded to prevent missing resource errors -->
+        <TextView
+            android:id="@+id/detailTitle"
+            android:text="Tutorial Title"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_black"
+            android:layout_marginBottom="6dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Meta Info -->
+        <!-- Hardcoded to prevent missing resource errors -->
+        <TextView
+            android:id="@+id/detailMeta"
+            android:text="By Author on Jan 1, 2024"
+            android:textColor="@color/text_gray"
+            android:textSize="14sp"
+            android:layout_marginBottom="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- Description -->
+        <!-- Hardcoded to prevent missing resource errors -->
+        <TextView
+            android:id="@+id/detailDesc"
+            android:text="This is a tutorial description."
+            android:textColor="@color/text_black"
+            android:textSize="16sp"
+            android:layout_marginBottom="12dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- VideoView -->
+        <!-- Fixed layout_height to prevent ScrollView warning -->
         <VideoView
-            android:id="@+id/videoPreview"
+            android:id="@+id/detailVideo"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:background="@drawable/ic_post_placeholder"
-            android:layout_marginBottom="12dp" />
+            android:layout_height="200dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
-        <EditText
-            android:id="@+id/tutorialTitleInput"
-            android:hint="Title"
-            android:textColor="@color/text_black"
+        <!-- WebView for YouTube -->
+        <!-- Fixed layout_height to prevent ScrollView warning -->
+        <WebView
+            android:id="@+id/detailWeb"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="200dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
-        <EditText
-            android:id="@+id/tutorialDescriptionInput"
-            android:hint="Description"
-            android:textColor="@color/text_black"
+        <!-- Placeholder Image -->
+        <!-- Hardcoded contentDescription to prevent missing resource errors -->
+        <ImageView
+            android:id="@+id/detailImage"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_post_placeholder"
+            android:contentDescription="Tutorial placeholder image"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
-        <EditText
-            android:id="@+id/tutorialCategoryInput"
-            android:hint="Category"
-            android:textColor="@color/text_black"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <Button
-            android:id="@+id/editTutorialBtn"
-            android:text="Edit Tutorial"
-            android:textColor="@color/text_white"
-            android:backgroundTint="@color/button_blue"
-            android:layout_width="match_parent"
+        <!-- Progress -->
+        <ProgressBar
+            android:id="@+id/detailProgress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" />
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
-        <Button
-            android:id="@+id/deleteTutorialBtn"
-            android:text="Delete Tutorial"
-            android:textColor="@color/text_white"
-            android:backgroundTint="@color/red_error"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+        <!-- Buttons -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <!-- Hardcoded to prevent missing resource errors -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Back"
+                android:backgroundTint="@color/button_blue"
+                android:textColor="@color/text_white"
+                android:layout_marginEnd="8dp" />
+
+            <!-- Hardcoded to prevent missing resource errors -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit"
+                android:backgroundTint="@color/button_blue"
+                android:textColor="@color/text_white"
+                android:layout_marginEnd="8dp" />
+
+            <!-- Hardcoded to prevent missing resource errors -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:backgroundTint="@color/red_error"
+                android:textColor="@color/text_white" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

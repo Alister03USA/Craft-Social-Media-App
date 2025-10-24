@@ -1,145 +1,158 @@
 package com.example.androidexample;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageView;
 import android.widget.MediaController;
-import android.widget.Toast;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Request;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.google.android.material.button.MaterialButton;
 
 public class TutorialDetailActivity extends AppCompatActivity {
 
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/";
-    private EditText titleInput, descInput, categoryInput;
+    private static final String TAG = "TutorialDetailActivity";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
+
+    private TextView titleTv, metaTv, descTv;
     private VideoView videoView;
-    private Button deleteBtn, editBtn;
-    private String tutorialId;
-    private String username;
-    private String fileUrl;
+    private WebView webView;
+    private ProgressBar progress;
+    private ImageView imageView;
+    private MaterialButton btnBack, btnEdit, btnDelete;
+
+    private String title, description, category, fileUrl, filePath, username;
+    private long id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutorial_detail);
 
-        titleInput = findViewById(R.id.tutorialTitleInput);
-        descInput = findViewById(R.id.tutorialDescriptionInput);
-        categoryInput = findViewById(R.id.tutorialCategoryInput);
-        videoView = findViewById(R.id.videoPreview);
-        editBtn = findViewById(R.id.editTutorialBtn);
-        deleteBtn = findViewById(R.id.deleteTutorialBtn);
+        titleTv = findViewById(R.id.detailTitle);
+        metaTv = findViewById(R.id.detailMeta);
+        descTv = findViewById(R.id.detailDesc);
+        videoView = findViewById(R.id.detailVideo);
+        webView = findViewById(R.id.detailWeb);
+        imageView = findViewById(R.id.detailImage);
+        progress = findViewById(R.id.detailProgress);
+        btnBack = findViewById(R.id.btnBack);
+        btnEdit = findViewById(R.id.btnEdit);
+        btnDelete = findViewById(R.id.btnDelete);
 
-        tutorialId = getIntent().getStringExtra("tutorialId");
-        username = getIntent().getStringExtra("username");
-        if (username == null) username = "Fuji";
+        Intent intent = getIntent();
+        id = intent.getLongExtra("id", -1);
+        title = intent.getStringExtra("title");
+        description = intent.getStringExtra("description");
+        category = intent.getStringExtra("category");
+        fileUrl = intent.getStringExtra("fileUrl");
+        filePath = intent.getStringExtra("filePath");
+        username = intent.getStringExtra("username");
 
-        fetchTutorialDetails();
+        Log.d(TAG, "onCreate: id=" + id + ", title=" + title + ", fileUrl=" + fileUrl + ", filePath=" + filePath);
 
-        deleteBtn.setOnClickListener(v -> deleteTutorial());
-        editBtn.setOnClickListener(v -> editTutorial());
+        titleTv.setText(title);
+        metaTv.setText("@" + (username == null ? "Unknown" : username) + " • " + category);
+        descTv.setText(description == null || description.isEmpty() ? "No description available" : description);
+
+        showMedia();
+        btnBack.setOnClickListener(v -> finish());
     }
 
-    private void fetchTutorialDetails() {
-        String url = BASE_URL + tutorialId;
-        Log.d("DETAIL", "Fetching details from: " + url);
+    private void showMedia() {
+        Log.d(TAG, "showMedia() called, fileUrl=" + fileUrl);
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        if (response.has("fileUrl")) {
-                            fileUrl = response.getString("fileUrl");
-                        } else if (response.has("fileURL")) {
-                            fileUrl = response.getString("fileURL");
-                        } else {
-                            fileUrl = null;
-                        }
+        progress.setVisibility(View.VISIBLE);
+        videoView.setVisibility(View.GONE);
+        webView.setVisibility(View.GONE);
+        imageView.setVisibility(View.GONE);
 
-                        titleInput.setText(response.optString("title", ""));
-                        descInput.setText(response.optString("description", ""));
-                        categoryInput.setText(response.optString("category", ""));
-
-                        if (fileUrl != null && !fileUrl.isEmpty()) {
-                            playVideo(fileUrl);
-                        } else {
-                            Toast.makeText(this, "No video URL found", Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Exception e) {
-                        Log.e("DETAIL", "Parse error", e);
-                        Toast.makeText(this, "Error loading tutorial details", Toast.LENGTH_SHORT).show();
-                    }
-                },
-                error -> {
-                    Log.e("DETAIL", "Fetch failed", error);
-                    Toast.makeText(this, "Failed to load tutorial", Toast.LENGTH_SHORT).show();
-                });
-
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
-    }
-
-    private void playVideo(String url) {
         try {
-            videoView.setVideoURI(Uri.parse(url));
-            MediaController mediaController = new MediaController(this);
-            mediaController.setAnchorView(videoView);
-            videoView.setMediaController(mediaController);
-            videoView.start();
-        } catch (Exception e) {
-            Log.e("DETAIL", "Video load error", e);
-            Toast.makeText(this, "Unable to play video", Toast.LENGTH_SHORT).show();
-        }
-    }
+            String source = null;
+            if (fileUrl != null && !fileUrl.isEmpty()) {
+                if (fileUrl.startsWith("/tutorial/")) {
+                    source = BASE_URL + fileUrl;
+                    Log.d(TAG, "Detected local backend path: " + source);
+                } else {
+                    source = fileUrl;
+                    Log.d(TAG, "Detected external URL: " + source);
+                }
+            }
 
-    private void deleteTutorial() {
-        String url = BASE_URL + tutorialId;
-        Log.d("DETAIL", "Deleting tutorial: " + url);
+            if (source == null) {
+                Log.e(TAG, "No valid media source found");
+                progress.setVisibility(View.GONE);
+                imageView.setVisibility(View.VISIBLE);
+                imageView.setImageResource(R.drawable.ic_post_placeholder);
+                return;
+            }
 
-        StringRequest request = new StringRequest(Request.Method.DELETE, url,
-                response -> {
-                    Toast.makeText(this, "Tutorial deleted successfully!", Toast.LENGTH_SHORT).show();
-                    finish();
-                },
-                error -> {
-                    Log.e("DETAIL", "Delete failed", error);
-                    Toast.makeText(this, "Failed to delete tutorial", Toast.LENGTH_SHORT).show();
+            // ✅ Case 1: YouTube
+            if (source.contains("youtube.com") || source.contains("youtu.be")) {
+                Log.d(TAG, "Loading YouTube in WebView: " + source);
+                webView.setVisibility(View.VISIBLE);
+                webView.getSettings().setJavaScriptEnabled(true);
+                webView.setWebViewClient(new WebViewClient());
+                webView.loadUrl(source);
+                progress.setVisibility(View.GONE);
+            }
+            // ✅ Case 2: backend/local .mp4 stream
+            else if (source.startsWith(BASE_URL)) {
+                Log.d(TAG, "Attempting to play backend video: " + source);
+                videoView.setVisibility(View.VISIBLE);
+                MediaController controller = new MediaController(this);
+                controller.setAnchorView(videoView);
+                videoView.setMediaController(controller);
+
+                // 👇 Fix: use setVideoPath() instead of setVideoURI()
+                videoView.setVideoPath(source);
+
+                videoView.setOnPreparedListener(mp -> {
+                    progress.setVisibility(View.GONE);
+                    videoView.start();
                 });
 
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
-    }
-
-    private void editTutorial() {
-        String url = BASE_URL + tutorialId;
-
-        StringRequest request = new StringRequest(Request.Method.PUT, url,
-                response -> {
-                    Toast.makeText(this, "Tutorial updated!", Toast.LENGTH_SHORT).show();
-                },
-                error -> {
-                    Log.e("DETAIL", "Edit failed", error);
-                    Toast.makeText(this, "Failed to update tutorial", Toast.LENGTH_SHORT).show();
-                }) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("title", titleInput.getText().toString());
-                params.put("description", descInput.getText().toString());
-                params.put("category", categoryInput.getText().toString());
-                return params;
+                videoView.setOnErrorListener((mp, what, extra) -> {
+                    Log.e(TAG, "Video playback error: what=" + what + ", extra=" + extra);
+                    progress.setVisibility(View.GONE);
+                    imageView.setVisibility(View.VISIBLE);
+                    imageView.setImageResource(R.drawable.ic_post_placeholder);
+                    return true;
+                });
             }
-        };
+            // ✅ Case 3: fallback external .mp4 or invalid file
+            else if (source.endsWith(".mp4")) {
+                Log.d(TAG, "Playing external mp4: " + source);
+                videoView.setVisibility(View.VISIBLE);
+                MediaController controller = new MediaController(this);
+                controller.setAnchorView(videoView);
+                videoView.setMediaController(controller);
+                videoView.setVideoPath(source);
+                videoView.setOnPreparedListener(mp -> {
+                    progress.setVisibility(View.GONE);
+                    videoView.start();
+                });
+            }
+            else {
+                Log.d(TAG, "Unknown type, showing placeholder.");
+                imageView.setVisibility(View.VISIBLE);
+                imageView.setImageResource(R.drawable.ic_post_placeholder);
+                progress.setVisibility(View.GONE);
+            }
 
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+        } catch (Exception e) {
+            Log.e(TAG, "Error displaying media", e);
+            progress.setVisibility(View.GONE);
+            imageView.setVisibility(View.VISIBLE);
+            imageView.setImageResource(R.drawable.ic_post_placeholder);
+        }
     }
 }

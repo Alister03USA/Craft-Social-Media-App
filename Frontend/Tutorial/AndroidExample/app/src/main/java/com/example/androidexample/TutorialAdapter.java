@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,52 +12,56 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.VH> {
+public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.ViewHolder> {
 
-    public interface OnItemClick {
-        void onClick(TutorialItem item);
+    public interface OnItemClickListener {
+        void onItemClick(TutorialItem item);
     }
 
-    private final List<TutorialItem> data;
-    private final OnItemClick callback;
+    private final Context context;
+    private final List<TutorialItem> tutorialList;
+    private final OnItemClickListener listener;
 
-    public TutorialAdapter(List<TutorialItem> data, OnItemClick callback) {
-        this.data = data;
-        this.callback = callback;
+    public TutorialAdapter(Context context, List<TutorialItem> tutorialList, OnItemClickListener listener) {
+        this.context = context;
+        this.tutorialList = tutorialList;
+        this.listener = listener;
     }
 
     @NonNull
     @Override
-    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.tutorial_item, parent, false);
-        return new VH(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.tutorial_item, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull VH holder, int position) {
-        TutorialItem item = data.get(position);
-        holder.title.setText(item.getTitle());
-        holder.description.setText(item.getDescription());
-        holder.category.setText(item.getCategory());
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        TutorialItem item = tutorialList.get(position);
 
-        holder.itemView.setOnClickListener(v -> callback.onClick(item));
+        holder.title.setText(item.getTitle());
+        holder.category.setText(item.getCategory());
+        holder.username.setText("@" + item.getUsername());
+        holder.description.setText(item.getDescription());
+
+        holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
     }
 
     @Override
     public int getItemCount() {
-        return data.size();
+        return tutorialList.size();
     }
 
-    static class VH extends RecyclerView.ViewHolder {
-        TextView title, description, category;
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView title, category, username, description;
         ImageView thumbnail;
 
-        VH(View itemView) {
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.tutorialTitle);
-            description = itemView.findViewById(R.id.tutorialDescription);
             category = itemView.findViewById(R.id.tutorialCategory);
+            username = itemView.findViewById(R.id.tutorialUsername);
+            description = itemView.findViewById(R.id.tutorialDescription);
             thumbnail = itemView.findViewById(R.id.tutorialThumbnail);
         }
     }
