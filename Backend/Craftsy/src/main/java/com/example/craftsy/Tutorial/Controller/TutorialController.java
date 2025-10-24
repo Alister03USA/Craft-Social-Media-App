@@ -120,42 +120,52 @@ public class TutorialController {
 
 
     /**
-     * GET "/tutorials/{id}"
-     * Fetch the file of the Videos
-     */
+     * GET "/tutorial/{id}"
+     * * Fetch the file of the Videos - Optimized for direct streaming
+    */
     @GetMapping("/{id}")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
-        if (tutorialOpt.isEmpty()){
+        if (tutorialOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         Tutorial tutorial = tutorialOpt.get();
 
-        // External URL
-        if (tutorial.getFileUrl() != null) {
-            return ResponseEntity.ok(Map.of("fileUrl", tutorial.getFileUrl()));
+        // External URL - Redirect to the external source
+        if (tutorial.getFileUrl() != null && !tutorial.getFileUrl().isEmpty()) {
+            // Return a redirect response so the client fetches from the external URL directly
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                    .location(java.net.URI.create(tutorial.getFileUrl()))
+                    .build();
         }
 
-        // Local file
-        if (tutorial.getFilePath() != null) {
+        // Local file - Stream directly
+        if (tutorial.getFilePath() != null && !tutorial.getFilePath().isEmpty()) {
             Path path = Paths.get(tutorial.getFilePath());
             if (!Files.exists(path)) {
                 return ResponseEntity.notFound().build();
             }
 
-            Resource resource = new FileSystemResource(path); // Data is read by chunk
-            String contentType;
             try {
-                contentType = Files.probeContentType(path); // build-in system to detect file type
-            } catch (IOException e) {
-                contentType = "application/octet-stream";
-            }
-            if (contentType == null) contentType = "application/octet-stream"; // For unknown binary file
+                Resource resource = new FileSystemResource(path);
 
-            return ResponseEntity.ok() // Resource will be streamed in the response body
-                    .contentType(MediaType.parseMediaType(contentType)) // sent the type of file
-                    .body(resource);
+                // Detect content type
+                String contentType = Files.probeContentType(path);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+
+                // Return the file with proper headers for streaming
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .header("Content-Disposition", "inline; filename=\"" + path.getFileName() + "\"")
+                        .body(resource);
+
+            } catch (IOException e) {
+                return ResponseEntity.status(500)
+                        .body("Error reading file: " + e.getMessage());
+            }
         }
 
         return ResponseEntity.noContent().build();
