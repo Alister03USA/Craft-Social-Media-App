@@ -129,9 +129,7 @@ public class FollowController {
         targetNotification.setSender(follower); // sender
         targetNotification.setTitle("New Follow Request");
         targetNotification.setMessage(follower.getDisplayName() + " sent you a follow request.");
-        targetNotification.setType("FOLLOW_REQUEST");
         targetNotification.setReferenceId(follow.getId());
-        targetNotification.setReferenceType("FOLLOW");
         targetNotification.setIsRead(false);
         targetNotification.setCreatedAt(new Date());
         Notification savedTargetNotification = notificationRepository.save(targetNotification);
@@ -145,9 +143,7 @@ public class FollowController {
         senderNotification.setSender(target); // for clarity (target is context)
         senderNotification.setTitle("Follow Request Sent");
         senderNotification.setMessage("Your follow request to " + target.getDisplayName() + " has been sent.");
-        senderNotification.setType("FOLLOW_REQUEST_SENT");
         senderNotification.setReferenceId(follow.getId());
-        senderNotification.setReferenceType("FOLLOW");
         senderNotification.setIsRead(false);
         senderNotification.setCreatedAt(new Date());
         Notification savedSenderNotification = notificationRepository.save(senderNotification);
@@ -265,9 +261,7 @@ public class FollowController {
             acceptedNotification.setSender(target);
             acceptedNotification.setTitle("Follow Request Accepted");
             acceptedNotification.setMessage(target.getDisplayName() + " accepted your follow request!");
-            acceptedNotification.setType("FOLLOW_ACCEPTED");
             acceptedNotification.setReferenceId(follow.getId());
-            acceptedNotification.setReferenceType("FOLLOW");
             acceptedNotification.setIsRead(false);
             acceptedNotification.setCreatedAt(new Date());
             Notification savedAccepted = notificationRepository.save(acceptedNotification);
@@ -284,9 +278,7 @@ public class FollowController {
             declinedNotification.setSender(target);
             declinedNotification.setTitle("Follow Request Declined");
             declinedNotification.setMessage(target.getDisplayName() + " declined your follow request.");
-            declinedNotification.setType("FOLLOW_DECLINED");
             declinedNotification.setReferenceId(notification.getReferenceId());
-            declinedNotification.setReferenceType("FOLLOW");
             declinedNotification.setIsRead(false);
             declinedNotification.setCreatedAt(new Date());
             Notification savedDeclined = notificationRepository.save(declinedNotification);

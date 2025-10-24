@@ -60,11 +60,9 @@ public class NotificationController {
         Notification notification = new Notification();
         notification.setUser(receiver);
         notification.setSender(sender);
-        notification.setType(type);
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setReferenceId(referenceId);
-        notification.setReferenceType(referenceType);
         notification.setCreatedAt(new Date());
         notification.setIsRead(false);
 

@@ -182,7 +182,6 @@ public class GroupController {
                 notif.setUser(member);
                 notif.setTitle("New Member Joined");
                 notif.setMessage(user.getUsername() + " has joined " + group.getGroupName());
-                notif.setType("GROUP_MEMBER_ADDED");
                 notif.setCreatedAt(new Date());
                 notif.setIsRead(false);
 
@@ -207,7 +206,6 @@ public class GroupController {
             notif.setUser(group.getGroupAdmin());
             notif.setTitle("New Join Request");
             notif.setMessage(user.getUsername() + " wants to join " + group.getGroupName());
-            notif.setType("GROUP_JOIN_REQUEST");
             notif.setReferenceId(groupJoinRequest.getId());
             notif.setCreatedAt(new Date());
             notif.setIsRead(false);
@@ -252,7 +250,6 @@ public class GroupController {
             userNotif.setUser(user);
             userNotif.setTitle("Join Request Accepted");
             userNotif.setMessage("You have been added to group: " + group.getGroupName());
-            userNotif.setType("JOIN_ACCEPTED");
             userNotif.setReferenceId(group.getId());
             userNotif.setCreatedAt(new Date());
             userNotif.setIsRead(false);
@@ -267,7 +264,6 @@ public class GroupController {
                 notif.setUser(member);
                 notif.setTitle("New Member Joined");
                 notif.setMessage(user.getUsername() + " has joined " + group.getGroupName());
-                notif.setType("GROUP_MEMBER_ADDED");
                 notif.setCreatedAt(new Date());
                 notif.setIsRead(false);
                 notificationRepository.save(notif);
@@ -282,7 +278,6 @@ public class GroupController {
             notif.setUser(user);
             notif.setTitle("Join Request Declined");
             notif.setMessage("Your request to join " + group.getGroupName() + " was declined");
-            notif.setType("JOIN_DECLINED");
             notif.setReferenceId(group.getId());
             notif.setCreatedAt(new Date());
             notif.setIsRead(false);
@@ -331,7 +326,6 @@ public class GroupController {
         notif.setUser(user);
         notif.setTitle("Removed from Group");
         notif.setMessage("You have been removed from " + group.getGroupName());
-        notif.setType("GROUP_MEMBER_REMOVED");
         notif.setCreatedAt(new Date());
         notif.setIsRead(false);
 
