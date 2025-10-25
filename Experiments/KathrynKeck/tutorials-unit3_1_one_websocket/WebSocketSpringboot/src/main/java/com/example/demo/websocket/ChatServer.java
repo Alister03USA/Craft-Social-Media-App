@@ -89,7 +89,6 @@ public class ChatServer {
         // server side log
         logger.info("[onMessage] " + username + ": " + message);
 
-        // sends user is typing... if typing sent
         if (message.equalsIgnoreCase("/typing")) {
             broadcast(username + " is typing...");
             return; // stop here so it doesn't send as a normal chat message
