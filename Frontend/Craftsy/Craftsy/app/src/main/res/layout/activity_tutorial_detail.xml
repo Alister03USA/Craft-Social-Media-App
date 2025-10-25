@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/craftsy_background">
+
+    <!-- Back button -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_arrow_back"
+        app:tint="@color/dark_text"
+        android:contentDescription="@string/back" />
+
+    <!-- Scrollable tutorial content -->
+    <ScrollView
+        android:id="@+id/tutorialScroll"
+        android:layout_width="388dp"
+        android:layout_height="578dp"
+        android:layout_above="@+id/bottomButtonsLayout"
+        android:layout_below="@id/btnBack"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <!-- Tutorial Title -->
+            <TextView
+                android:id="@+id/detailTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/tutorial_title"
+                android:textColor="@color/dark_text"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <!-- Tutorial Author -->
+            <TextView
+                android:id="@+id/detailUsername"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/by_user"
+                android:textColor="@color/text_gray" />
+
+            <!-- Tutorial Category -->
+            <TextView
+                android:id="@+id/detailCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/category"
+                android:textColor="@color/text_gray" />
+
+            <!-- Tutorial Video/WebView -->
+            <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginTop="16dp"
+                android:background="@android:color/white" />
+
+            <!-- Tutorial Description -->
+            <TextView
+                android:id="@+id/detailDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingBottom="16dp"
+                android:text="@string/tutorial_description"
+                android:textColor="@color/dark_text" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Button Bar (Edit & Delete) -->
+    <LinearLayout
+        android:id="@+id/bottomButtonsLayout"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:background="@android:color/transparent">
+
+        <Button
+            android:id="@+id/btnEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/edit_button"
+            android:backgroundTint="@color/craftsy_accent"
+            android:textColor="@color/white"
+            android:layout_marginEnd="16dp" />
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/delete_button"
+            android:backgroundTint="@color/red_error"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+</RelativeLayout>

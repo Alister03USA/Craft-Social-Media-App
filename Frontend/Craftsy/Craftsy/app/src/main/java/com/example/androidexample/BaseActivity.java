@@ -22,37 +22,35 @@ public abstract class BaseActivity extends AppCompatActivity {
             if (id == selectedItemId) return true;
 
             if (id == R.id.nav_notif) {
-                // Open the NotificationCenterActivity
+                // Open Notification Center
                 Intent intent = new Intent(this, NotificationCenterActivity.class);
                 startActivity(intent);
             }
             else if (id == R.id.nav_view_user) {
-                // Open OutsideUserProfile
+                // Open another user’s profile
                 Intent intent = new Intent(this, OutsideUserProfile.class);
-
-                // Pass info
                 String loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
                 intent.putExtra("logged_in_username", loggedInUsername);
-                intent.putExtra("username", "Fuji"); // Example
-
+                intent.putExtra("username", "Fuji"); // example
                 startActivity(intent);
             }
             else if (id == R.id.nav_my_profile) {
-                //  Open OutsideUserProfile
+                // Open logged-in user’s profile
                 Intent intent = new Intent(this, UserProfile.class);
-
-
-                startActivity(intent);
-            }else if (id == R.id.myFeed) {
-                //  Open FeedActivity
-                Intent intent = new Intent(this, FeedActivity.class);
-
-                String loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
-                intent.putExtra("username", loggedInUsername);
-
                 startActivity(intent);
             }
-
+            else if (id == R.id.myFeed) {
+                // Open Feed Activity
+                Intent intent = new Intent(this, FeedActivity.class);
+                String loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
+                intent.putExtra("username", loggedInUsername);
+                startActivity(intent);
+            }
+            else if (id == R.id.nav_search) {
+                // Open Search Activity
+                Intent intent = new Intent(this, SearchActivity.class);
+                startActivity(intent);
+            }
 
             overridePendingTransition(0, 0);
             return true;

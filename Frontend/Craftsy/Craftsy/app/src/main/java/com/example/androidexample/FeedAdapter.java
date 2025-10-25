@@ -1,6 +1,7 @@
 package com.example.androidexample;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,53 +10,68 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
-public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder> {
+/**
+ * Adapter for the main feed and search results feed.
+ */
+public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
 
-    private final LayoutInflater inflater;
-    private final List<FeedItem> items;
+    private final Context context;
+    private final List<FeedItem> feedList;
+    private final String fromScreen;  // "feed" or "search"
 
-    public FeedAdapter(Context context, List<FeedItem> items) {
-        this.inflater = LayoutInflater.from(context);
-        this.items = items;
+    public FeedAdapter(Context context, List<FeedItem> feedList, String fromScreen) {
+        this.context = context;
+        this.feedList = feedList;
+        this.fromScreen = fromScreen;
     }
 
     @NonNull
     @Override
-    public FeedViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = inflater.inflate(R.layout.feed_item, parent, false);
-        return new FeedViewHolder(v);
+    public FeedAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.feed_item, parent, false);
+        return new FeedAdapter.ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FeedViewHolder h, int position) {
-        FeedItem it = items.get(position);
-        h.textUsername.setText(it.getUsername());
-        h.textProjectName.setText(it.getProjectName());
-        h.textProjectDesc.setText(it.getProjectDesc());
-        h.textProjectType.setText(it.getProjectType());
-        h.textSupplies.setText(it.getSupplies());
-        h.textMeta.setText(it.getVisibility() + " • " + it.getDate());
+    public void onBindViewHolder(@NonNull FeedAdapter.ViewHolder holder, int position) {
+        FeedItem item = feedList.get(position);
+
+        holder.projectName.setText(item.getProjectName());
+        holder.username.setText("@" + item.getUsername());
+        holder.projectDesc.setText(item.getProjectDesc());
+        holder.projectType.setText(item.getProjectType());
+        holder.visibility.setText(item.getVisibility());
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, FeedDetailActivity.class);
+            intent.putExtra("from", fromScreen);
+            intent.putExtra("username", item.getUsername());
+            intent.putExtra("projectName", item.getProjectName());
+            intent.putExtra("projectDesc", item.getProjectDesc());
+            intent.putExtra("projectType", item.getProjectType());
+            intent.putExtra("supplies", item.getSupplies());
+            intent.putExtra("visibility", item.getVisibility());
+            intent.putExtra("date", item.getDate());
+
+            context.startActivity(intent);
+        });
     }
 
     @Override
-    public int getItemCount() { return items.size(); }
+    public int getItemCount() {
+        return feedList.size();
+    }
 
-    static class FeedViewHolder extends RecyclerView.ViewHolder {
-        final TextView textUsername;
-        final TextView textProjectName;
-        final TextView textProjectDesc;
-        final TextView textProjectType;
-        final TextView textSupplies;
-        final TextView textMeta;
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView projectName, username, projectDesc, projectType, visibility;
 
-        FeedViewHolder(@NonNull View itemView) {
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            textUsername    = itemView.findViewById(R.id.textUsername);
-            textProjectName = itemView.findViewById(R.id.textProjectName);
-            textProjectDesc = itemView.findViewById(R.id.textProjectDesc);
-            textProjectType = itemView.findViewById(R.id.textProjectType);
-            textSupplies    = itemView.findViewById(R.id.textSupplies);
-            textMeta        = itemView.findViewById(R.id.textMeta);
+            projectName = itemView.findViewById(R.id.textProjectName);
+            username = itemView.findViewById(R.id.textUsername);
+            projectDesc = itemView.findViewById(R.id.textProjectDesc);
+            projectType = itemView.findViewById(R.id.textProjectType);
+            visibility = itemView.findViewById(R.id.textMeta);
         }
     }
 }

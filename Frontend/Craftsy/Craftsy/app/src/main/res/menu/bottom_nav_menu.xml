@@ -19,5 +19,9 @@
         android:title="My Feed"
         android:icon="@drawable/ic_c" />
 
+    <item
+        android:id="@+id/nav_search"
+        android:icon="@drawable/ic_spy"
+        android:title="Search" />
 </menu>
 
