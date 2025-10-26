@@ -35,14 +35,11 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    // Type of notification: "FOLLOW_REQUEST", "LIKE", "COMMENT"
-    @Column(nullable = false)
-    private String type;
+
 
     // References Follow ID
     private Long referenceId;
 
-    private String referenceType; // e.g., "FOLLOW", "COMMENT", "GROUP"
 
 
     // Has the user read the notification?
@@ -63,7 +60,6 @@ public class Notification {
         this.sender = sender;
         this.title = title;
         this.message = message;
-        this.type = type;
         this.referenceId = referenceId;
         this.isRead = false;
         this.createdAt = new Date();
@@ -103,13 +99,7 @@ public class Notification {
         this.message = message;
     }
 
-    public String getType() {
-        return type;
-    }
 
-    public void setType(String type) {
-        this.type = type;
-    }
 
     public Long getReferenceId() {
         return referenceId;
@@ -135,18 +125,16 @@ public class Notification {
         this.createdAt = createdAt;
     }
 
-    public Users getSender() {
-        return sender;
-    }
     public void setSender(Users sender) {
-        this.sender = sender;
-    }
-
-    public String getReferenceType() {
-        return referenceType;
+        this.user = sender;
     }
 
     public void setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
     }
+    public Users getSender() {
+        return sender;
+    }
+
+
+
 }
