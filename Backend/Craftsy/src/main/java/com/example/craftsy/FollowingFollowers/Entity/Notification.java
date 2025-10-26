@@ -123,4 +123,11 @@ public class Notification {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+    public void setSender(Users sender) {
+        this.user = sender;
+    }
+
+    public void setReferenceType(String referenceType) {
+    }
 }
