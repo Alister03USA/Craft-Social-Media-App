@@ -1,9 +1,6 @@
 package com.example.androidexample;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.android.volley.Request;
@@ -18,13 +15,22 @@ public class CreateReviewActivity extends AppCompatActivity {
     private EditText reviewInput;
     private Button submitReviewButton, backToPatternButton;
 
-    private String username = "testUser"; // Replace with logged-in user
+    private String username;
     private String patternName;
+
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080"; // local backend
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_review);
+
+        // ✅ Get logged-in username from SessionManager
+        SessionManager session = SessionManager.getInstance();
+        username = session.getLoggedInUsername();
+        if (username == null || username.isEmpty()) {
+            username = "testUser"; // fallback
+        }
 
         stars[0] = findViewById(R.id.star1);
         stars[1] = findViewById(R.id.star2);
@@ -36,19 +42,12 @@ public class CreateReviewActivity extends AppCompatActivity {
         submitReviewButton = findViewById(R.id.submitReviewButton);
         backToPatternButton = findViewById(R.id.backToPatternButton);
 
+        // ✅ Get pattern name from previous screen
         patternName = getIntent().getStringExtra("patternName");
 
         // Interactive stars
         for (int i = 0; i < stars.length; i++) {
             int index = i;
-            stars[i].setOnTouchListener((v, event) -> {
-                if (event.getAction() == MotionEvent.ACTION_HOVER_ENTER ||
-                        event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
-                    highlightStars(index + 1);
-                }
-                return false;
-            });
-
             stars[i].setOnClickListener(v -> {
                 selectedRating = index + 1;
                 highlightStars(selectedRating);
@@ -74,7 +73,8 @@ public class CreateReviewActivity extends AppCompatActivity {
     }
 
     private void sendReviewToBackend(int rating, String reviewText) {
-        String url = "https://fdfe903c-6cbc-44e4-9457-0888ef0861b2.mock.pstmn.io/patterns/testUser/ChunkyBlanket/reviews";
+        // ✅ Build correct endpoint dynamically
+        String url = BASE_URL + "/patterns/" + username + "/" + patternName + "/reviews";
 
         JSONObject jsonBody = new JSONObject();
         try {
@@ -91,7 +91,10 @@ public class CreateReviewActivity extends AppCompatActivity {
                     Toast.makeText(this, "Review submitted!", Toast.LENGTH_SHORT).show();
                     finish();
                 },
-                error -> Toast.makeText(this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show()
+                error -> {
+                    error.printStackTrace();
+                    Toast.makeText(this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                }
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);

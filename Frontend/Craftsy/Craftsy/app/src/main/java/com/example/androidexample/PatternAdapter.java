@@ -1,29 +1,25 @@
 package com.example.androidexample;
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
-
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
+
 import java.util.List;
-import android.content.Context;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Handler;
-import android.os.Looper;
-
-
-
-
 
 public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternViewHolder> {
 
@@ -51,23 +47,36 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
         holder.patternDifficulty.setText("Difficulty: " + pattern.getDifficulty());
         holder.patternRating.setRating(pattern.getRating());
 
-        // Load image manually (no Glide)
-        new Thread(() -> {
-            try {
-                URL url = new URL(pattern.getPatternImage());
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setDoInput(true);
-                connection.connect();
-                InputStream input = connection.getInputStream();
-                Bitmap bitmap = BitmapFactory.decodeStream(input);
+        // 🔹 UPDATED for backend image loading (Volley ImageRequest)
+        if (pattern.getPatternImage() != null && !pattern.getPatternImage().isEmpty()) {
+            String imageUrl = pattern.getPatternImage();
 
-                new Handler(Looper.getMainLooper()).post(() -> holder.patternImage.setImageBitmap(bitmap));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+            ImageRequest imageRequest = new ImageRequest(
+                    imageUrl,
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            holder.patternImage.setImageBitmap(response);
+                        }
+                    },
+                    0, 0,
+                    ImageView.ScaleType.CENTER_CROP,
+                    Bitmap.Config.RGB_565,
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.e("PatternAdapter", "Image load failed: " + error.getMessage());
+                            holder.patternImage.setImageResource(R.drawable.craftsy_image_placeholder); // fallback drawable
+                        }
+                    }
+            );
 
-        // Card click listener
+            VolleySingleton.getInstance(context).addToRequestQueue(imageRequest);
+        } else {
+            holder.patternImage.setImageResource(R.drawable.craftsy_image_placeholder); // default placeholder
+        }
+
+        // 🔹 Open pattern details screen when item is clicked
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, PatternDetailActivity.class);
             intent.putExtra("patternName", pattern.getPatternName());
@@ -78,6 +87,7 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
             intent.putExtra("description", pattern.getDescription());
             intent.putExtra("supplies", pattern.getSupplies());
             intent.putExtra("link", pattern.getPatternLink());
+            intent.putExtra("username", pattern.getUsername()); // 🔹 passes backend username
             context.startActivity(intent);
         });
     }

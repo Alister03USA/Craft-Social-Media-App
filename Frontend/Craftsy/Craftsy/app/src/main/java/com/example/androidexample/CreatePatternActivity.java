@@ -1,14 +1,17 @@
 package com.example.androidexample;
 
-import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
+import android.util.Log;
 import android.widget.*;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.*;
@@ -20,7 +23,8 @@ public class CreatePatternActivity extends AppCompatActivity {
     private EditText patternTitleInput, patternDescInput;
     private Uri selectedUri;
 
-    private static final String UPLOAD_URL = "http://10.0.2.2:8080/patterns";
+    private static final String IMAGE_UPLOAD_URL = "http://coms-3090-028.class.las.iastate.edu:8080/images";
+    private static final String PATTERN_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/patterns";
 
     private ActivityResultLauncher<String> getContentLauncher;
 
@@ -36,10 +40,10 @@ public class CreatePatternActivity extends AppCompatActivity {
         patternTitleInput = findViewById(R.id.patternTitleInput);
         patternDescInput = findViewById(R.id.patternDescInput);
 
-        // back button
+        // Back button
         backToFeedButton.setOnClickListener(v -> finish());
 
-        // gallery picker
+        // Gallery picker
         getContentLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -51,13 +55,16 @@ public class CreatePatternActivity extends AppCompatActivity {
         );
         selectImageButton.setOnClickListener(v -> getContentLauncher.launch("image/*"));
 
-        // upload handler
+        // Upload handler
         uploadPatternButton.setOnClickListener(v -> uploadPattern());
     }
 
     private void uploadPattern() {
-        String title = patternTitleInput.getText().toString().trim();
-        String description = patternDescInput.getText().toString().trim();
+        final String title = patternTitleInput.getText().toString().trim();
+        final String description = patternDescInput.getText().toString().trim();
+
+        SessionManager session = SessionManager.getInstance();
+        final String username = (session.getLoggedInUsername() != null) ? session.getLoggedInUsername() : "testUser";
 
         if (title.isEmpty()) {
             Toast.makeText(this, "Please enter a title", Toast.LENGTH_SHORT).show();
@@ -65,70 +72,61 @@ public class CreatePatternActivity extends AppCompatActivity {
         }
 
         if (selectedUri != null) {
-            //  Upload the image first
-            byte[] imageData = convertImageUriToBytes(selectedUri);
-            String imageUploadUrl = "http://10.0.2.2:8080/images";
+            final byte[] fileData = convertImageUriToBytes(selectedUri);
+            if (fileData == null) {
+                Toast.makeText(this, "Failed to read image", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            MultipartRequest imageUploadRequest = new MultipartRequest(
+            final String fileName = getFileNameFromUri(selectedUri);
+            final String mimeType = (getContentResolver().getType(selectedUri) != null) ?
+                    getContentResolver().getType(selectedUri) : "image/jpeg";
+
+            MultipartRequest request = new MultipartRequest(
                     Request.Method.POST,
-                    imageUploadUrl,
-                    imageData,
+                    IMAGE_UPLOAD_URL,
+                    "image",
+                    fileName,
+                    mimeType,
+                    fileData,
                     response -> {
                         try {
                             JSONObject json = new JSONObject(response);
-                            String imageUrl = json.getString("imageUrl"); // Expect backend returns { "imageUrl": "..." }
-
-                            //  Now post the pattern data
-                            createPatternPost(title, description, imageUrl);
-
+                            long imageId = json.getLong("id");
+                            createPatternPost(username, title, description, imageId);
                         } catch (JSONException e) {
+                            e.printStackTrace();
                             Toast.makeText(this, "Error parsing image upload response", Toast.LENGTH_SHORT).show();
                         }
                     },
-                    error -> Toast.makeText(this, "Image upload failed: " + error.getMessage(), Toast.LENGTH_LONG).show()
+                    error -> Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show()
             );
 
-            VolleySingleton.getInstance(this).addToRequestQueue(imageUploadRequest);
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
 
         } else {
-            //  No image selected → just create the pattern post directly
-            createPatternPost(title, description, null);
+            createPatternPost(username, title, description, null);
         }
     }
-    private void createPatternPost(String title, String description, String imageUrl) {
-        String patternPostUrl = "http://10.0.2.2:8080/patterns";
 
-        JSONObject jsonBody = new JSONObject();
-        try {
-            jsonBody.put("patternName", title);
-            jsonBody.put("description", description);
-            jsonBody.put("username", "testUser");
-            if (imageUrl != null) {
-                jsonBody.put("patternImage", imageUrl);
+    private String getFileNameFromUri(Uri uri) {
+        String result = null;
+        if ("content".equals(uri.getScheme())) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0) result = cursor.getString(index);
+                }
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
-
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.POST,
-                patternPostUrl,
-                jsonBody,
-                response -> {
-                    Toast.makeText(this, "Pattern posted successfully!", Toast.LENGTH_SHORT).show();
-                    finish();
-                },
-                error -> Toast.makeText(this, "Pattern upload failed: " + error.getMessage(), Toast.LENGTH_LONG).show()
-        );
-
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+        if (result == null) result = uri.getLastPathSegment();
+        return result;
     }
 
+    private byte[] convertImageUriToBytes(Uri uri) {
+        try (InputStream inputStream = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()) {
 
-    private byte[] convertImageUriToBytes(Uri imageUri) {
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(imageUri);
-            ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
             int bufferSize = 1024;
             byte[] buffer = new byte[bufferSize];
             int len;
@@ -137,8 +135,53 @@ public class CreatePatternActivity extends AppCompatActivity {
             }
             return byteBuffer.toByteArray();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e("CreatePatternActivity", "Error converting image to bytes", e);
+            return null;
         }
-        return null;
+    }
+
+    private void createPatternPost(String username, String title, String description, Long imageId) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            JSONObject userObj = new JSONObject();
+            userObj.put("username", username);
+            jsonBody.put("user", userObj);
+
+            jsonBody.put("patternName", title);
+            jsonBody.put("patternType", "Knitting");
+            jsonBody.put("rating", 0);
+            jsonBody.put("patternLink", "");
+            jsonBody.put("difficulty", "Intermediate");
+            jsonBody.put("description", description);
+            jsonBody.put("supplies", "Needles, Yarn");
+            jsonBody.put("numRatings", 0);
+
+            if (imageId != null) {
+                JSONObject imageObj = new JSONObject();
+                imageObj.put("id", imageId);
+                JSONArray imagesArray = new JSONArray();
+                imagesArray.put(imageObj);
+                jsonBody.put("images", imagesArray);
+            }
+
+        } catch (JSONException e) {
+            Log.e("CreatePatternActivity", "Error building JSON body", e);
+        }
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.POST,
+                PATTERN_BASE_URL,
+                jsonBody,
+                response -> {
+                    Toast.makeText(this, "Pattern posted successfully!", Toast.LENGTH_SHORT).show();
+                    finish();
+                },
+                error -> {
+                    Log.e("CreatePatternActivity", "Pattern upload failed", error);
+                    Toast.makeText(this, "Pattern upload failed", Toast.LENGTH_LONG).show();
+                }
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 }

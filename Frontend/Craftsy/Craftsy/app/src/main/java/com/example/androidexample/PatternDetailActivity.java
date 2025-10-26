@@ -51,6 +51,7 @@ public class PatternDetailActivity extends AppCompatActivity {
         createReviewButton.setOnClickListener(v -> {
             Intent addReviewIntent = new Intent(this, CreateReviewActivity.class);
             addReviewIntent.putExtra("patternName", patternTitle);
+            addReviewIntent.putExtra("username", username); // 🔹 UPDATED for backend
             startActivity(addReviewIntent);
         });
 
@@ -58,18 +59,18 @@ public class PatternDetailActivity extends AppCompatActivity {
     }
 
     private void fetchPatternDetails(String username, String patternTitle) {
-        String url = "https://fdfe903c-6cbc-44e4-9457-0888ef0861b2.mock.pstmn.io/patterns/quinn/sweater";
-                //"https://yourbackendurl.com/patterns/" + username + "/" + patternTitle;
+        // 🔹 UPDATED for backend
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/patterns/" + username + "/" + patternTitle;
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET, url, null,
                 response -> {
                     try {
                         String name = response.getString("patternName");
-                        String type = response.getString("patternType");
-                        String difficulty = response.getString("difficulty");
-                        String description = response.getString("description");
-                        float rating = (float) response.getDouble("rating");
+                        String type = response.optString("patternType", "N/A");
+                        String difficulty = response.optString("difficulty", "N/A");
+                        String description = response.optString("description", "");
+                        float rating = (float) response.optDouble("rating", 0.0);
 
                         detailName.setText(name);
                         detailTypeDifficulty.setText(type + " • " + difficulty);
@@ -77,16 +78,19 @@ public class PatternDetailActivity extends AppCompatActivity {
                         detailRatingBar.setRating(rating);
                         averageRatingText.setText(String.format("%.1f avg", rating));
 
-                        JSONArray reviewsArray = response.getJSONArray("comments");
+                        // 🔹 Your backend returns comments under "comments"
+                        JSONArray reviewsArray = response.optJSONArray("comments");
                         List<String> reviews = new ArrayList<>();
 
-                        for (int i = 0; i < reviewsArray.length(); i++) {
-                            JSONObject reviewObj = reviewsArray.getJSONObject(i);
-                            String user = reviewObj.getString("username");
-                            String text = reviewObj.getString("text");
-                            String date = reviewObj.getString("date");
-                            String formattedReview = user + ": " + text + "\n" + date;
-                            reviews.add(formattedReview);
+                        if (reviewsArray != null) {
+                            for (int i = 0; i < reviewsArray.length(); i++) {
+                                JSONObject reviewObj = reviewsArray.getJSONObject(i);
+                                String text = reviewObj.optString("text", "");
+                                String date = reviewObj.optString("date", "");
+                                int likes = reviewObj.optInt("likes", 0);
+                                String formattedReview = text + "\n" + date + " • ❤️ " + likes;
+                                reviews.add(formattedReview);
+                            }
                         }
 
                         ArrayAdapter<String> adapter = new ArrayAdapter<>(

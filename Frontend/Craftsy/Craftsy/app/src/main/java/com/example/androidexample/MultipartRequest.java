@@ -1,77 +1,82 @@
 package com.example.androidexample;
 
+import android.webkit.MimeTypeMap;
+import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
-import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
- * Custom Multipart Request for image upload using Volley.
+ * MultipartRequest for uploading any file type to backend.
  */
 public class MultipartRequest extends Request<String> {
 
-    private final Response.Listener<String> mListener;
-    private final Response.ErrorListener mErrorListener;
-    private final byte[] mImageData;
-    private final String mBoundary = "apiclient-" + System.currentTimeMillis();
-    private final String mLineEnd = "\r\n";
-    private final String mTwoHyphens = "--";
+    private final Response.Listener<String> listener;
+    private final byte[] fileData;
+    private final String fileName;
+    private final String fieldName;
+    private final String mimeType;
+    private final String boundary = "apiclient-" + System.currentTimeMillis();
 
-    public MultipartRequest(int method, String url, byte[] imageData,
-                            Response.Listener<String> listener,
-                            Response.ErrorListener errorListener) {
+    public MultipartRequest(
+            int method,
+            String url,
+            String fieldName,
+            String fileName,
+            String mimeType,
+            byte[] fileData,
+            Response.Listener<String> listener,
+            Response.ErrorListener errorListener
+    ) {
         super(method, url, errorListener);
-        this.mListener = listener;
-        this.mErrorListener = errorListener;
-        this.mImageData = imageData;
+        this.listener = listener;
+        this.fileData = fileData;
+        this.fileName = fileName;
+        this.fieldName = fieldName;
+        this.mimeType = mimeType;
     }
 
     @Override
     public String getBodyContentType() {
-        return "multipart/form-data;boundary=" + mBoundary;
+        return "multipart/form-data; boundary=" + boundary;
     }
 
     @Override
-    public byte[] getBody() {
+    public byte[] getBody() throws AuthFailureError {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
         try {
-            dos.writeBytes(mTwoHyphens + mBoundary + mLineEnd);
-            dos.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"" + mLineEnd);
-            dos.writeBytes(mLineEnd);
-            dos.write(mImageData);
-            dos.writeBytes(mLineEnd);
-            dos.writeBytes(mTwoHyphens + mBoundary + mTwoHyphens + mLineEnd);
-            return bos.toByteArray();
+            dos.writeBytes("--" + boundary + "\r\n");
+            dos.writeBytes("Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + fileName + "\"\r\n");
+            dos.writeBytes("Content-Type: " + mimeType + "\r\n\r\n");
+            dos.write(fileData);
+            dos.writeBytes("\r\n");
+            dos.writeBytes("--" + boundary + "--\r\n");
+            dos.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return bos.toByteArray();
     }
 
     @Override
     protected Response<String> parseNetworkResponse(NetworkResponse response) {
+        String parsed;
         try {
-            String responseString = new String(response.data,
-                    HttpHeaderParser.parseCharset(response.headers));
-            return Response.success(responseString,
-                    HttpHeaderParser.parseCacheHeaders(response));
+            parsed = new String(response.data, HttpHeaderParser.parseCharset(response.headers));
         } catch (Exception e) {
-            return Response.error(new ParseError(e));
+            parsed = new String(response.data);
         }
+        return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response));
     }
 
     @Override
     protected void deliverResponse(String response) {
-        mListener.onResponse(response);
-    }
-
-    @Override
-    public void deliverError(com.android.volley.VolleyError error) {
-        mErrorListener.onErrorResponse(error);
+        listener.onResponse(response);
     }
 }

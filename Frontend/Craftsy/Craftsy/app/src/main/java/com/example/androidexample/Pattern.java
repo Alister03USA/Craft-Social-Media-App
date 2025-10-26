@@ -1,7 +1,7 @@
 package com.example.androidexample;
 
 public class Pattern {
-    private int id;
+    private long id;
     private String patternName;
     private String username;
     private String patternType;
@@ -14,7 +14,7 @@ public class Pattern {
     private String date;
 
     public Pattern(
-            int id,
+            long id,
             String patternName,
             String username,
             String patternType,
@@ -39,7 +39,9 @@ public class Pattern {
         this.date = date;
     }
 
-    public int getId() { return id; }
+    public Long getId() {
+        return id;
+    }
     public String getPatternName() { return patternName; }
     public String getUsername() { return username; }
     public String getPatternType() { return patternType; }
