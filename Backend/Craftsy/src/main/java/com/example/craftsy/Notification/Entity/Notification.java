@@ -125,6 +125,7 @@ public class Notification {
         this.createdAt = createdAt;
     }
 
+<<<<<<<< 199eb50f1311612c399d33aabb82f4064762c9a9:Backend/Craftsy/src/main/java/com/example/craftsy/Notification/Entity/Notification.java
     public Users getSender() {
         return sender;
     }
@@ -133,4 +134,12 @@ public class Notification {
     }
 
 
+========
+    public void setSender(Users sender) {
+        this.user = sender;
+    }
+
+    public void setReferenceType(String referenceType) {
+    }
+>>>>>>>> 1c1394116214ed6b8aa5669c4a73912d495d76ea:Backend/Craftsy/src/main/java/com/example/craftsy/FollowingFollowers/Entity/Notification.java
 }
