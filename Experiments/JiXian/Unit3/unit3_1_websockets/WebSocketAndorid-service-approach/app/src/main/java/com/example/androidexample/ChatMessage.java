@@ -20,7 +20,7 @@ public class ChatMessage {
         return message;
     }
 
-    public boolean isSent() {  // ✅ renamed
+    public boolean isSent() {
         return isSent;
     }
 
