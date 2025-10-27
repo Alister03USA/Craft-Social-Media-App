@@ -1,6 +1,8 @@
 package com.example.craftsy.FollowingFollowers.Controller;
 
 import com.example.craftsy.FollowingFollowers.Entity.Notification;
+import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 
