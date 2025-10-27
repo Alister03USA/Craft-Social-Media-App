@@ -1,21 +1,32 @@
-// server.js
 const WebSocket = require('ws');
 
-// Create WebSocket server on port 8080
-const wss = new WebSocket.Server({ port: 9090 });
+// Listen on port 9090
+const wss = new WebSocket.Server({ port: 9090, path: '/ws/notifications/Quinn' });
 
-console.log("✅ WebSocket server running on ws://localhost:9090");
+wss.on('connection', function connection(ws, req) {
+  console.log('Client connected!');
 
-wss.on('connection', (ws, req) => {
-    const ip = req.socket.remoteAddress;
-    console.log(`💬 New client connected: ${ip}`);
-
-    ws.on('message', (message) => {
-        console.log(`📩 Received message: ${message}`);
-        ws.send(`Echo: ${message}`);
+  // Send a test notification every 5 seconds
+  const interval = setInterval(() => {
+    const message = JSON.stringify({
+      title: "Hello from Node.js",
+      message: "This is a test notification"
     });
 
-    ws.on('close', () => {
-        console.log(`❌ Client disconnected: ${ip}`);
-    });
+    ws.send(message);
+
+    // Log to terminal
+    console.log(`Notification sent to client: ${message} at ${new Date().toLocaleTimeString()}`);
+  }, 5000);
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+    clearInterval(interval);
+  });
+
+  ws.on('message', (msg) => {
+    console.log('Received from client:', msg);
+  });
 });
+
+console.log('WebSocket server running on ws://localhost:9090/ws/notifications/Quinn');
