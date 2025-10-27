@@ -291,6 +291,48 @@ public class GroupController {
 
 
     /**
+     * GET /groups/user/{username}
+     * Retrieve all groups that a user is a member of.
+     */
+    @GetMapping("/user/{username}")
+    public ResponseEntity<?> getUserGroups(@PathVariable String username) {
+        // Find the user
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "User not found"));
+        }
+
+        Users user = userOpt.get();
+
+        // Find all groups the user is a member of
+        List<Group> userGroups = groupRepository.findAll()
+                .stream()
+                .filter(g -> g.getMembers().contains(user))
+                .toList();
+
+        List<Map<String, Object>> groupList = new ArrayList<>();
+        for (Group group : userGroups) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", group.getId());
+            map.put("groupName", group.getGroupName());
+            map.put("description", group.getDescription());
+            map.put("isPrivate", group.isPrivate());
+            map.put("craft", group.getCraft());
+            map.put("memberCount", group.getMembers().size());
+            map.put("admin", group.getGroupAdmin().getUsername());
+            groupList.add(map);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "username", username,
+                "totalGroups", groupList.size(),
+                "groups", groupList
+        ));
+    }
+
+
+
+    /**
      * DELETE /groups/{groupName}/remove-member/{username}
      * Remove a user from a group. Only admins can do this.
      */
