@@ -18,7 +18,7 @@
         <service
             android:name=".WebSocketService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false" />
 
         <activity
             android:name=".ChatActivity2"
