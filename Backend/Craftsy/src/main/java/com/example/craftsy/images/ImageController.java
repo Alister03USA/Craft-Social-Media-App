@@ -16,7 +16,7 @@ import java.util.Optional;
 public class ImageController {
 
     // replace this! careful with the operating system in use
-    private final String directory = "/uploads"; // ✅ Change to your desired folder
+    private final String directory = System.getProperty("user.home") + "/uploads";
 
     @Autowired
     private ImageRepository imageRepository;
