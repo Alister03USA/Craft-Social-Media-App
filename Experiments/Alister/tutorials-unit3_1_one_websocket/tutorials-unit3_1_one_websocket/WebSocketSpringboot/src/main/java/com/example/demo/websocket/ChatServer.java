@@ -15,6 +15,9 @@ import jakarta.websocket.server.ServerEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 /**
  * Represents a WebSocket chat server for handling real-time communication
@@ -67,7 +70,7 @@ public class ChatServer {
             usernameSessionMap.put(username, session);
 
             // send to the user joining in
-            sendMessageToPArticularUser(username, "Welcome to the chat server, "+username);
+            sendMessageToParticularUser(username, "Welcome to the chat server, "+username);
 
             // send to everyone in the chat
             broadcast("User: " + username + " has Joined the Chat");
@@ -83,31 +86,31 @@ public class ChatServer {
     @OnMessage
     public void onMessage(Session session, String message) throws IOException {
 
-        // get the username by session
+
+        if (message == null || message.trim().isEmpty()) {
+            session.getBasicRemote().sendText("Empty messages are not allowed.");
+            return;
+        }
+
         String username = sessionUsernameMap.get(session);
 
-        // server side log
-        logger.info("[onMessage] " + username + ": " + message);
-
-        // Direct message to a user using the format "@username <message>"
+        // Handle direct messages first
         if (message.startsWith("@")) {
-
-            // split by space
-            String[] split_msg =  message.split("\\s+");
-
-            // Combine the rest of message
-            StringBuilder actualMessageBuilder = new StringBuilder();
-            for (int i = 1; i < split_msg.length; i++) {
-                actualMessageBuilder.append(split_msg[i]).append(" ");
+            String[] split_msg = message.split("\\s+");
+            if (split_msg.length > 1) {
+                String destUserName = split_msg[0].substring(1); // remove @
+                String actualMessage = message.substring(split_msg[0].length()).trim();
+                sendMessageToParticularUser(destUserName, "[DM from " + username + "]: " + actualMessage);
+                sendMessageToParticularUser(username, "[DM to " + destUserName + "]: " + actualMessage);
             }
-            String destUserName = split_msg[0].substring(1);    //@username and get rid of @
-            String actualMessage = actualMessageBuilder.toString();
-            sendMessageToPArticularUser(destUserName, "[DM from " + username + "]: " + actualMessage);
-            sendMessageToPArticularUser(username, "[DM from " + username + "]: " + actualMessage);
+            return;
         }
-        else { // Message to whole chat
-            broadcast(username + ": " + message);
-        }
+
+        // Broadcast normal message
+        String timestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String fullMessage = "[" + timestamp + "] " + username + ": " + message;
+        broadcast(fullMessage);
     }
 
     /**
@@ -154,7 +157,7 @@ public class ChatServer {
      * @param username The username of the recipient.
      * @param message  The message to be sent.
      */
-    private void sendMessageToPArticularUser(String username, String message) {
+    private void sendMessageToParticularUser(String username, String message) {
         try {
             usernameSessionMap.get(username).getBasicRemote().sendText(message);
         } catch (IOException e) {
