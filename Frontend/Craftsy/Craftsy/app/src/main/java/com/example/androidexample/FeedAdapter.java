@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -34,13 +35,13 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public FeedAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.feed_item, parent, false);
-        return new ViewHolder(view);
+        return new FeedAdapter.ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull FeedAdapter.ViewHolder holder, int position) {
         FeedItem item = feedList.get(position);
 
         holder.projectName.setText(item.getProjectName());
@@ -49,9 +50,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         holder.projectType.setText(item.getProjectType());
         holder.visibility.setText(item.getVisibility());
 
-        //  Load image manually
+        // Load image manually
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
-            // Allow network on main thread temporarily (quick workaround)
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
             try {
@@ -64,13 +64,48 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
                 holder.projectImage.setImageBitmap(bitmap);
             } catch (Exception e) {
                 Log.e("FeedAdapter", "Image load failed: " + e.getMessage());
-                holder.projectImage.setImageResource(R.drawable.ic_post_placeholder); // fallback
+                holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
             }
         } else {
             holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
         }
 
-        // On click → open details
+        // 🔹 Show Edit/Delete buttons only for own posts
+        if (item.getUsername().equalsIgnoreCase(loggedInUser)) {
+            holder.buttonEdit.setVisibility(View.VISIBLE);
+            holder.buttonDelete.setVisibility(View.VISIBLE);
+        } else {
+            holder.buttonEdit.setVisibility(View.GONE);
+            holder.buttonDelete.setVisibility(View.GONE);
+        }
+
+        // 🔹 Edit post
+        holder.buttonEdit.setOnClickListener(v -> {
+            Intent intent = new Intent(context, FeedCRUDActivity.class);
+            intent.putExtra("mode", "edit");
+            intent.putExtra("username", loggedInUser);
+            intent.putExtra("projectName", item.getProjectName());
+            intent.putExtra("projectDesc", item.getProjectDesc());
+            intent.putExtra("projectType", item.getProjectType());
+            intent.putExtra("supplies", item.getSupplies());
+            intent.putExtra("visibility", item.getVisibility());
+            context.startActivity(intent);
+        });
+
+        // 🔹 Delete post
+        holder.buttonDelete.setOnClickListener(v -> {
+            Intent intent = new Intent(context, FeedCRUDActivity.class);
+            intent.putExtra("mode", "delete");
+            intent.putExtra("username", loggedInUser);
+            intent.putExtra("projectName", item.getProjectName());
+            intent.putExtra("projectDesc", item.getProjectDesc());
+            intent.putExtra("projectType", item.getProjectType());
+            intent.putExtra("supplies", item.getSupplies());
+            intent.putExtra("visibility", item.getVisibility());
+            context.startActivity(intent);
+        });
+
+        // 🔹 View details
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedDetailActivity.class);
             intent.putExtra("username", item.getUsername());
@@ -94,6 +129,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView projectName, username, projectDesc, projectType, visibility;
         ImageView projectImage;
+        Button buttonEdit, buttonDelete;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -103,6 +139,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             projectType = itemView.findViewById(R.id.textProjectType);
             visibility = itemView.findViewById(R.id.textMeta);
             projectImage = itemView.findViewById(R.id.imageProject);
+            buttonEdit = itemView.findViewById(R.id.buttonEdit);
+            buttonDelete = itemView.findViewById(R.id.buttonDelete);
         }
     }
 }

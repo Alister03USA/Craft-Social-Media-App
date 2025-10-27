@@ -59,5 +59,38 @@
             android:textColor="@color/gray"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
+        <!-- 🔹 Edit/Delete buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/buttonEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit"
+                android:textSize="12sp"
+                android:paddingHorizontal="12dp"
+                android:backgroundTint="@color/button_blue"
+                android:textColor="@color/text_white"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/buttonDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:textSize="12sp"
+                android:layout_marginStart="8dp"
+                android:paddingHorizontal="12dp"
+                android:backgroundTint="@color/red"
+                android:textColor="@color/text_white"
+                android:visibility="gone" />
+        </LinearLayout>
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>
