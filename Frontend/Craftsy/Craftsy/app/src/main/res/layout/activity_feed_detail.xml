@@ -2,105 +2,81 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/blue_background"
-    android:padding="12dp">
+    android:padding="16dp"
+    android:background="@color/blue_background">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp">
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="← Back"
-            android:textAllCaps="false"
-            android:textColor="@color/text_white"
-            android:background="@drawable/rounded_button"
-            android:padding="8dp"
-            android:layout_margin="12dp" />
-        <TextView
-            android:id="@+id/textUsername"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="username"
-            android:textStyle="bold"
-            android:textColor="@color/button_blue"
-            android:clickable="true"
-            android:focusable="true"
-            android:paddingBottom="4dp" />
+        android:layout_height="wrap_content">
+
+        <!-- Post image -->
+        <ImageView
+            android:id="@+id/imageProject"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_post_placeholder"
+            android:background="@color/white" />
+
+        <!-- Project info -->
         <TextView
             android:id="@+id/textProjectName"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/button_blue"
-            android:textSize="18sp"
+            android:text="Project Name"
             android:textStyle="bold"
-            android:layout_marginTop="4dp" />
+            android:textSize="20sp"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/textUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@username"
+            android:textSize="16sp"
+            android:textColor="@color/gray" />
 
         <TextView
             android:id="@+id/textProjectDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_gray"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="10dp"
+            android:text="Project description goes here."
+            android:textSize="16sp"
+            android:textColor="@color/dark_text" />
 
         <TextView
             android:id="@+id/textProjectType"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_gray"
-            android:textSize="13sp"
-            android:layout_marginTop="2dp" />
+            android:text="Type: Knitting"
+            android:textSize="14sp"
+            android:textColor="@color/gray" />
 
         <TextView
             android:id="@+id/textSupplies"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_gray"
-            android:textSize="13sp"
-            android:layout_marginTop="2dp" />
+            android:text="Supplies: Yarn, Needles"
+            android:textSize="14sp"
+            android:textColor="@color/gray" />
 
         <TextView
-            android:id="@+id/textMeta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/text_gray"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/text_gray"
-            android:layout_marginVertical="8dp" />
-
-        <!-- Comments -->
-        <LinearLayout
-            android:id="@+id/commentsContainer"
+            android:id="@+id/textVisibility"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:text="Visibility: Public"
+            android:textSize="14sp"
+            android:textColor="@color/gray" />
 
-        <EditText
-            android:id="@+id/editComment"
+        <TextView
+            android:id="@+id/textDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Add a comment..."
-            android:background="@drawable/rounded_edittext_bg"
-            android:padding="10dp"
-            android:layout_marginTop="12dp"
-            android:textColor="@color/text_black" />
-
-        <Button
-            android:id="@+id/btnPostComment"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="POST"
-            android:backgroundTint="@color/button_blue"
-            android:textColor="@color/text_white"
-            android:layout_marginTop="6dp" />
+            android:text="Date: 2025-10-27"
+            android:textSize="14sp"
+            android:textColor="@color/gray" />
     </LinearLayout>
 </ScrollView>

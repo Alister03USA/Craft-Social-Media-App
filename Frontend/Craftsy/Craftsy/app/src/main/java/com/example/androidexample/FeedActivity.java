@@ -22,6 +22,7 @@ public class FeedActivity extends BaseActivity {
 
     private static final String TAG = "FeedActivity";
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/feed";
+    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/"; // ✅ where images are served
 
     private String loggedInUsername;
 
@@ -33,13 +34,11 @@ public class FeedActivity extends BaseActivity {
         recyclerViewFeed = findViewById(R.id.recyclerViewFeed);
         recyclerViewFeed.setLayoutManager(new LinearLayoutManager(this));
 
-        // ✅ Get username passed from login or previous activity
         loggedInUsername = getIntent().getStringExtra("username");
         if (loggedInUsername == null || loggedInUsername.trim().isEmpty()) {
             loggedInUsername = "Fuji"; // fallback
         }
 
-        // 🔹 "Add Post" button
         findViewById(R.id.btnAddPost).setOnClickListener(v -> {
             Intent intent = new Intent(this, FeedCRUDActivity.class);
             intent.putExtra("mode", "add");
@@ -47,26 +46,21 @@ public class FeedActivity extends BaseActivity {
             startActivity(intent);
         });
 
-        // 🔹 Adapter with Edit/Delete listeners
-        feedAdapter = new FeedAdapter(this, feedList, "feed");
+        feedAdapter = new FeedAdapter(this, feedList, "feed", loggedInUsername);
         recyclerViewFeed.setAdapter(feedAdapter);
 
-        // 🔹 Bottom navigation bar
         setupBottomNavigation(R.id.bottom_navigation);
 
         Log.d(TAG, "FeedActivity created for: " + loggedInUsername);
         loadFeed(loggedInUsername);
     }
 
-    /** 🟩 Auto-refresh whenever you return to this screen */
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "Refreshing feed for user: " + loggedInUsername);
         loadFeed(loggedInUsername);
     }
 
-    /** Load feed data from backend */
     private void loadFeed(String username) {
         final String url = BASE_URL + "/" + username;
 
@@ -84,7 +78,6 @@ public class FeedActivity extends BaseActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /** Parse backend JSON into FeedItem list */
     private void handleFeedResponse(JSONArray arr) {
         try {
             feedList.clear();
@@ -100,34 +93,24 @@ public class FeedActivity extends BaseActivity {
                 String visibility = o.optString("visibility", "");
                 String date = o.optString("date", "");
 
-                feedList.add(new FeedItem(u, name, desc, type, supplies, visibility, date));
+                //  Get first image path if available
+                String imageUrl = null;
+                JSONArray imagesArr = o.optJSONArray("images");
+                if (imagesArr != null && imagesArr.length() > 0) {
+                    JSONObject imgObj = imagesArr.getJSONObject(0);
+                    String filePath = imgObj.optString("filePath", "");
+                    if (filePath != null && !filePath.isEmpty()) {
+                        // Convert backend file path to accessible URL
+                        imageUrl = IMAGE_BASE_URL + filePath.substring(filePath.lastIndexOf("/") + 1);
+                    }
+                }
+
+                feedList.add(new FeedItem(u, name, desc, type, supplies, visibility, date, imageUrl));
             }
             feedAdapter.notifyDataSetChanged();
             Log.d(TAG, "Feed reloaded with " + feedList.size() + " posts");
         } catch (JSONException e) {
             Log.e(TAG, "Parse error", e);
         }
-    }
-
-    /** Edit button → open FeedCRUDActivity (prefilled mode) */
-    private void onEditClicked(FeedItem item) {
-        Intent intent = new Intent(this, FeedCRUDActivity.class);
-        intent.putExtra("mode", "edit");
-        intent.putExtra("username", loggedInUsername);
-        intent.putExtra("projectName", item.getProjectName());
-        intent.putExtra("projectDesc", item.getProjectDesc());
-        intent.putExtra("projectType", item.getProjectType());
-        intent.putExtra("supplies", item.getSupplies());
-        intent.putExtra("visibility", item.getVisibility());
-        startActivity(intent);
-    }
-
-    /** Delete button → open FeedCRUDActivity (prefilled for confirmation) */
-    private void onDeleteClicked(FeedItem item) {
-        Intent intent = new Intent(this, FeedCRUDActivity.class);
-        intent.putExtra("mode", "delete");
-        intent.putExtra("username", loggedInUsername);
-        intent.putExtra("projectName", item.getProjectName());
-        startActivity(intent);
     }
 }

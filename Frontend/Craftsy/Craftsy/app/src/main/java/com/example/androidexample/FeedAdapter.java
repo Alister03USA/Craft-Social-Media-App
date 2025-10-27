@@ -2,38 +2,45 @@ package com.example.androidexample;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.StrictMode;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
-/**
- * Adapter for the main feed and search results feed.
- */
 public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
 
     private final Context context;
     private final List<FeedItem> feedList;
-    private final String fromScreen;  // "feed" or "search"
+    private final String fromScreen;
+    private final String loggedInUser;
 
-    public FeedAdapter(Context context, List<FeedItem> feedList, String fromScreen) {
+    public FeedAdapter(Context context, List<FeedItem> feedList, String fromScreen, String loggedInUser) {
         this.context = context;
         this.feedList = feedList;
         this.fromScreen = fromScreen;
+        this.loggedInUser = loggedInUser;
     }
 
     @NonNull
     @Override
-    public FeedAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.feed_item, parent, false);
-        return new FeedAdapter.ViewHolder(view);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FeedAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FeedItem item = feedList.get(position);
 
         holder.projectName.setText(item.getProjectName());
@@ -42,9 +49,30 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         holder.projectType.setText(item.getProjectType());
         holder.visibility.setText(item.getVisibility());
 
+        //  Load image manually
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            // Allow network on main thread temporarily (quick workaround)
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            try {
+                URL url = new URL(item.getImageUrl());
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                holder.projectImage.setImageBitmap(bitmap);
+            } catch (Exception e) {
+                Log.e("FeedAdapter", "Image load failed: " + e.getMessage());
+                holder.projectImage.setImageResource(R.drawable.ic_post_placeholder); // fallback
+            }
+        } else {
+            holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
+        }
+
+        // On click → open details
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedDetailActivity.class);
-            intent.putExtra("from", fromScreen);
             intent.putExtra("username", item.getUsername());
             intent.putExtra("projectName", item.getProjectName());
             intent.putExtra("projectDesc", item.getProjectDesc());
@@ -52,7 +80,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             intent.putExtra("supplies", item.getSupplies());
             intent.putExtra("visibility", item.getVisibility());
             intent.putExtra("date", item.getDate());
-
+            intent.putExtra("imageUrl", item.getImageUrl());
+            intent.putExtra("loggedInUser", loggedInUser);
             context.startActivity(intent);
         });
     }
@@ -64,6 +93,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView projectName, username, projectDesc, projectType, visibility;
+        ImageView projectImage;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -72,6 +102,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             projectDesc = itemView.findViewById(R.id.textProjectDesc);
             projectType = itemView.findViewById(R.id.textProjectType);
             visibility = itemView.findViewById(R.id.textMeta);
+            projectImage = itemView.findViewById(R.id.imageProject);
         }
     }
 }

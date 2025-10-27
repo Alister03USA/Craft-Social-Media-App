@@ -13,25 +13,20 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * ✅ Custom Volley request that supports multipart/form-data
- * so that we can send both file and text fields together.
- * Works with Spring Boot @RequestParam for file upload.
+ * ✅ Corrected VolleyMultipartRequest
+ * Proper multipart/form-data format for Spring Boot backend @RequestParam("image")
  */
 public class VolleyMultipartRequest extends Request<NetworkResponse> {
 
-    private final String boundary = "----AndroidFormBoundary" + UUID.randomUUID();
     private static final String LINE_FEED = "\r\n";
+    private final String boundary = "----AndroidBoundary" + UUID.randomUUID().toString();
 
     private final Response.Listener<NetworkResponse> mListener;
     private final Response.ErrorListener mErrorListener;
 
-    // Text and file parts
     private final Map<String, String> textParams;
     private final Map<String, DataPart> fileParams;
 
-    /**
-     * Constructor
-     */
     public VolleyMultipartRequest(
             int method,
             String url,
@@ -54,48 +49,46 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
 
     @Override
     public byte[] getBody() throws AuthFailureError {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            // ✳️ Append text fields
+            // Text fields
             if (textParams != null && !textParams.isEmpty()) {
                 for (Map.Entry<String, String> entry : textParams.entrySet()) {
-                    outputStream.write(("--" + boundary + LINE_FEED).getBytes());
-                    outputStream.write(("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"" + LINE_FEED).getBytes());
-                    outputStream.write(("Content-Type: text/plain; charset=UTF-8" + LINE_FEED + LINE_FEED).getBytes());
-                    outputStream.write(entry.getValue().getBytes());
-                    outputStream.write(LINE_FEED.getBytes());
+                    bos.write(("--" + boundary + LINE_FEED).getBytes());
+                    bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"" + LINE_FEED).getBytes());
+                    bos.write(("Content-Type: text/plain; charset=UTF-8" + LINE_FEED).getBytes());
+                    bos.write(LINE_FEED.getBytes());
+                    bos.write(entry.getValue().getBytes());
+                    bos.write(LINE_FEED.getBytes());
                 }
             }
 
-            // ✳️ Append file fields
+            // File fields
             if (fileParams != null && !fileParams.isEmpty()) {
                 for (Map.Entry<String, DataPart> entry : fileParams.entrySet()) {
-                    DataPart dataPart = entry.getValue();
-                    outputStream.write(("--" + boundary + LINE_FEED).getBytes());
-                    outputStream.write(("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"; filename=\"" + dataPart.getFileName() + "\"" + LINE_FEED).getBytes());
-                    outputStream.write(("Content-Type: " + dataPart.getType() + LINE_FEED + LINE_FEED).getBytes());
-                    outputStream.write(dataPart.getContent());
-                    outputStream.write(LINE_FEED.getBytes());
+                    DataPart dp = entry.getValue();
+                    bos.write(("--" + boundary + LINE_FEED).getBytes());
+                    bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey()
+                            + "\"; filename=\"" + dp.getFileName() + "\"" + LINE_FEED).getBytes());
+                    bos.write(("Content-Type: " + dp.getType() + LINE_FEED).getBytes());
+                    bos.write(LINE_FEED.getBytes());
+                    bos.write(dp.getContent());
+                    bos.write(LINE_FEED.getBytes());
                 }
             }
 
-            // ✳️ End boundary
-            outputStream.write(("--" + boundary + "--" + LINE_FEED).getBytes());
+            // End boundary
+            bos.write(("--" + boundary + "--" + LINE_FEED).getBytes());
 
         } catch (IOException e) {
-            throw new AuthFailureError("Error while creating multipart request body: " + e.getMessage());
+            throw new AuthFailureError("Multipart body build error: " + e.getMessage());
         }
-
-        return outputStream.toByteArray();
+        return bos.toByteArray();
     }
 
     @Override
     protected Response<NetworkResponse> parseNetworkResponse(NetworkResponse response) {
-        try {
-            return Response.success(response, HttpHeaderParser.parseCacheHeaders(response));
-        } catch (Exception e) {
-            return Response.error(new VolleyError("Failed to parse network response"));
-        }
+        return Response.success(response, HttpHeaderParser.parseCacheHeaders(response));
     }
 
     @Override
@@ -108,9 +101,7 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         mErrorListener.onErrorResponse(error);
     }
 
-    /**
-     * ✅ Helper class representing a file (binary) part
-     */
+    /** Binary file holder */
     public static class DataPart {
         private final String fileName;
         private final byte[] content;
@@ -122,16 +113,8 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
             this.type = type;
         }
 
-        public String getFileName() {
-            return fileName;
-        }
-
-        public byte[] getContent() {
-            return content;
-        }
-
-        public String getType() {
-            return type;
-        }
+        public String getFileName() { return fileName; }
+        public byte[] getContent() { return content; }
+        public String getType() { return type; }
     }
 }

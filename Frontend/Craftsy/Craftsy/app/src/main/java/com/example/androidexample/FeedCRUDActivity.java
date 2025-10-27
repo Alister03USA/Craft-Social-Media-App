@@ -1,142 +1,229 @@
 package com.example.androidexample;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.*;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
-
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
- * FeedCRUDActivity — unified Add, Edit, and Delete post screen.
- * - Username is auto-fetched from logged-in session (intent extra)
- * - Add/Edit/Delete work based on the mode passed in the intent.
- */
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 public class FeedCRUDActivity extends AppCompatActivity {
 
-    private EditText editProjectName, editDesc, editType, editSupplies, editVisibility;
-    private Button buttonSave, buttonDelete, buttonBack;
+    private static final String TAG = "FeedCRUDActivity";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
+    private static final int PICK_IMAGE_REQUEST = 101;
 
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/feed";
-    private String loggedInUsername; // Automatically filled from session intent
+    private EditText editProjectName, editDesc, editType, editSupplies, editVisibility;
+    private Button buttonSave, buttonDelete, buttonBack, btnChooseImage;
+    private ImageView imagePreview;
+    private Uri selectedImageUri;
+    private String loggedInUsername, mode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed_crud);
 
-        // Bind UI elements
         editProjectName = findViewById(R.id.editProjectName);
         editDesc = findViewById(R.id.editDesc);
         editType = findViewById(R.id.editType);
         editSupplies = findViewById(R.id.editSupplies);
         editVisibility = findViewById(R.id.editVisibility);
-
         buttonSave = findViewById(R.id.buttonSave);
         buttonDelete = findViewById(R.id.buttonDelete);
         buttonBack = findViewById(R.id.buttonBack);
+        btnChooseImage = findViewById(R.id.btnChooseImage);
+        imagePreview = findViewById(R.id.imagePreview);
 
-        // Get data from Intent
-        String mode = getIntent().getStringExtra("mode");
-        loggedInUsername = getIntent().getStringExtra("username"); // Comes from logged-in user
+        mode = getIntent().getStringExtra("mode");
+        loggedInUsername = getIntent().getStringExtra("username");
 
-        String projectName = getIntent().getStringExtra("projectName");
-        String desc = getIntent().getStringExtra("projectDesc");
-        String type = getIntent().getStringExtra("projectType");
-        String supplies = getIntent().getStringExtra("supplies");
-        String visibility = getIntent().getStringExtra("visibility");
+        // ✅ Pre-fill fields if data is passed
+        if (getIntent().hasExtra("projectName")) {
+            editProjectName.setText(getIntent().getStringExtra("projectName"));
+        }
+        if (getIntent().hasExtra("projectDesc")) {
+            editDesc.setText(getIntent().getStringExtra("projectDesc"));
+        }
+        if (getIntent().hasExtra("projectType")) {
+            editType.setText(getIntent().getStringExtra("projectType"));
+        }
+        if (getIntent().hasExtra("supplies")) {
+            editSupplies.setText(getIntent().getStringExtra("supplies"));
+        }
+        if (getIntent().hasExtra("visibility")) {
+            editVisibility.setText(getIntent().getStringExtra("visibility"));
+        }
 
-        // Back button → return to FeedActivity
         buttonBack.setOnClickListener(v -> finish());
+        btnChooseImage.setOnClickListener(v -> openImageChooser());
 
-        // Mode logic
         if ("edit".equals(mode)) {
-            // Prefill existing data
-            editProjectName.setText(projectName);
-            editDesc.setText(desc);
-            editType.setText(type);
-            editSupplies.setText(supplies);
-            editVisibility.setText(visibility);
-
-            // Prevent changing project name
-            editProjectName.setEnabled(false);
-
             buttonSave.setText("Update Post");
             buttonDelete.setEnabled(false);
-
-            buttonSave.setOnClickListener(v -> updateFeed(projectName));
-
+            btnChooseImage.setEnabled(false);
+            buttonSave.setOnClickListener(v -> updateFeed(editProjectName.getText().toString()));
         } else if ("delete".equals(mode)) {
-            // Prefill minimal info for confirmation
-            editProjectName.setText(projectName);
-            editProjectName.setEnabled(false);
-            editDesc.setEnabled(false);
-            editType.setEnabled(false);
-            editSupplies.setEnabled(false);
-            editVisibility.setEnabled(false);
-
+            disableInputs(); // keep values visible but not editable
+            btnChooseImage.setEnabled(false);
             buttonSave.setEnabled(false);
             buttonDelete.setText("Confirm Delete");
 
+            // ✅ Use the pre-filled project name, not empty EditText
+            String projectName = getIntent().getStringExtra("projectName");
             buttonDelete.setOnClickListener(v -> deleteFeed(projectName));
-
         } else {
-            // Default = add mode
             buttonDelete.setEnabled(false);
-            buttonSave.setText("Add Post");
-
-            buttonSave.setOnClickListener(v -> createFeed());
+            buttonSave.setOnClickListener(v -> {
+                if (selectedImageUri != null) uploadImageAndCreateFeed();
+                else createFeed(null);
+            });
         }
     }
 
-    /** POST /feed/{username} — Add new post */
-    private void createFeed() {
-        if (loggedInUsername == null || loggedInUsername.trim().isEmpty()) {
-            Toast.makeText(this, "Session error: username missing. Please log in again.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void disableInputs() {
+        editProjectName.setEnabled(false);
+        editDesc.setEnabled(false);
+        editType.setEnabled(false);
+        editSupplies.setEnabled(false);
+        editVisibility.setEnabled(false);
+    }
 
-        String projectName = editProjectName.getText().toString().trim();
-        if (projectName.isEmpty()) {
-            Toast.makeText(this, "Project name cannot be empty.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void openImageChooser() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Image"), PICK_IMAGE_REQUEST);
+    }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
+            selectedImageUri = data.getData();
+            if (selectedImageUri != null) {
+                imagePreview.setImageURI(selectedImageUri);
+                Toast.makeText(this, "Image selected", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void uploadImageAndCreateFeed() {
+        try {
+            byte[] fileData = readBytesFromUri(selectedImageUri);
+            String fileName = getFileName(selectedImageUri);
+            Log.d(TAG, "Preparing upload: " + fileName + " (" + fileData.length + " bytes)");
+
+            VolleyMultipartRequest request = new VolleyMultipartRequest(
+                    Request.Method.POST,
+                    BASE_URL + "/images",
+                    response -> {
+                        try {
+                            String resp = new String(response.data, StandardCharsets.UTF_8);
+                            Log.d(TAG, "✅ Server response: " + resp);
+                            JSONObject obj = new JSONObject(resp);
+                            long imageId = obj.getLong("id");
+                            createFeed(imageId);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Parse error", e);
+                        }
+                    },
+                    error -> {
+                        String msg = "";
+                        if (error.networkResponse != null && error.networkResponse.data != null)
+                            msg = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                        Log.e(TAG, "❌ Upload failed. Code: " +
+                                (error.networkResponse != null ? error.networkResponse.statusCode : 0) +
+                                " | Body: " + msg, error);
+                        Toast.makeText(this, "Upload failed: " + msg, Toast.LENGTH_LONG).show();
+                    },
+                    new HashMap<>(),
+                    getImagePart(fileName, fileData)
+            );
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
+        } catch (IOException e) {
+            Log.e(TAG, "Image read failed", e);
+        }
+    }
+
+    private Map<String, VolleyMultipartRequest.DataPart> getImagePart(String fileName, byte[] fileData) {
+        Map<String, VolleyMultipartRequest.DataPart> map = new HashMap<>();
+        map.put("image", new VolleyMultipartRequest.DataPart(fileName, fileData, "image/jpeg"));
+        return map;
+    }
+
+    private byte[] readBytesFromUri(Uri uri) throws IOException {
+        try (InputStream input = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024];
+            int n;
+            while ((n = input.read(buffer)) >= 0) output.write(buffer, 0, n);
+            return output.toByteArray();
+        }
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex != -1) result = cursor.getString(nameIndex);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error retrieving file name: " + e.getMessage());
+        }
+        return result != null ? result : "image.jpg";
+    }
+
+    private void createFeed(Long imageId) {
         JSONObject json = new JSONObject();
         try {
-            json.put("projectName", projectName);
+            json.put("projectName", editProjectName.getText().toString());
             json.put("projectDesc", editDesc.getText().toString());
             json.put("projectType", editType.getText().toString());
             json.put("supplies", editSupplies.getText().toString());
             json.put("visibility", editVisibility.getText().toString());
+            if (imageId != null) {
+                JSONArray arr = new JSONArray();
+                JSONObject img = new JSONObject();
+                img.put("id", imageId);
+                arr.put(img);
+                json.put("images", arr);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        String url = BASE_URL + "/" + loggedInUsername;
-        Log.d("FeedCRUDActivity", "POST " + url);
-
-        JsonObjectRequest req = new JsonObjectRequest(
-                Request.Method.POST, url, json,
+        String url = BASE_URL + "/feed/" + loggedInUsername;
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, json,
                 response -> {
-                    Toast.makeText(this, " Post added successfully!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "✅ Post added successfully!", Toast.LENGTH_SHORT).show();
                     finish();
                 },
                 error -> {
-                    Log.e("FeedCRUDActivity", "Add failed", error);
-                    Toast.makeText(this, "Failed to add post", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Post add failed", error);
+                    Toast.makeText(this, "Post add failed", Toast.LENGTH_SHORT).show();
                 });
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /** PUT /feed/{username}/{projectName} — Update existing post */
     private void updateFeed(String projectName) {
         JSONObject json = new JSONObject();
         try {
@@ -144,41 +231,37 @@ public class FeedCRUDActivity extends AppCompatActivity {
             json.put("projectType", editType.getText().toString());
             json.put("supplies", editSupplies.getText().toString());
             json.put("visibility", editVisibility.getText().toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        } catch (JSONException e) { e.printStackTrace(); }
 
-        String url = BASE_URL + "/" + loggedInUsername + "/" + projectName;
-        Log.d("FeedCRUDActivity", "PUT " + url);
-
-        JsonObjectRequest req = new JsonObjectRequest(
-                Request.Method.PUT, url, json,
+        String url = BASE_URL + "/feed/" + loggedInUsername + "/" + projectName;
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.PUT, url, json,
                 response -> {
-                    Toast.makeText(this, " Post updated!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "✅ Post updated", Toast.LENGTH_SHORT).show();
                     finish();
                 },
-                error -> {
-                    Log.e("FeedCRUDActivity", "Update failed", error);
-                    Toast.makeText(this, "Failed to update post", Toast.LENGTH_SHORT).show();
-                });
-
+                error -> Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show());
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /** DELETE /feed/{username}/{projectName} — Delete post */
+    /** DELETE /feed/{username}/{projectName} */
     private void deleteFeed(String projectName) {
-        String url = BASE_URL + "/" + loggedInUsername + "/" + projectName;
-        Log.d("FeedCRUDActivity", "DELETE " + url);
+        if (projectName == null || projectName.trim().isEmpty()) {
+            Toast.makeText(this, "Project name is missing — cannot delete.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String url = BASE_URL + "/feed/" + loggedInUsername + "/" + projectName.trim();
+        Log.d(TAG, "DELETE → " + url);
 
         com.android.volley.toolbox.StringRequest req = new com.android.volley.toolbox.StringRequest(
                 Request.Method.DELETE, url,
                 response -> {
-                    Toast.makeText(this, "🗑️ Post deleted", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "🗑️ Post deleted!", Toast.LENGTH_SHORT).show();
                     finish();
                 },
                 error -> {
-                    Log.e("FeedCRUDActivity", "Delete failed", error);
-                    Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Delete failed: " + error);
+                    Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
                 });
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
