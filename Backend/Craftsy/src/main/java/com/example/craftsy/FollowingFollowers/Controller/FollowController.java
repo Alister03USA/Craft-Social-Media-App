@@ -1,7 +1,9 @@
 package com.example.craftsy.FollowingFollowers.Controller;
 
-import com.example.craftsy.FollowingFollowers.Entity.Notification;
+import com.example.craftsy.FollowingFollowers.Entity.Follow;
 import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+import com.example.craftsy.Notification.Entity.Notification;
+import com.example.craftsy.Notification.NotificationWebSocket;
 import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
@@ -28,7 +30,7 @@ public class FollowController {
     /**
      * GET /{viewerUsername}/profile/{targetUsername}
      * Example: /alister_gan/profile/Zayden
-     *
+     * <p>
      * This endpoint checks the relationship between the viewer and the target user.
      * - If viewer is following the target user, isFollowing = true
      * - If viewer has sent a pending follow request, isPending = true
@@ -122,19 +124,35 @@ public class FollowController {
         follow.setAccepted(false); // pending
         followRepository.save(follow);
 
-        // Create notification for the target user
-        Notification notification = new Notification();
-        notification.setUser(target);
-        notification.setTitle("New Follower");
-        notification.setMessage(follower.getDisplayName() + " wants to follow you");
-        notification.setType("FOLLOW_REQUEST");
-        notification.setReferenceId(follow.getId()); // link to follow request
-        notificationRepository.save(notification);
+        // Notify TARGET user (the one being followed)
+        Notification targetNotification = new Notification();
+        targetNotification.setUser(target); // receiver
+        targetNotification.setSender(follower); // sender
+        targetNotification.setTitle("New Follow Request");
+        targetNotification.setMessage(follower.getDisplayName() + " sent you a follow request.");
+        targetNotification.setReferenceId(follow.getId());
+        targetNotification.setIsRead(false);
+        targetNotification.setCreatedAt(new Date());
+        Notification savedTargetNotification = notificationRepository.save(targetNotification);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "success");
-        response.put("message", "Follow request sent");
-        return ResponseEntity.ok(response);
+        // Real-time push to TARGET user
+        NotificationWebSocket.pushNotification(target.getUsername(), savedTargetNotification);
+
+        // Notify SENDER that request was successfully sent
+        Notification senderNotification = new Notification();
+        senderNotification.setUser(follower); // receiver = sender
+        senderNotification.setSender(target); // for clarity (target is context)
+        senderNotification.setTitle("Follow Request Sent");
+        senderNotification.setMessage("Your follow request to " + target.getDisplayName() + " has been sent.");
+        senderNotification.setReferenceId(follow.getId());
+        senderNotification.setIsRead(false);
+        senderNotification.setCreatedAt(new Date());
+        Notification savedSenderNotification = notificationRepository.save(senderNotification);
+
+        // Real-time push to SENDER user
+        NotificationWebSocket.pushNotification(follower.getUsername(), savedSenderNotification);
+
+        return ResponseEntity.ok(Map.of("message", "Follow request sent successfully"));
     }
 
     /**
@@ -187,79 +205,17 @@ public class FollowController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * GET /notifications/{username}
-     * Retrieves all unread notifications for the specified user.
-     * Only one follow request notification per follower is included.
-     */
-    @GetMapping("/notifications/{username}")
-    public ResponseEntity<List<Map<String, Object>>> getNotifications(
-            @PathVariable String username) {
-
-        // Fetch the user by username
-        Optional<Users> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build(); // Return 404 if user not found
-        }
-        Users user = userOpt.get();
-
-        // Fetch unread notifications ordered by newest first
-        List<Notification> notifications = notificationRepository
-                .findByUserAndIsReadFalseOrderByCreatedAtDesc(user);
-
-        // Prepare response list
-        List<Map<String, Object>> response = new ArrayList<>();
-        Set<Long> seenFollowerIds = new HashSet<>(); // Track which followers we've already included
-
-        for (Notification notif : notifications) {
-            // If this is not a FOLLOW_REQUEST notification, include it directly
-            if (!"FOLLOW_REQUEST".equals(notif.getType())) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", notif.getId());
-                map.put("title", notif.getTitle());
-                map.put("message", notif.getMessage());
-                map.put("read", notif.getIsRead());
-                response.add(map);
-                continue; // Skip to next notification
-            }
-
-            // For FOLLOW_REQUEST notifications, fetch the associated Follow entity
-            Optional<Follow> followOpt = followRepository.findById(notif.getReferenceId());
-            if (followOpt.isEmpty()) continue; // Skip if follow request not found
-
-            Users follower = followOpt.get().getFollower();
-            if (follower == null || seenFollowerIds.contains(follower.getId())) {
-                // Skip if follower is null or we've already included a notification from this follower
-                continue;
-            }
-
-            // Mark this follower as seen
-            seenFollowerIds.add(follower.getId());
-
-            // Add notification to response
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", notif.getId());
-            map.put("title", notif.getTitle());
-            map.put("message", notif.getMessage());
-            map.put("read", notif.getIsRead());
-            response.add(map);
-        }
-
-        // Return the final filtered list of notifications
-        return ResponseEntity.ok(response);
-    }
-
-
 
 
     /**
-     * PUT /notifications/respond/{targetUsername}/{followerUsername}/{accepted}
+     * PUT /notifications/respond/{notificationId}/{accepted}
      * Accept or reject a follow request from a specific follower
      */
     @PutMapping("/notifications/respond/{notificationId}/{accepted}")
     public ResponseEntity<Map<String, String>> respondToFollowRequest(
             @PathVariable Long notificationId,
             @PathVariable boolean accepted) {
+
 
         // Find the notification
         Optional<Notification> notifOpt = notificationRepository.findById(notificationId);
@@ -271,6 +227,11 @@ public class FollowController {
         }
 
         Notification notification = notifOpt.get();
+
+        // mark the original follow request as read
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+
         Long followId = notification.getReferenceId();
 
         // Find the follow request
@@ -283,38 +244,52 @@ public class FollowController {
         }
 
         Follow follow = followOpt.get();
+        Users sender = follow.getFollower(); // user who sent the request
+        Users target = follow.getFollowing(); // user who received the request
 
         if (accepted) {
-            // Accept the follow request
             follow.setAccepted(true);
             followRepository.save(follow);
 
-            // Update follower counts
-            Users follower = follow.getFollower();
-            Users target = follow.getFollowing();
-            follower.setFollowing(follower.getFollowing() + 1);
+            sender.setFollowing(sender.getFollowing() + 1);
             target.setFollowers(target.getFollowers() + 1);
-            userRepository.save(follower);
+            userRepository.save(sender);
             userRepository.save(target);
 
-            // Mark notification as read
-            notification.setIsRead(true);
-            notificationRepository.save(notification);
+            // Notify sender that their request was accepted
+            Notification acceptedNotification = new Notification();
+            acceptedNotification.setUser(sender);
+            acceptedNotification.setSender(target);
+            acceptedNotification.setTitle("Follow Request Accepted");
+            acceptedNotification.setMessage(target.getDisplayName() + " accepted your follow request!");
+            acceptedNotification.setReferenceId(follow.getId());
+            acceptedNotification.setIsRead(false);
+            acceptedNotification.setCreatedAt(new Date());
+            Notification savedAccepted = notificationRepository.save(acceptedNotification);
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Follow request accepted"
-            ));
+            NotificationWebSocket.pushNotification(sender.getUsername(), savedAccepted);
+
+            return ResponseEntity.ok(Map.of("message", "Follow request accepted"));
         } else {
-            // Reject the follow request
             followRepository.delete(follow);
-            notificationRepository.delete(notification);
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Follow request rejected"
-            ));
+            // Notify sender that their request was declined
+            Notification declinedNotification = new Notification();
+            declinedNotification.setUser(sender);
+            declinedNotification.setSender(target);
+            declinedNotification.setTitle("Follow Request Declined");
+            declinedNotification.setMessage(target.getDisplayName() + " declined your follow request.");
+            declinedNotification.setReferenceId(notification.getReferenceId());
+            declinedNotification.setIsRead(false);
+            declinedNotification.setCreatedAt(new Date());
+            Notification savedDeclined = notificationRepository.save(declinedNotification);
+
+            NotificationWebSocket.pushNotification(sender.getUsername(), savedDeclined);
+
+            return ResponseEntity.ok(Map.of("message", "Follow request declined"));
         }
+
+
     }
 
 
