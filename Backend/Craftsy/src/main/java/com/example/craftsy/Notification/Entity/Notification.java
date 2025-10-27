@@ -35,14 +35,11 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    // Type of notification: "FOLLOW_REQUEST", "LIKE", "COMMENT"
-    @Column(nullable = false)
-    private String type;
+
 
     // References Follow ID
     private Long referenceId;
 
-    private String referenceType; // e.g., "FOLLOW", "COMMENT", "GROUP"
 
 
     // Has the user read the notification?
@@ -63,7 +60,6 @@ public class Notification {
         this.sender = sender;
         this.title = title;
         this.message = message;
-        this.type = type;
         this.referenceId = referenceId;
         this.isRead = false;
         this.createdAt = new Date();
@@ -103,13 +99,7 @@ public class Notification {
         this.message = message;
     }
 
-    public String getType() {
-        return type;
-    }
 
-    public void setType(String type) {
-        this.type = type;
-    }
 
     public Long getReferenceId() {
         return referenceId;
@@ -135,6 +125,7 @@ public class Notification {
         this.createdAt = createdAt;
     }
 
+<<<<<<<< 199eb50f1311612c399d33aabb82f4064762c9a9:Backend/Craftsy/src/main/java/com/example/craftsy/Notification/Entity/Notification.java
     public Users getSender() {
         return sender;
     }
@@ -142,11 +133,13 @@ public class Notification {
         this.sender = sender;
     }
 
-    public String getReferenceType() {
-        return referenceType;
+
+========
+    public void setSender(Users sender) {
+        this.user = sender;
     }
 
     public void setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
     }
+>>>>>>>> 1c1394116214ed6b8aa5669c4a73912d495d76ea:Backend/Craftsy/src/main/java/com/example/craftsy/FollowingFollowers/Entity/Notification.java
 }
