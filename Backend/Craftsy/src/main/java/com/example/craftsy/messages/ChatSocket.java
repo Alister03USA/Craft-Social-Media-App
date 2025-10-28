@@ -64,23 +64,25 @@ public class ChatSocket {
         sessionUsernameMap.put(session, username);
         usernameSessionMap.put(username, session);
 
-        Optional<DirectConversation> directConvo = directConvoRepo.findById(convoId);
-        Optional<GroupConversation> groupConvo = groupConvoRepo.findById(convoId);
-
         Conversation convo;
-        if(directConvo.isPresent()){
-            convo = directConvo.orElseThrow();
-        }
-        else if(groupConvo.isPresent()){
-            convo = groupConvo.orElseThrow();
-        }
-        else{
-            throw new RuntimeException("group not found");
-        }
 
+        if (convoId.startsWith("D-")) {
+            convo = directConvoRepo.findByIdWithMembers(convoId)
+                    .orElseThrow(() -> new RuntimeException("Direct conversation not found"));
+        } else if (convoId.startsWith("G-")) {
+            convo = groupConvoRepo.findByIdWithMembers(convoId)
+                    .orElseThrow(() -> new RuntimeException("Group conversation not found"));
+        } else {
+            throw new RuntimeException("Invalid conversation ID format");
+        }
         Users user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if(!convo.getMembers().contains(user)){
+
+        boolean inConversation = convo.getMembers()
+                .stream()
+                .anyMatch(member -> member.getUsername().equals(username));
+
+        if (!inConversation) {
             throw new RuntimeException("User not in conversation");
         }
 
@@ -124,6 +126,7 @@ public class ChatSocket {
     public void onError(Session session, Throwable throwable) {
         // Do error handling here
         logger.info("Entered into Error");
+        logger.error("WebSocket error for session {}: {}", session.getId(), throwable.getMessage(), throwable);
         throwable.printStackTrace();
     }
 

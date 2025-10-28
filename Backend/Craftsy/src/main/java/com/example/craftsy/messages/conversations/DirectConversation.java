@@ -22,7 +22,12 @@ public class DirectConversation implements Conversation {
         }
     }
 
-    @OneToMany
+    @ManyToMany
+    @JoinTable(
+            name = "direct_convo_members",
+            joinColumns = @JoinColumn(name = "id"),
+            inverseJoinColumns = @JoinColumn(name = "username")
+    )
     private List<Users> members;
 
     @OneToMany(mappedBy = "directConvo", cascade = CascadeType.ALL, orphanRemoval = true)

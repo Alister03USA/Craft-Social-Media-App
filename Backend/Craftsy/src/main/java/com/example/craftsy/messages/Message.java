@@ -54,6 +54,8 @@ public class Message {
     @JoinColumn(name = "direct_convo_id")
     private DirectConversation directConvo;
 
+    public Message(){}
+
     public Message(String username, String text) {
         this.sender = username;
         this.text = text;

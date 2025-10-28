@@ -24,6 +24,11 @@ public class GroupConversation implements Conversation{
     }
 
     @ManyToMany
+    @JoinTable(
+            name = "group_convo_members",
+            joinColumns = @JoinColumn(name = "id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
     private List<Users> members = new ArrayList<>();
 
     @OneToMany(mappedBy = "groupConvo", cascade = CascadeType.ALL, orphanRemoval = true)
