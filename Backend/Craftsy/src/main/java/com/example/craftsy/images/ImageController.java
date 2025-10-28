@@ -66,7 +66,7 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to delete file from disk.");
         }
-        
+
         imageRepository.deleteById(id);
 
         return ResponseEntity.ok("Image deleted successfully.");
