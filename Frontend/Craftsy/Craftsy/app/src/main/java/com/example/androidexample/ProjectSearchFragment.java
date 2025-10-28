@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,7 +23,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 /**
- * Project search tab with full debug logging.
+ * Project search tab — now opens FeedDetailActivity with full project details.
  */
 public class ProjectSearchFragment extends Fragment implements SearchableTab {
 
@@ -31,7 +32,7 @@ public class ProjectSearchFragment extends Fragment implements SearchableTab {
 
     private RecyclerView recyclerView;
     private SearchAdapter adapter;
-    private ArrayList<SearchItem> projectList = new ArrayList<>();
+    private final ArrayList<SearchItem> projectList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -43,7 +44,25 @@ public class ProjectSearchFragment extends Fragment implements SearchableTab {
         recyclerView = view.findViewById(R.id.recyclerViewProject);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new SearchAdapter(getContext(), projectList, "Projects");
+        adapter = new SearchAdapter(getContext(), projectList, "Projects", item -> {
+            Log.d(TAG, "Clicked project: " + item.getTitle() + " by " + item.getUsername());
+
+            Intent intent = new Intent(requireContext(), FeedDetailActivity.class);
+            intent.putExtra("username", item.getUsername());
+            intent.putExtra("projectName", item.getTitle());
+            intent.putExtra("projectDesc", item.getDescription());
+
+            if (item.getExtrasMap() != null) {
+                intent.putExtra("projectType", item.getExtrasMap().optString("projectType", ""));
+                intent.putExtra("supplies", item.getExtrasMap().optString("supplies", ""));
+                intent.putExtra("visibility", item.getExtrasMap().optString("visibility", ""));
+                intent.putExtra("date", item.getExtrasMap().optString("date", ""));
+                intent.putExtra("imageUrl", item.getExtrasMap().optString("imageUrl", ""));
+            }
+
+            startActivity(intent);
+        });
+
         recyclerView.setAdapter(adapter);
 
         Log.d(TAG, "ProjectSearchFragment initialized.");
@@ -57,10 +76,13 @@ public class ProjectSearchFragment extends Fragment implements SearchableTab {
             return;
         }
 
-        String url = BASE_URL + query;
+        String url = BASE_URL + query.trim();
         Log.d(TAG, "Fetching projects from URL: " + url);
 
-        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
+        JsonArrayRequest request = new JsonArrayRequest(
+                Request.Method.GET,
+                url,
+                null,
                 response -> {
                     Log.d(TAG, "✅ Project response received: " + response);
                     projectList.clear();
@@ -84,10 +106,27 @@ public class ProjectSearchFragment extends Fragment implements SearchableTab {
                 String username = obj.optString("username", "Unknown");
                 String name = obj.optString("projectName", "No Project Name");
                 String desc = obj.optString("projectDesc", "No Description");
+                String projectType = obj.optString("projectType", "");
+                String supplies = obj.optString("supplies", "");
+                String visibility = obj.optString("visibility", "");
+                String date = obj.optString("date", "");
+                String imageUrl = obj.optString("projectPic", "");
 
-                Log.d(TAG, "Parsed: username=" + username + ", name=" + name + ", desc=" + desc);
-                projectList.add(new SearchItem("Project", name, desc, username));
+                Log.d(TAG, "Parsed: " + name + " by " + username);
+
+                // ✅ Store all project extras inside the SearchItem (in a JSON-style map)
+                SearchItem item = new SearchItem("Project", name, desc, username);
+                JSONObject extras = new JSONObject();
+                extras.put("projectType", projectType);
+                extras.put("supplies", supplies);
+                extras.put("visibility", visibility);
+                extras.put("date", date);
+                extras.put("imageUrl", imageUrl);
+                item.setExtrasMap(extras);
+
+                projectList.add(item);
             }
+
             Log.d(TAG, "✅ Total projects parsed: " + projectList.size());
             adapter.notifyDataSetChanged();
         } catch (Exception e) {

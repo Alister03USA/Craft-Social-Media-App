@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 
 /**
  * User search tab with full debug logging.
+ * Opens OutsideUserProfile using data we already have from search.
  */
 public class UserSearchFragment extends Fragment implements SearchableTab {
 
@@ -31,21 +33,47 @@ public class UserSearchFragment extends Fragment implements SearchableTab {
 
     private RecyclerView recyclerView;
     private SearchAdapter adapter;
-    private ArrayList<SearchItem> userList = new ArrayList<>();
+    private final ArrayList<SearchItem> userList = new ArrayList<>();
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
         View view = inflater.inflate(R.layout.fragment_user_search, container, false);
         recyclerView = view.findViewById(R.id.recyclerViewUser);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new SearchAdapter(getContext(), userList, "Users");
-        recyclerView.setAdapter(adapter);
+        // Adapter with click listener that provides the username; we look up the rest from userList.
+        adapter = new SearchAdapter(
+                getContext(),
+                userList,
+                "Users",
+                clickedUsername -> {
+                    Log.d(TAG, "Clicked on username: " + clickedUsername);
 
+                    // Find the SearchItem so we can send displayName/bio/specialties too.
+                    SearchItem selected = null;
+                    for (SearchItem it : userList) {
+                        if (clickedUsername != null && clickedUsername.equals(it.getUsername())) {
+                            selected = it;
+                            break;
+                        }
+                    }
+
+                    Intent intent = new Intent(requireContext(), OutsideUserProfile.class);
+                    intent.putExtra("username", clickedUsername.getUsername());
+                    if (selected != null) {
+                        intent.putExtra("displayName", selected.getTitle());          // SearchItem.title used for display name
+                        intent.putExtra("bio", selected.getDescription());            // SearchItem.description used for bio
+                        // If you stored craftSpecialties in SearchItem.extra, pass it too:
+                        intent.putExtra("craftSpecialties", selected.getExtra() != null ? selected.getExtra() : "");
+                    }
+                    startActivity(intent);
+                }
+        );
+
+        recyclerView.setAdapter(adapter);
         Log.d(TAG, "UserSearchFragment initialized.");
         return view;
     }
@@ -57,10 +85,13 @@ public class UserSearchFragment extends Fragment implements SearchableTab {
             return;
         }
 
-        String url = BASE_URL + query;
+        String url = BASE_URL + query.trim();
         Log.d(TAG, "Fetching users from URL: " + url);
 
-        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
+        JsonArrayRequest request = new JsonArrayRequest(
+                Request.Method.GET,
+                url,
+                null,
                 response -> {
                     Log.d(TAG, "✅ User response received: " + response);
                     userList.clear();
@@ -84,9 +115,14 @@ public class UserSearchFragment extends Fragment implements SearchableTab {
                 String username = obj.optString("username", "Unknown");
                 String displayName = obj.optString("displayName", "No Display Name");
                 String bio = obj.optString("bio", "No Bio");
+                String craftSpecialties = obj.optString("craftSpecialties", "");
 
                 Log.d(TAG, "Parsed: username=" + username + ", displayName=" + displayName + ", bio=" + bio);
-                userList.add(new SearchItem("User", displayName, bio, username));
+
+                // Store craftSpecialties in extra so we can forward it.
+                SearchItem item = new SearchItem("User", displayName, bio, username);
+                item.setExtra(craftSpecialties);
+                userList.add(item);
             }
             Log.d(TAG, "✅ Total users parsed: " + userList.size());
             adapter.notifyDataSetChanged();

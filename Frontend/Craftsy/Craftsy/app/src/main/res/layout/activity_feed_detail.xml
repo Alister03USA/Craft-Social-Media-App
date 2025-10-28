@@ -34,7 +34,7 @@
             android:id="@+id/textUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@username"
+            android:text="username"
             android:textSize="16sp"
             android:textColor="@color/gray" />
 
@@ -78,5 +78,45 @@
             android:text="Date: 2025-10-27"
             android:textSize="14sp"
             android:textColor="@color/gray" />
+
+        <!-- Comments section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Comments"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/black" />
+
+        <LinearLayout
+            android:id="@+id/commentsContainer"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <!-- Add comment -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <EditText
+                android:id="@+id/commentInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Add a comment..."
+                android:background="@drawable/ic_edit"
+                android:padding="8dp" />
+
+            <Button
+                android:id="@+id/postCommentButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Post" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -10,7 +10,15 @@ public class SearchItem {
     private String description;
     private String username;
     private String extra; // optional: for project type, tutorial category, etc.
+    private org.json.JSONObject extrasMap;
 
+    public org.json.JSONObject getExtrasMap() {
+        return extrasMap;
+    }
+
+    public void setExtrasMap(org.json.JSONObject extrasMap) {
+        this.extrasMap = extrasMap;
+    }
     // Full constructor
     public SearchItem(String type, String title, String description, String username) {
         this.type = type;

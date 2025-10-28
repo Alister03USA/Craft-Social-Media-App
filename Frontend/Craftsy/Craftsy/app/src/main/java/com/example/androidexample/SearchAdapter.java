@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,16 +13,34 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+/**
+ * Universal adapter for Search tabs (Users, Groups, Projects, Tutorials)
+ * Supports click listener for dynamic navigation (used in UserSearchFragment and ProjectSearchFragment).
+ */
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder> {
+
+    // Unified listener interface for any search tab (user/project/group/tutorial)
+    public interface OnSearchClickListener {
+        void onItemClick(SearchItem item);
+    }
 
     private final List<SearchItem> searchList;
     private final Context context;
     private final String currentType;
+    private final OnSearchClickListener clickListener;
 
-    public SearchAdapter(Context context, List<SearchItem> searchList, String currentType) {
+    // 🔹 Constructor with click listener (used by UserSearchFragment and ProjectSearchFragment)
+    public SearchAdapter(Context context, List<SearchItem> searchList, String currentType,
+                         OnSearchClickListener clickListener) {
         this.context = context;
         this.searchList = searchList;
         this.currentType = currentType;
+        this.clickListener = clickListener;
+    }
+
+    // 🔹 Backward-compatible constructor for older fragments without click listener
+    public SearchAdapter(Context context, List<SearchItem> searchList, String currentType) {
+        this(context, searchList, currentType, null);
     }
 
     @NonNull
@@ -44,42 +63,41 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             switch (currentType.toLowerCase()) {
                 case "users":
                 case "user": {
-                    Intent intent = new Intent(context, OutsideUserProfile.class);
-                    intent.putExtra("username", item.getUsername());
-                    intent.putExtra("logged_in_username", SessionManager.getInstance().getLoggedInUsername());
-                    context.startActivity(intent);
+                    if (clickListener != null) {
+                        clickListener.onItemClick(item);
+                    } else {
+                        Intent intent = new Intent(context, OutsideUserProfile.class);
+                        intent.putExtra("username", item.getUsername());
+                        intent.putExtra("logged_in_username", SessionManager.getInstance().getLoggedInUsername());
+                        context.startActivity(intent);
+                    }
                     break;
                 }
 
                 case "projects":
                 case "project": {
-                    Intent intent = new Intent(context, FeedDetailActivity.class);
-                    intent.putExtra("username", item.getUsername());
-                    intent.putExtra("projectName", item.getTitle());
-                    intent.putExtra("projectDesc", item.getDescription());
-                    context.startActivity(intent);
+                    if (clickListener != null) {
+                        clickListener.onItemClick(item);
+                    } else {
+                        Log.d("SearchAdapter", "Clicked project: " + item.getTitle() + " by " + item.getUsername());
+                        Intent intent = new Intent(context, FeedDetailActivity.class);
+                        intent.putExtra("username", item.getUsername());
+                        intent.putExtra("projectName", item.getTitle());
+                        intent.putExtra("projectDesc", item.getDescription());
+                        context.startActivity(intent);
+                    }
                     break;
                 }
 
                 case "groups":
                 case "group": {
-                    // TODO: Uncomment once GroupDetailActivity is ready
-                    /*
-                    Intent intent = new Intent(context, GroupDetailActivity.class);
-                    intent.putExtra("groupName", item.getTitle());
-                    context.startActivity(intent);
-                    */
+                    // Future support
                     break;
                 }
 
                 case "tutorials":
                 case "tutorial": {
-                    // TODO: Uncomment once TutorialDetailActivity is ready
-                    /*
-                    Intent intent = new Intent(context, TutorialDetailActivity.class);
-                    intent.putExtra("tutorialId", item.getExtra());
-                    context.startActivity(intent);
-                    */
+                    // Future support
                     break;
                 }
             }
