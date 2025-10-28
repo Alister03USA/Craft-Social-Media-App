@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/blue_background"
+    android:padding="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Top Bar -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/backToPatternButton"
+            style="@style/CraftsyButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← Back to Pattern"
+            android:textSize="16sp"
+            android:backgroundTint="@color/blue_secondary"
+            android:layout_marginEnd="12dp" />
+
+        <TextView
+            android:text="Create Review"
+            android:textColor="@color/text_black"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- Rating Section -->
+    <TextView
+        android:layout_marginTop="40dp"
+        android:text="Select your rating:"
+        android:textColor="@color/text_black"
+        android:textSize="20sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:id="@+id/starContainer"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/star1"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="Star 1" />
+
+        <ImageView
+            android:id="@+id/star2"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="Star 2" />
+
+        <ImageView
+            android:id="@+id/star3"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="Star 3" />
+
+        <ImageView
+            android:id="@+id/star4"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="Star 4" />
+
+        <ImageView
+            android:id="@+id/star5"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_star_outline"
+            android:contentDescription="Star 5" />
+    </LinearLayout>
+
+    <!-- Review Box -->
+    <EditText
+        android:id="@+id/reviewInput"
+        android:layout_marginTop="32dp"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:hint="Write your review (optional)"
+        android:gravity="top|start"
+        android:background="@drawable/craftsy_card_bg"
+        android:padding="12dp"
+        android:inputType="textMultiLine"
+        android:textColor="@color/text_black"
+        android:textSize="16sp" />
+
+    <!-- Submit Button -->
+    <Button
+        android:id="@+id/submitReviewButton"
+        style="@style/CraftsyButton"
+        android:text="Submit Review"
+        android:enabled="false"
+        android:backgroundTint="@color/button_blue"
+        android:layout_marginTop="24dp" />
+
+</LinearLayout>
