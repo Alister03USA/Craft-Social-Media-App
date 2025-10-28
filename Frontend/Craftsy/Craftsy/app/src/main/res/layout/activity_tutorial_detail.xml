@@ -68,7 +68,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
                 android:layout_marginTop="16dp"
-                android:background="@android:color/white" />
+                android:background="@android:color/white"
+                android:visibility="gone" />
+
+            <VideoView
+                android:id="@+id/videoView"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginTop="16dp"
+                android:background="@android:color/black"
+                android:visibility="gone" />
 
             <!-- Tutorial Description -->
             <TextView

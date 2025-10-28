@@ -18,14 +18,14 @@ import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 
 /**
- * Displays a single tutorial with Edit & Delete support.
- * Author: Ji Xian Fu (frontend)
+ * Displays both YouTube and MP4 tutorials properly in a WebView.
+ * Author: Ji Xian Fu (Frontend)
  */
 public class TutorialDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "TutorialDetailActivity";
     private static final String BASE_URL =
-            "http://coms-3090-028.class.las.iastate.edu:8080/tutorial";
+            "http://coms-3090-028.class.las.iastate.edu:8080";
 
     private TextView titleText, descText, categoryText, usernameText;
     private WebView webView;
@@ -33,9 +33,8 @@ public class TutorialDetailActivity extends AppCompatActivity {
     private Button btnEdit, btnDelete;
     private ProgressDialog progressDialog;
 
-    private long tutorialId = -1L;      // must be long
+    private long tutorialId = -1L;
     private String title, description, category, fileUrl, username;
-    private final String currentUser = "Fuji";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +53,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
 
-        // Always read id as long, matching backend BIGINT
         tutorialId = getIntent().getLongExtra("id", -1L);
         title = getIntent().getStringExtra("title");
         description = getIntent().getStringExtra("description");
@@ -71,18 +69,9 @@ public class TutorialDetailActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
 
-        // Show buttons only if current user == author
-//        if (username != null && username.equalsIgnoreCase(currentUser)) {
-//            btnEdit.setVisibility(View.VISIBLE);
-//            btnDelete.setVisibility(View.VISIBLE);
-//        } else {
-//            btnEdit.setVisibility(View.GONE);
-//            btnDelete.setVisibility(View.GONE);
-//        }
-
         btnEdit.setOnClickListener(v -> {
             Intent intent = new Intent(this, EditTutorialActivity.class);
-            intent.putExtra("tutorialId", tutorialId);   // ✅ consistent key
+            intent.putExtra("tutorialId", tutorialId);
             intent.putExtra("title", title);
             intent.putExtra("description", description);
             intent.putExtra("category", category);
@@ -95,7 +84,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
     }
 
     /** Displays both YouTube and MP4 tutorials properly */
-    /** Displays MP4s directly; opens YouTube in app/browser safely */
     private void setupWebView() {
         if (fileUrl == null || fileUrl.isEmpty()) {
             webView.setVisibility(android.view.View.GONE);
@@ -113,8 +101,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
 
         // --- Handle YouTube links ---
         if (normalizedUrl.contains("youtube.com") || normalizedUrl.contains("youtu.be")) {
-
-            // Extract the video ID (works for both shorts & normal)
             String videoId = null;
             try {
                 if (normalizedUrl.contains("watch?v=")) {
@@ -131,7 +117,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
                 Log.e(TAG, "❌ Failed to extract YouTube video ID", e);
             }
 
-            // Build thumbnail + "Watch on YouTube" fallback
             String thumbnail = videoId != null
                     ? "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg"
                     : "https://www.youtube.com";
@@ -183,7 +168,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
     private void deleteTutorial() {
         if (tutorialId <= 0) {
             Toast.makeText(this, "Invalid tutorial ID", Toast.LENGTH_LONG).show();
-            Log.e(TAG, "❌ Delete aborted: tutorialId=" + tutorialId);
             return;
         }
 
@@ -192,20 +176,18 @@ public class TutorialDetailActivity extends AppCompatActivity {
 
         StringRequest deleteRequest = new StringRequest(
                 Request.Method.DELETE,
-                BASE_URL + "/" + tutorialId,
+                BASE_URL + "/tutorial/" + tutorialId,
                 response -> {
                     progressDialog.dismiss();
                     Toast.makeText(this, "Tutorial deleted successfully!", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "✅ Deleted tutorial " + tutorialId);
                     finish();
                 },
                 error -> {
                     progressDialog.dismiss();
                     Toast.makeText(this, "Delete failed: " + error, Toast.LENGTH_LONG).show();
-                    Log.e(TAG, "❌ Delete error", error);
+                    Log.e(TAG, "Delete error", error);
                 }
         );
-
         VolleySingleton.getInstance(this).addToRequestQueue(deleteRequest);
     }
 }

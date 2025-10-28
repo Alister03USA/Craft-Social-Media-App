@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * FeedDetailActivity — identical to feed detail, with comments + like toggle.
@@ -43,6 +44,8 @@ public class FeedDetailActivity extends AppCompatActivity {
     private String username;
     private String projectName;
     private long imageId = -1L;
+
+    private HashMap<Long, Boolean> likedComments = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -164,6 +167,7 @@ public class FeedDetailActivity extends AppCompatActivity {
 
     private void bindComments(JSONObject post) {
         commentsContainer.removeAllViews();
+        likedComments.clear();
         JSONArray comments = post.optJSONArray("comments");
         if (comments == null || comments.length() == 0) {
             TextView none = new TextView(this);
@@ -184,20 +188,39 @@ public class FeedDetailActivity extends AppCompatActivity {
         Button likeBtn = row.findViewById(R.id.likeButton);
 
         long id = c.optLong("id", -1);
-        text.setText(c.optString("text", ""));
-        likes.setText(c.optInt("likes", 0) + " likes");
+        int likeCount = c.optInt("likes", 0);
+        boolean liked = c.optBoolean("liked", false);
 
-        likeBtn.setOnClickListener(v -> toggleLike(id));
+        text.setText(c.optString("text", ""));
+        likes.setText(likeCount + " likes");
+        likedComments.put(id, liked);
+        likeBtn.setText(liked ? "Unlike" : "Like");
+
+        likeBtn.setOnClickListener(v -> toggleLike(id, likeBtn, likes));
         commentsContainer.addView(row);
     }
 
     /** Backend now handles toggle logic */
-    private void toggleLike(long commentId) {
+    private void toggleLike(long commentId, Button likeBtn, TextView likesView) {
         if (commentId <= 0) return;
+        boolean currentlyLiked = likedComments.getOrDefault(commentId, false);
+        String action = currentlyLiked ? "unlike" : "like";
         String url = BASE + "/feed/" + username + "/" + projectName + "/" + commentId;
         JsonObjectRequest req = new JsonObjectRequest(
                 Request.Method.PUT, url, null,
-                r -> fetchUserFeed(username),
+                r -> {
+                    // Update local like state and UI without refetching entire feed
+                    likedComments.put(commentId, !currentlyLiked);
+                    int currentLikes = 0;
+                    try {
+                        String likesText = likesView.getText().toString();
+                        currentLikes = Integer.parseInt(likesText.split(" ")[0]);
+                    } catch (Exception ignored) {}
+                    int newLikes = currentlyLiked ? currentLikes - 1 : currentLikes + 1;
+                    if (newLikes < 0) newLikes = 0;
+                    likesView.setText(newLikes + " likes");
+                    likeBtn.setText(!currentlyLiked ? "Unlike" : "Like");
+                },
                 err -> Log.e(TAG, "❌ Like toggle failed", err)
         );
         VolleySingleton.getInstance(this).addToRequestQueue(req);
