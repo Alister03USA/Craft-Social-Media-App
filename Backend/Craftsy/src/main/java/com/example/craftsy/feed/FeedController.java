@@ -221,7 +221,7 @@ public class FeedController {
         return feed;
     }
 
-    @DeleteMapping("/feed/{username}/{projectName}/{id}")
+    @PutMapping("/feed/{username}/{projectName}/{id}/unlike")
     Feed unlikeComment(@PathVariable String username, @PathVariable String projectName,
                        @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
