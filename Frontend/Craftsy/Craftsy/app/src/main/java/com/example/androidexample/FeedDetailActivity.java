@@ -3,7 +3,6 @@ package com.example.androidexample;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -25,30 +24,31 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
- * FeedDetailActivity — identical to Feed page detail.
- * Displays a post, allows adding comments and liking comments.
- * Works from both Feed and ProjectSearch.
+ * FeedDetailActivity — identical to feed detail, with comments + like toggle.
  */
 public class FeedDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "FeedDetailActivity";
+    private static final String BASE = "http://coms-3090-028.class.las.iastate.edu:8080";
 
-    private TextView textProjectName, textUsername, textProjectDesc, textProjectType, textSupplies, textVisibility, textDate;
     private ImageView imageProject;
+    private TextView textProjectName, textUsername, textProjectDesc, textProjectType, textSupplies, textVisibility, textDate;
     private LinearLayout commentsContainer;
     private EditText commentInput;
     private Button postCommentButton;
 
-    private String username, projectName;
+    private String username;
+    private String projectName;
+    private long imageId = -1L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed_detail);
 
-        // Bind UI
         imageProject = findViewById(R.id.imageProject);
         textProjectName = findViewById(R.id.textProjectName);
         textUsername = findViewById(R.id.textUsername);
@@ -72,174 +72,153 @@ public class FeedDetailActivity extends AppCompatActivity {
 
         fetchUserFeed(username);
 
-        // Add comment listener
         postCommentButton.setOnClickListener(v -> {
-            String commentText = commentInput.getText().toString().trim();
-            if (!commentText.isEmpty()) {
-                postComment(commentText);
-            } else {
-                Toast.makeText(this, "Enter a comment", Toast.LENGTH_SHORT).show();
-            }
+            String text = commentInput.getText().toString().trim();
+            if (!text.isEmpty()) postComment(text);
+            else Toast.makeText(this, "Enter a comment", Toast.LENGTH_SHORT).show();
         });
     }
 
-    /** Fetch the user’s feed and find this project */
-    private void fetchUserFeed(String username) {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/feed/" + username;
-        Log.d(TAG, "Requesting: " + url);
-
-        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> handleFeedResponse(response),
-                error -> {
-                    Log.e(TAG, "❌ Error fetching feed", error);
-                    Toast.makeText(this, "Failed to load feed", Toast.LENGTH_SHORT).show();
-                });
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
-    }
-
-    private void handleFeedResponse(JSONArray response) {
-        try {
-            for (int i = 0; i < response.length(); i++) {
-                JSONObject obj = response.getJSONObject(i);
-                String name = obj.optString("projectName", "");
-                if (name.equalsIgnoreCase(projectName)) {
-                    updateUI(obj);
-                    fetchComments();
-                    return;
-                }
-            }
-            Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Parse error", e);
-        }
-    }
-
-    /** Populate project info */
-    private void updateUI(JSONObject obj) {
-        String projectDesc = obj.optString("projectDesc", "");
-        String projectType = obj.optString("projectType", "");
-        String supplies = obj.optString("supplies", "");
-        String visibility = obj.optString("visibility", "");
-        String date = obj.optString("date", "");
-        String imageUrl = obj.optString("projectPic", null);
-
-        textProjectName.setText(projectName);
-        textUsername.setText("@" + username);
-        textProjectDesc.setText(projectDesc);
-        textProjectType.setText("Type: " + projectType);
-        textSupplies.setText("Supplies: " + supplies);
-        textVisibility.setText("Visibility: " + visibility);
-        textDate.setText("Date: " + date);
-
-        // Load image manually
-        if (imageUrl != null && !imageUrl.isEmpty() && !"null".equals(imageUrl)) {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-            try {
-                URL url = new URL(imageUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setDoInput(true);
-                connection.connect();
-                InputStream input = connection.getInputStream();
-                Bitmap bitmap = BitmapFactory.decodeStream(input);
-                imageProject.setImageBitmap(bitmap);
-            } catch (Exception e) {
-                Log.e(TAG, "Image load failed: " + e.getMessage());
-                imageProject.setImageResource(R.drawable.ic_post_placeholder);
-            }
-        } else {
-            imageProject.setImageResource(R.drawable.ic_post_placeholder);
-        }
-    }
-
-    /** Fetch project comments */
-    private void fetchComments() {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/feed/" + username;
-        Log.d(TAG, "Fetching comments for " + projectName);
-
-        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> {
-                    commentsContainer.removeAllViews();
-                    for (int i = 0; i < response.length(); i++) {
-                        try {
-                            JSONObject project = response.getJSONObject(i);
-                            if (projectName.equalsIgnoreCase(project.optString("projectName"))) {
-                                JSONArray comments = project.optJSONArray("feedComments");
-                                if (comments != null) {
-                                    for (int j = 0; j < comments.length(); j++) {
-                                        JSONObject comment = comments.getJSONObject(j);
-                                        addCommentToView(comment);
-                                    }
-                                }
-                                break;
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "❌ Error parsing comment", e);
+    private void fetchUserFeed(String user) {
+        String url = BASE + "/feed/" + user;
+        JsonArrayRequest req = new JsonArrayRequest(
+                Request.Method.GET, url, null,
+                resp -> {
+                    for (int i = 0; i < resp.length(); i++) {
+                        JSONObject obj = resp.optJSONObject(i);
+                        if (obj != null && projectName.equalsIgnoreCase(obj.optString("projectName", ""))) {
+                            bindPost(obj);
+                            bindComments(obj);
+                            return;
                         }
                     }
                 },
-                error -> Log.e(TAG, "❌ Failed to fetch comments", error));
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+                err -> Log.e(TAG, "❌ Feed fetch failed", err)
+        );
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /** Dynamically add comment view */
-    private void addCommentToView(JSONObject comment) {
-        try {
-            String text = comment.optString("text", "");
-            int likes = comment.optInt("likes", 0);
-            long id = comment.optLong("id", -1);
+    private void bindPost(JSONObject obj) {
+        textProjectName.setText(projectName);
+        textUsername.setText("@" + username);
+        textProjectDesc.setText(obj.optString("projectDesc", ""));
+        textProjectType.setText("Type: " + obj.optString("projectType", ""));
+        textSupplies.setText("Supplies: " + obj.optString("supplies", ""));
+        textVisibility.setText("Visibility: " + obj.optString("visibility", ""));
+        textDate.setText("Date: " + obj.optString("date", ""));
 
-            View commentView = getLayoutInflater().inflate(R.layout.comment_item, commentsContainer, false);
+        JSONArray images = obj.optJSONArray("images");
+        if (images != null && images.length() > 0) {
+            JSONObject first = images.optJSONObject(0);
+            imageId = first != null ? first.optLong("id", -1) : -1;
+        }
+        if (imageId > 0) fetchImageMetaAndLoad(imageId);
+        else imageProject.setImageResource(R.drawable.ic_post_placeholder);
+    }
 
-            TextView commentText = commentView.findViewById(R.id.commentText);
-            TextView likeCount = commentView.findViewById(R.id.likeCount);
-            Button likeButton = commentView.findViewById(R.id.likeButton);
+    private void fetchImageMetaAndLoad(long id) {
+        String metaUrl = BASE + "/images/" + id;
+        JsonObjectRequest metaReq = new JsonObjectRequest(
+                Request.Method.GET, metaUrl, null,
+                meta -> {
+                    String filePath = meta.optString("filePath", "");
+                    String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+                    ArrayList<String> tries = new ArrayList<>();
+                    tries.add(BASE + "/uploads/" + fileName);
+                    tries.add(BASE + "/images/" + id + "/download");
+                    tries.add(BASE + "/images/" + id);
+                    tryLoadBitmapSequentially(tries, 0);
+                },
+                err -> {
+                    Log.e(TAG, "❌ Image meta fetch failed", err);
+                    imageProject.setImageResource(R.drawable.ic_post_placeholder);
+                });
+        VolleySingleton.getInstance(this).addToRequestQueue(metaReq);
+    }
 
-            commentText.setText(text);
-            likeCount.setText(likes + " likes");
+    private void tryLoadBitmapSequentially(ArrayList<String> urls, int idx) {
+        if (idx >= urls.size()) {
+            imageProject.setImageResource(R.drawable.ic_post_placeholder);
+            return;
+        }
+        String url = urls.get(idx);
+        new Thread(() -> {
+            Bitmap bmp = null;
+            try {
+                HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+                conn.setDoInput(true);
+                conn.connect();
+                if (!"application/json".equals(conn.getContentType())) {
+                    try (InputStream in = conn.getInputStream()) {
+                        bmp = BitmapFactory.decodeStream(in);
+                    }
+                }
+            } catch (Exception ignored) {}
+            Bitmap finalBmp = bmp;
+            runOnUiThread(() -> {
+                if (finalBmp != null) imageProject.setImageBitmap(finalBmp);
+                else tryLoadBitmapSequentially(urls, idx + 1);
+            });
+        }).start();
+    }
 
-            likeButton.setOnClickListener(v -> likeComment(id));
-
-            commentsContainer.addView(commentView);
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Error adding comment view", e);
+    private void bindComments(JSONObject post) {
+        commentsContainer.removeAllViews();
+        JSONArray comments = post.optJSONArray("comments");
+        if (comments == null || comments.length() == 0) {
+            TextView none = new TextView(this);
+            none.setText("No comments yet.");
+            commentsContainer.addView(none);
+            return;
+        }
+        for (int i = 0; i < comments.length(); i++) {
+            JSONObject c = comments.optJSONObject(i);
+            if (c != null) addCommentRow(c);
         }
     }
 
-    /** Like a comment */
-    private void likeComment(long commentId) {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/feed/" + username + "/" + projectName + "/" + commentId;
-        Log.d(TAG, "Liking comment: " + url);
+    private void addCommentRow(JSONObject c) {
+        View row = getLayoutInflater().inflate(R.layout.comment_item, commentsContainer, false);
+        TextView text = row.findViewById(R.id.commentText);
+        TextView likes = row.findViewById(R.id.likeCount);
+        Button likeBtn = row.findViewById(R.id.likeButton);
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.PUT, url, null,
-                response -> fetchComments(),
-                error -> Log.e(TAG, "❌ Failed to like comment", error));
+        long id = c.optLong("id", -1);
+        text.setText(c.optString("text", ""));
+        likes.setText(c.optInt("likes", 0) + " likes");
 
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+        likeBtn.setOnClickListener(v -> toggleLike(id));
+        commentsContainer.addView(row);
     }
 
-    /** Post a new comment */
+    /** Backend now handles toggle logic */
+    private void toggleLike(long commentId) {
+        if (commentId <= 0) return;
+        String url = BASE + "/feed/" + username + "/" + projectName + "/" + commentId;
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.PUT, url, null,
+                r -> fetchUserFeed(username),
+                err -> Log.e(TAG, "❌ Like toggle failed", err)
+        );
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
     private void postComment(String text) {
         try {
             JSONObject body = new JSONObject();
             body.put("text", text);
-
-            String url = "http://coms-3090-028.class.las.iastate.edu:8080/feed/" + username + "/" + projectName + "/comment";
-            Log.d(TAG, "Posting comment to " + url);
-
-            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, body,
-                    response -> {
-                        Toast.makeText(this, "Comment added!", Toast.LENGTH_SHORT).show();
+            String url = BASE + "/feed/" + username + "/" + projectName + "/comment";
+            JsonObjectRequest req = new JsonObjectRequest(
+                    Request.Method.POST, url, body,
+                    r -> {
                         commentInput.setText("");
-                        fetchComments();
+                        fetchUserFeed(username);
                     },
-                    error -> {
-                        Log.e(TAG, "❌ Failed to post comment", error);
-                        Toast.makeText(this, "Failed to add comment", Toast.LENGTH_SHORT).show();
-                    });
-            VolleySingleton.getInstance(this).addToRequestQueue(request);
+                    err -> Log.e(TAG, "❌ Comment post failed", err)
+            );
+            VolleySingleton.getInstance(this).addToRequestQueue(req);
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error creating comment JSON", e);
+            Log.e(TAG, "❌ JSON build error", e);
         }
     }
 }

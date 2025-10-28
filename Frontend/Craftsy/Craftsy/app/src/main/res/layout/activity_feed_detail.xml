@@ -10,16 +10,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Post image -->
+        <!-- Image -->
         <ImageView
             android:id="@+id/imageProject"
             android:layout_width="match_parent"
             android:layout_height="220dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_post_placeholder"
-            android:background="@color/white" />
+            android:background="@color/white"
+            android:src="@drawable/ic_post_placeholder" />
 
-        <!-- Project info -->
+        <!-- Project text -->
         <TextView
             android:id="@+id/textProjectName"
             android:layout_width="match_parent"
@@ -27,23 +27,23 @@
             android:text="Project Name"
             android:textStyle="bold"
             android:textSize="20sp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:textColor="@color/black" />
 
         <TextView
             android:id="@+id/textUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="username"
-            android:textSize="16sp"
+            android:text="@username"
+            android:textSize="14sp"
             android:textColor="@color/gray" />
 
         <TextView
             android:id="@+id/textProjectDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Project description goes here."
+            android:layout_marginTop="8dp"
+            android:text="Project description"
             android:textSize="16sp"
             android:textColor="@color/dark_text" />
 
@@ -51,7 +51,7 @@
             android:id="@+id/textProjectType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Type: Knitting"
+            android:text="Type:"
             android:textSize="14sp"
             android:textColor="@color/gray" />
 
@@ -59,7 +59,7 @@
             android:id="@+id/textSupplies"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Supplies: Yarn, Needles"
+            android:text="Supplies:"
             android:textSize="14sp"
             android:textColor="@color/gray" />
 
@@ -67,7 +67,7 @@
             android:id="@+id/textVisibility"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Visibility: Public"
+            android:text="Visibility:"
             android:textSize="14sp"
             android:textColor="@color/gray" />
 
@@ -75,48 +75,52 @@
             android:id="@+id/textDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Date: 2025-10-27"
+            android:text="Date:"
             android:textSize="14sp"
-            android:textColor="@color/gray" />
+            android:textColor="@color/gray"
+            android:layout_marginBottom="8dp" />
 
-        <!-- Comments section -->
+        <!-- Comments header -->
         <TextView
+            android:id="@+id/commentsHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Comments"
             android:textStyle="bold"
             android:textSize="18sp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"
             android:textColor="@color/black" />
 
+        <!-- Comments list container (we inflate rows into here) -->
         <LinearLayout
             android:id="@+id/commentsContainer"
-            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:orientation="vertical" />
 
-        <!-- Add comment -->
+        <!-- Add comment row -->
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
             <EditText
                 android:id="@+id/commentInput"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="44dp"
                 android:layout_weight="1"
                 android:hint="Add a comment..."
-                android:background="@drawable/ic_edit"
-                android:padding="8dp" />
+                android:padding="10dp"
+                android:background="@drawable/rounded_edittext_bg" />
 
             <Button
                 android:id="@+id/postCommentButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="90dp"
+                android:layout_height="44dp"
                 android:text="Post" />
         </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

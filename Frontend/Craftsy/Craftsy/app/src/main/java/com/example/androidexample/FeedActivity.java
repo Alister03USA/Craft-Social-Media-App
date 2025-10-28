@@ -22,7 +22,7 @@ public class FeedActivity extends BaseActivity {
 
     private static final String TAG = "FeedActivity";
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/feed";
-    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/"; // ✅ where images are served
+    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/"; //  where images are served
 
     private String loggedInUsername;
 
