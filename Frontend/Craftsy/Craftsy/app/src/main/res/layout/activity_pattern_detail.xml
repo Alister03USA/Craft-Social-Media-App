@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/blue_background"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Top Bar -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/backButton"
+            style="@style/CraftsyButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← Back"
+            android:layout_marginEnd="12dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:text="Pattern Details"
+            android:textColor="@color/text_black"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="12dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Pattern Image -->
+            <ImageView
+                android:id="@+id/detailImage"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:scaleType="centerCrop"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/craftsy_image_placeholder"
+                android:contentDescription="Pattern Image"
+                android:clipToOutline="true" />
+
+            <!-- Card: Pattern Info -->
+            <LinearLayout
+                android:orientation="vertical"
+                android:background="@drawable/craftsy_card_bg"
+                android:padding="20dp"
+                android:layout_marginBottom="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/detailName"
+                    android:text="Pattern Name"
+                    android:layout_width= "wrap_content"
+                    android:layout_height ="wrap_content"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_black"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/detailTypeDifficulty"
+                    android:layout_width= "wrap_content"
+                    android:layout_height ="wrap_content"
+                    android:text="Type • Difficulty"
+                    android:textColor="@color/text_gray"
+                    android:textSize="18sp"
+                    android:layout_marginBottom="12dp"/>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <RatingBar
+                        android:id="@+id/detailRatingBar"
+                        android:numStars="5"
+                        android:stepSize="0.1"
+                        android:isIndicator="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/averageRatingText"
+                        android:layout_width= "wrap_content"
+                        android:layout_height ="wrap_content"
+                        android:text="4.2 avg"
+                        android:textColor="@color/text_gray"
+                        android:textSize="16sp"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/detailDescription"
+                    android:layout_width= "wrap_content"
+                    android:layout_height ="wrap_content"
+                    android:text="A cozy pattern perfect for any crafter."
+                    android:textSize="18sp"
+                    android:textColor="@color/text_black"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- Card: Reviews -->
+            <LinearLayout
+                android:orientation="vertical"
+                android:background="@drawable/craftsy_card_bg"
+                android:padding="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="1">
+
+                    <TextView
+                        android:text="Reviews"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_black"
+                        android:textSize="22sp"
+                        android:layout_weight="0.7"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"/>
+
+                    <Button
+                        android:id="@+id/createReviewButton"
+                        style="@style/CraftsyButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Create Review"
+                        android:textAllCaps="false"
+                        android:backgroundTint="@color/button_blue"
+                        android:layout_gravity="end"/>
+                </LinearLayout>
+
+
+                <ListView
+                    android:id="@+id/reviewsList"
+                    android:divider="@color/blue_secondary"
+                    android:dividerHeight="1dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
