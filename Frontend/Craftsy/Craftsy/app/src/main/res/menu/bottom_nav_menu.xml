@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <item
         android:id="@+id/nav_notif"
         android:title="Notifications"
-        android:icon="@drawable/ic_heart" />
+        android:icon="@drawable/ic_groups" />
+    <item
+        android:id="@+id/pattern"
+        android:title="My Patterns"
+        android:icon="@drawable/ic_images" />
 
-    <item
-        android:id="@+id/nav_view_user"
-        android:title="View User"
-        android:icon="@drawable/ic_spy" />
-    <item
-        android:id="@+id/nav_my_profile"
-        android:title="My Profile"
-        android:icon="@drawable/ic_user_profile" />
     <item
         android:id="@+id/myFeed"
         android:title="My Feed"

@@ -16,7 +16,7 @@ import java.util.Optional;
 public class ImageController {
 
     // replace this! careful with the operating system in use
-    private final String directory = "C:/uploads"; // ✅ Change to your desired folder
+    private final String directory = System.getProperty("user.home") + "/uploads";
 
     @Autowired
     private ImageRepository imageRepository;
@@ -31,10 +31,9 @@ public class ImageController {
     @PostMapping("/images")
     public ResponseEntity<Image> handleFileUpload(@RequestParam("image") MultipartFile imageFile) {
         try {
-            // ✅ Step 2: Ensure the upload directory exists
             File uploadDir = new File(directory);
             if (!uploadDir.exists()) {
-                uploadDir.mkdirs(); // creates the folder if it doesn't exist
+                uploadDir.mkdirs();
             }
 
             // Save the uploaded file to the directory
@@ -54,7 +53,6 @@ public class ImageController {
 
     @DeleteMapping("/images/{id}")
     public ResponseEntity<String> deleteImage(@PathVariable Long id) {
-        // 1️⃣ Find the image record in the database
         Optional<Image> optionalImage = imageRepository.findById(id);
         if (!optionalImage.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -63,14 +61,12 @@ public class ImageController {
 
         Image image = optionalImage.get();
 
-        // 2️⃣ Delete the file from the filesystem
         File file = new File(image.getFilePath());
         if (file.exists() && !file.delete()) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to delete file from disk.");
         }
 
-        // 3️⃣ Delete the record from the database
         imageRepository.deleteById(id);
 
         return ResponseEntity.ok("Image deleted successfully.");

@@ -8,8 +8,6 @@ import com.example.craftsy.feed.feedComments.FeedComments;
 import com.example.craftsy.feed.feedComments.FeedCommentsRepository;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.images.ImageRepository;
-import com.example.craftsy.patterns.Patterns;
-import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -219,6 +217,21 @@ public class FeedController {
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
         comment.setLikes(comment.getLikes()+1);
+        feedCommentsRepository.save(comment);
+        return feed;
+    }
+
+    @PutMapping("/feed/{username}/{projectName}/{id}/unlike")
+    Feed unlikeComment(@PathVariable String username, @PathVariable String projectName,
+                       @PathVariable Long id){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed feed = feedRepository.findByUserAndProjectName(user,projectName)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        FeedComments comment = feedCommentsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        comment.setLikes(comment.getLikes()-1);
         feedCommentsRepository.save(comment);
         return feed;
     }
