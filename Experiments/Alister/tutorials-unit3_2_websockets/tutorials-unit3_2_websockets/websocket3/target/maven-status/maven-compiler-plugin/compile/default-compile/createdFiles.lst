@@ -1,0 +1,5 @@
+com\cs309\websocket3\chat\Message.class
+com\cs309\websocket3\Websocket3Application.class
+com\cs309\websocket3\chat\ChatSocket.class
+com\cs309\websocket3\chat\ChatSocketConfig.class
+com\cs309\websocket3\chat\MessageRepository.class
