@@ -1,5 +1,10 @@
 package com.example.craftsy.Tutorial.Controller;
 
+import com.example.craftsy.FollowingFollowers.Entity.Follow;
+import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+import com.example.craftsy.Notification.Entity.Notification;
+import com.example.craftsy.Notification.NotificationWebSocket;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
@@ -28,6 +33,12 @@ public class TutorialController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
 
 
@@ -79,6 +90,27 @@ public class TutorialController {
             tutorial.setUser(user);
 
             tutorialRepository.save(tutorial);
+
+
+            // ===== Notify followers =====
+
+            List<Follow> followList = followRepository.findByFollowing(user);
+            List<Users> followers = followList.stream()
+                    .map(Follow::getFollower)
+                    .toList();
+
+            for (Users follower : followers) {
+                Notification notif = new Notification();
+                notif.setUser(follower);
+                notif.setTitle("New Tutorial Uploaded");
+                notif.setMessage(user.getUsername() + " uploaded a new tutorial: " + tutorial.getTitle());
+                notif.setCreatedAt(new Date());
+                notif.setIsRead(false);
+                notificationRepository.save(notif);
+
+                // Push notification via WebSocket
+                NotificationWebSocket.pushNotification(follower.getUsername(), notif);
+            }
 
             return ResponseEntity.ok("Tutorial uploaded successfully!");
 
@@ -229,7 +261,7 @@ public class TutorialController {
             map.put("category", t.getCategory());
             map.put("username", t.getUser().getUsername());
 
-            // ✅ Handle both local and external URLs
+            // Handle both local and external URLs
             String fileUrl = (t.getFileUrl() != null)
                     ? t.getFileUrl()
                     : "/tutorial/" + t.getId(); // local file endpoint
