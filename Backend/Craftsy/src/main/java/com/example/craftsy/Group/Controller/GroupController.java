@@ -75,39 +75,49 @@ public class GroupController {
     }
 
     /**
-     * POST /groups/{groupName}/add-member/{username}
-     * Add a new user to an existing group.
+     * POST /groups/{groupName}/{admin}/add-member/{username}
+     * @param groupName
+     * @param username
+     * @param admin
+     * @return
      */
-    @PostMapping("/{groupName}/add-member/{username}")
+    @PostMapping("/{groupName}/{admin}/add-member/{username}")
     public ResponseEntity<Map<String, String>> addMember(
             @PathVariable String groupName,
-            @PathVariable String username) {
+            @PathVariable String username,
+            @PathVariable String admin) {
 
-        // Decode any spaces or special characters in the group name
+        // Decode the group name
         groupName = URLDecoder.decode(groupName, StandardCharsets.UTF_8);
 
-        // Look up the group and user in the database
         Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
         Optional<Users> userOpt = userRepository.findByUsername(username);
+        Optional<Users> adminOpt = userRepository.findByUsername(admin);
 
-        if (groupOpt.isEmpty() || userOpt.isEmpty()) {
+        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
         }
 
         Group group = groupOpt.get();
         Users user = userOpt.get();
+        Users currentUser = adminOpt.get();
 
-        // Prevent adding the same user twice
+        // Only admin can add members
+        if (!group.getGroupAdmin().equals(currentUser)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Only the group admin can add members"));
+        }
+
+        // Prevent adding duplicate members
         if (group.getMembers().contains(user)) {
             return ResponseEntity.badRequest().body(Map.of("message", "User already in group"));
         }
 
-        // Add the user to the group
         group.getMembers().add(user);
         groupRepository.save(group);
 
         return ResponseEntity.ok(Map.of("message", "Member added successfully"));
     }
+
 
     /**
      * GET /groups/{groupName}/members
@@ -336,10 +346,11 @@ public class GroupController {
      * DELETE /groups/{groupName}/remove-member/{username}
      * Remove a user from a group. Only admins can do this.
      */
-    @DeleteMapping("/{groupName}/removeMember/{username}")
+    @DeleteMapping("/{groupName}/{admin}/removeMember/{username}")
     public ResponseEntity<Map<String, String>> removeMember(
             @PathVariable String groupName,
-            @PathVariable String username) {
+            @PathVariable String username,
+            @PathVariable String admin) {
 
         Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
         Optional<Users> userOpt = userRepository.findByUsername(username);
@@ -350,6 +361,12 @@ public class GroupController {
 
         Group group = groupOpt.get();
         Users user = userOpt.get();
+
+        // Check admin
+        if (!group.getGroupAdmin().equals(admin)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Only the group admin can remove members"));
+
+        }
 
         // Check if the user is actually in the group
         if (!group.getMembers().contains(user)) {
