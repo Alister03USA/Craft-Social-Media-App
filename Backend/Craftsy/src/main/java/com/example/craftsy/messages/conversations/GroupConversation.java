@@ -6,24 +6,38 @@ import com.example.craftsy.messages.Message;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "group_convo")
-public class GroupConversation {
+public class GroupConversation implements Conversation{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    private List<Users> members;
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = "G-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+    }
 
-    private List<Message> messages;
+    @ManyToMany
+    private List<Users> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "groupConvo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Message> messages = new ArrayList<>();
 
     private LocalDate dateCreated;
+
+    private String groupName;
 
     @ManyToOne
     @JoinColumn(name = "group_pic_id")
     private Image groupPic;
+
+    public GroupConversation(){}
 
     public GroupConversation(List<Users> members) {
         this.members = members;
@@ -38,11 +52,11 @@ public class GroupConversation {
         this.groupPic = groupPic;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -84,5 +98,13 @@ public class GroupConversation {
 
     public void removeMember(Users user){
         this.members.remove(user);
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 }

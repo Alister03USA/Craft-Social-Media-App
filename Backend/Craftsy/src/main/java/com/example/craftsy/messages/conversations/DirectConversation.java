@@ -6,31 +6,42 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "direct_convo")
-public class DirectConversation {
+public class DirectConversation implements Conversation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = "D-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+    }
+
+    @OneToMany
     private List<Users> members;
 
+    @OneToMany(mappedBy = "directConvo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Message> messages;
 
     private LocalDate dateCreated;
+
+    public DirectConversation(){}
 
     public DirectConversation(List<Users> members) {
         this.members = members;
         this.dateCreated = LocalDate.now();
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

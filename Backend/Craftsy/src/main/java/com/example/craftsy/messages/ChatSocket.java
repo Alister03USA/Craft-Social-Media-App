@@ -1,6 +1,9 @@
 package com.example.craftsy.messages;
 
 
+import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import com.example.craftsy.messages.conversations.*;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
@@ -13,11 +16,15 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @ServerEndpoint(value = "/chat/{convoId}/{username}")
 public class ChatSocket {
     private static MessageRepository msgRepo;
+    private static GroupConversationRepository groupConvoRepo;
+    private static DirectConversationRepository directConvoRepo;
+    private static UserRepository userRepo;
 
     /*
      * Grabs the MessageRepository singleton from the Spring Application
@@ -31,20 +38,55 @@ public class ChatSocket {
         msgRepo = repo;  // we are setting the static variable
     }
 
+    @Autowired
+    public void setGroupConvoRepository(GroupConversationRepository repo) {
+        groupConvoRepo = repo;  // we are setting the static variable
+    }
+
+    @Autowired
+    public void setDirectConvoRepository(DirectConversationRepository repo) {
+        directConvoRepo = repo;  // we are setting the static variable
+    }
+
+    @Autowired
+    public void setUserRepository(UserRepository repo) {
+        userRepo = repo;  // we are setting the static variable
+    }
+
     // Store all socket session and their corresponding username.
     private static Map<Session, String> sessionUsernameMap = new Hashtable<>();
     private static Map<String, Session> usernameSessionMap = new Hashtable<>();
 
     private final Logger logger = LoggerFactory.getLogger(ChatSocket.class);
 
-    public void onOpen(Session session,@PathParam("convoId") Long convoId, @PathParam("username") String username)
-            throws IOException {
+    @OnOpen
+    public void onOpen(Session session,@PathParam("convoId") String convoId, @PathParam("username") String username){
+        sessionUsernameMap.put(session, username);
+        usernameSessionMap.put(username, session);
+
+        Optional<DirectConversation> directConvo = directConvoRepo.findById(convoId);
+        Optional<GroupConversation> groupConvo = groupConvoRepo.findById(convoId);
+
+        Conversation convo;
+        if(directConvo.isPresent()){
+            convo = directConvo.orElseThrow();
+        }
+        else if(groupConvo.isPresent()){
+            convo = groupConvo.orElseThrow();
+        }
+        else{
+            throw new RuntimeException("group not found");
+        }
+
+        Users user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if(!convo.getMembers().contains(user)){
+            throw new RuntimeException("User not in conversation");
+        }
 
         logger.info("Entered into Open");
 
         // store connecting user information
-        sessionUsernameMap.put(session, username);
-        usernameSessionMap.put(username, session);
 
         //Send chat history to the newly connected user
         sendMessageToParticularUser(username, getChatHistory());
