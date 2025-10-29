@@ -2,7 +2,6 @@ package com.example.craftsy.Group.Controller;
 
 import com.example.craftsy.Group.Entity.Group;
 import com.example.craftsy.Group.Entity.GroupMessage;
-import com.example.craftsy.Group.Repository.GroupMessageReadStatusRepository;
 import com.example.craftsy.Group.Repository.GroupMessageRepository;
 import com.example.craftsy.Group.Repository.GroupRepository;
 import com.example.craftsy.Group.GroupMessageWebsocket;
@@ -36,7 +35,6 @@ public class GroupMessageController {
 
     @Autowired private GroupRepository groupRepository;
     @Autowired private GroupMessageRepository groupMessageRepository;
-    @Autowired private GroupMessageReadStatusRepository groupMessageReadStatusRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private NotificationRepository notificationRepository;
 
@@ -117,7 +115,7 @@ public class GroupMessageController {
             broadcastToWebSocket(groupId, senderUsername, " uploaded an image: " + file.getOriginalFilename());
 
             // Create notifications for other members
-            createNotificationsForMembers(group, sender, "uploaded an image");
+            createNotificationsForMembers(group, sender, "uploaded an image", message.getId());
 
             return ResponseEntity.ok(Map.of(
                     "message", "Image uploaded successfully",
@@ -191,15 +189,17 @@ public class GroupMessageController {
     /**
      * Create notifications for all group members except sender
      */
-    private void createNotificationsForMembers(Group group, Users sender, String action) {
+    private void createNotificationsForMembers(Group group, Users sender, String action, Long referenceId) {
         group.getMembers().stream()
                 .filter(member -> !member.getId().equals(sender.getId()))
                 .forEach(member -> {
                     Notification notif = new Notification();
                     notif.setUser(member);
+                    notif.setSender(sender);
                     notif.setTitle("New Group Activity");
                     notif.setMessage(sender.getUsername() + " " + action + " in " + group.getGroupName());
                     notif.setCreatedAt(new Date());
+                    notif.setReferenceId(referenceId);
                     notif.setIsRead(false);
                     notificationRepository.save(notif);
 

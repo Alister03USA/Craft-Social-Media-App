@@ -126,7 +126,7 @@ public class Notification {
     }
 
     public void setSender(Users sender) {
-        this.user = sender;
+        this.sender = sender;
     }
 
     public void setReferenceType(String referenceType) {

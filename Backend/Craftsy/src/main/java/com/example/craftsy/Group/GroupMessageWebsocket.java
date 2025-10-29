@@ -116,7 +116,7 @@ public class GroupMessageWebsocket {
         broadcastToGroup(groupId, username, message);
 
         // create notifications for all members except sender
-        createNotificationsForMembers(group, sender, "sent a message");
+        createNotificationsForMembers(group, sender, "sent a message", groupMessage.getId());
 
     }
 
@@ -139,7 +139,10 @@ public class GroupMessageWebsocket {
         logger.info("[onClose] " + username + " disconnected from group " + groupId);
 
         sessionUsernameMap.remove(session);
-        usernameSessionMap.remove(username);
+
+        if (username != null) {
+            usernameSessionMap.remove(username);
+        }
 
         Set<Session> groupSessions = groupSessionsMap.get(groupId);
         if (groupSessions != null) {
@@ -197,14 +200,18 @@ public class GroupMessageWebsocket {
 
 
 
-    private void createNotificationsForMembers(Group group, Users sender, String action) {
-        group.getMembers().forEach(member -> {
+    private void createNotificationsForMembers(Group group, Users sender, String action, Long referenceID) {
+        group.getMembers().stream()
+                .filter(member -> !member.getUsername().equals(sender.getUsername()))
+                .forEach(member -> {
             Notification notification = new Notification();
             notification.setUser(member);
+            notification.setSender(sender);
             notification.setTitle("New Group Message");
             notification.setMessage(sender.getUsername() + " " + action + " in " + group.getGroupName());
             notification.setCreatedAt(new Date());
             notification.setIsRead(false);
+            notification.setReferenceId(referenceID);
             notificationRepository.save(notification);
 
             NotificationWebSocket.pushNotification(member.getUsername(), notification);

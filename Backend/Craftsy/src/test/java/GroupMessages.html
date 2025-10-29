@@ -1,312 +1,189 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Chat WebSocket Tester</title>
+    <title>Group Chat Tester</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 80%;
+            background-color: #1f1f1f;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
+
+        #wrapper {
+            width: 960px;
+            margin: auto;
+            text-align: left;
+            color: #d9d9d9;
         }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
+
+        table {
+            width: 100%;
         }
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+
+        input[type="text"], input[type="number"] {
+            width: 15rem;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: #d9d9d9;
         }
+
+        textarea {
+            background-color: #2a2a2a;
+            color: #d9d9d9;
+            border: 1px solid #444;
+            padding: 8px;
+            font-family: monospace;
+        }
+
+        .button {
+            display: inline;
+            color: #fff;
+            background-color: #f2791d;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 8px;
+            box-shadow: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #ffb15e;
+        }
+
+        .button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+
         .status {
             display: inline-block;
             padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
+            border-radius: 4px;
             font-weight: bold;
-            margin-top: 8px;
+            margin-left: 10px;
         }
-        .status.disconnected {
-            background: #ef4444;
-        }
+
         .status.connected {
-            background: #10b981;
-        }
-        .config {
-            padding: 20px;
-            border-bottom: 2px solid #f3f4f6;
-            background: #f9fafb;
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-        .btn-primary {
-            background: #667eea;
+            background-color: #5eb85e;
             color: white;
         }
-        .btn-primary:hover {
-            background: #5568d3;
-        }
-        .btn-danger {
-            background: #ef4444;
+
+        .status.disconnected {
+            background-color: #db524d;
             color: white;
         }
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .chat-container {
-            height: 400px;
-            overflow-y: auto;
-            padding: 20px;
-            background: #ffffff;
-        }
-        .message {
-            margin-bottom: 12px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-        .message.system {
-            background: #f3f4f6;
-            color: #6b7280;
-            font-style: italic;
-            text-align: center;
-            max-width: 100%;
-            font-size: 13px;
-        }
-        .message.received {
-            background: #e0e7ff;
-            color: #3730a3;
-        }
-        .message.sent {
-            background: #667eea;
-            color: white;
-            margin-left: auto;
-        }
-        .message.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-        .message.image {
-            background: #f0f9ff;
-            border: 2px solid #bae6fd;
-            color: #0c4a6e;
-        }
-        .message-sender {
-            font-weight: 700;
-            margin-bottom: 3px;
-            font-size: 12px;
-        }
-        .message-time {
-            font-size: 11px;
-            opacity: 0.7;
-            margin-top: 3px;
-        }
-        .image-preview {
-            max-width: 300px;
-            max-height: 300px;
-            border-radius: 8px;
-            margin-top: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .image-preview:hover {
-            transform: scale(1.05);
-        }
-        .upload-section {
-            padding: 15px 20px;
-            background: #fef3c7;
-            border-top: 2px solid #fbbf24;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
+
+        label {
             display: inline-block;
-        }
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: -9999px;
-        }
-        .file-input-label {
-            padding: 10px 20px;
-            background: #f59e0b;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-        .file-input-label:hover {
-            background: #d97706;
-        }
-        .selected-file {
-            font-size: 13px;
-            color: #92400e;
-            flex: 1;
-        }
-        .input-area {
-            padding: 20px;
-            background: #f9fafb;
-            border-top: 2px solid #e5e7eb;
-            display: flex;
-            gap: 10px;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .input-area input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+            width: 120px;
+            color: #d9d9d9;
         }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <div class="header">
-        <h1> Group Chat WebSocket Tester</h1>
-        <span class="status disconnected" id="status">Disconnected</span>
-    </div>
+<div id="wrapper">
+    <h1> Group Chat WebSocket Tester</h1>
 
-    <div class="config">
-        <div class="input-group">
-            <label>WebSocket URL:</label>
-            <input type="text" id="wsUrl" value="ws://localhost:8080/ws/groupMessage" placeholder="ws://localhost:8080/ws/groupMessage">
-        </div>
-        <div class="input-group">
-            <label>Group ID:</label>
-            <input type="number" id="groupId" value="1" placeholder="1">
-        </div>
-        <div class="input-group">
-            <label>Username:</label>
-            <input type="text" id="username" value="alister_gan" placeholder="alister_gan">
-        </div>
-        <div class="controls">
-            <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect</button>
-            <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
-        </div>
-    </div>
-
-    <div class="chat-container" id="chatContainer"></div>
-
-    <div class="input-area">
-        <input type="text" id="messageInput" placeholder="Type your message..." disabled onkeypress="handleKeyPress(event)">
-        <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
-    </div>
+    <table>
+        <tr>
+            <td>
+                <label>WebSocket URL:</label>
+                <input type="text" id="wsserver"
+                       placeholder="ws://localhost:8080/ws/groupMessage"
+                       value="ws://localhost:8080/ws/groupMessage"
+                />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>Group ID:</label>
+                <input type="number" id="groupId" value="1" placeholder="1" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>Username:</label>
+                <input type="text" id="username" placeholder="Username" value="alister_gan" />
+                <button type="button" class="button" id="connectBtn" onclick="connect();">Connect</button>
+                <button type="button" class="button" id="disconnectBtn" onclick="disconnect();" disabled>Disconnect</button>
+                <span class="status disconnected" id="status">Disconnected</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>Chat Log:</label><br/>
+                <textarea readonly="true" rows="15" cols="100" id="log"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>Message:</label>
+                <input type="text" size="70" id="msg" placeholder="Type your message..." disabled />
+                <button type="button" class="button" id="sendBtn" onclick="send();" disabled>Send</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <hr style="border-color: #444;">
+                <h3>📷 Image Upload</h3>
+                <input type="file" id="fileInput" accept="image/*" style="color: #d9d9d9;" disabled />
+                <button type="button" class="button" id="uploadBtn" onclick="uploadImage();" disabled>Upload Image</button>
+            </td>
+        </tr>
+    </table>
 </div>
 
 <script>
-    let ws = null;
-    let username = '';
+    var ws;
+    var groupId;
+    var username;
+    const API_BASE_URL = 'http://localhost:8080';
 
     function connect() {
-        const wsUrl = document.getElementById('wsUrl').value;
-        const groupId = document.getElementById('groupId').value;
-        username = document.getElementById('username').value;
+        username = document.getElementById("username").value;
+        groupId = document.getElementById("groupId").value;
+        var wsserver = document.getElementById("wsserver").value;
 
-        if (!wsUrl || !groupId || !username) {
-            addMessage('Please fill in all fields', 'error');
+        if (!username || !groupId) {
+            alert("Please enter both username and group ID");
             return;
         }
 
-        const fullUrl = `${wsUrl}/${groupId}/${username}`;
-        addMessage(`Connecting to ${fullUrl}...`, 'system');
+        var url = wsserver + "/" + groupId + "/" + username;
+        logMessage("Connecting to " + url + "...");
 
-        try {
-            ws = new WebSocket(fullUrl);
+        ws = new WebSocket(url);
 
-            ws.onopen = function(event) {
-                addMessage('Connected successfully!', 'system');
-                updateStatus(true);
-            };
+        ws.onmessage = function(event) {
+            console.log(event.data);
 
-            ws.onmessage = function(event) {
-                const message = event.data;
+            if (event.data.startsWith("ERROR:")) {
+                logMessage(" " + event.data, "error");
+                setTimeout(() => disconnect(), 2000);
+            } else {
+                logMessage(event.data);
+            }
+        };
 
-                if (message.startsWith('ERROR:')) {
-                    addMessage(message, 'error');
-                    setTimeout(() => disconnect(), 2000);
-                } else {
-                    addMessage(message, 'received');
-                }
-            };
+        ws.onopen = function(event) {
+            logMessage(" Connected to " + event.currentTarget.url);
+            updateStatus(true);
+        };
 
-            ws.onerror = function(error) {
-                addMessage('WebSocket error occurred', 'error');
-                console.error('WebSocket error:', error);
-            };
+        ws.onerror = function(error) {
+            logMessage(" WebSocket error occurred");
+            console.error(error);
+        };
 
-            ws.onclose = function(event) {
-                addMessage(`Disconnected (Code: ${event.code}, Reason: ${event.reason || 'None'})`, 'system');
-                updateStatus(false);
-            };
-
-        } catch (error) {
-            addMessage('Failed to connect: ' + error.message, 'error');
-            console.error('Connection error:', error);
-        }
+        ws.onclose = function(event) {
+            logMessage(" Disconnected (Code: " + event.code + ")");
+            updateStatus(false);
+        };
     }
 
     function disconnect() {
@@ -316,66 +193,107 @@
         }
     }
 
-    function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
+    function send() {
+        var content = document.getElementById("msg").value.trim();
 
-        if (!message) return;
+        if (!content) return;
 
         if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(message);
-            addMessage(`[${username}]: ${message}`, 'sent');
-            input.value = '';
+            ws.send(content);
+            logMessage("[" + username + "]: " + content, "sent");
+            document.getElementById("msg").value = "";
         } else {
-            addMessage('Not connected to WebSocket', 'error');
+            logMessage(" Not connected to WebSocket", "error");
         }
     }
 
-    function handleKeyPress(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
+    async function uploadImage() {
+        var fileInput = document.getElementById("fileInput");
+        var file = fileInput.files[0];
+
+        if (!file) {
+            alert("Please select an image first");
+            return;
+        }
+
+        if (!groupId || !username) {
+            alert("Not connected to a group");
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('senderUsername', username);
+        formData.append('file', file);
+
+        logMessage("Uploading image: " + file.name + "...");
+
+        try {
+            const response = await fetch(API_BASE_URL + '/groupMessage/' + groupId + '/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                logMessage(" Image uploaded successfully: " + result.fileName);
+                logMessage("   View at: " + API_BASE_URL + "/groupMessage/image/" + result.messageId);
+                fileInput.value = "";
+            } else {
+                logMessage(" Upload failed: " + result.error, "error");
+            }
+        } catch (error) {
+            logMessage(" Upload error: " + error.message, "error");
+            console.error(error);
         }
     }
 
-    function addMessage(text, type = 'received') {
-        const container = document.getElementById('chatContainer');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}`;
-
-        const time = new Date().toLocaleTimeString();
-        messageDiv.innerHTML = `
-            <div class="message-content">${text}</div>
-            <div class="message-time">${time}</div>
-        `;
-
-        container.appendChild(messageDiv);
-        container.scrollTop = container.scrollHeight;
+    function logMessage(message, type) {
+        var log = document.getElementById("log");
+        var timestamp = new Date().toLocaleTimeString();
+        log.value += "[" + timestamp + "] " + message + "\n";
+        log.scrollTop = log.scrollHeight;
     }
 
     function updateStatus(connected) {
-        const status = document.getElementById('status');
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
+        var status = document.getElementById("status");
+        var connectBtn = document.getElementById("connectBtn");
+        var disconnectBtn = document.getElementById("disconnectBtn");
+        var msgInput = document.getElementById("msg");
+        var sendBtn = document.getElementById("sendBtn");
+        var fileInput = document.getElementById("fileInput");
+        var uploadBtn = document.getElementById("uploadBtn");
 
         if (connected) {
-            status.textContent = 'Connected';
-            status.className = 'status connected';
+            status.textContent = "Connected";
+            status.className = "status connected";
             connectBtn.disabled = true;
             disconnectBtn.disabled = false;
-            messageInput.disabled = false;
+            msgInput.disabled = false;
             sendBtn.disabled = false;
-            messageInput.focus();
+            fileInput.disabled = false;
+            uploadBtn.disabled = false;
+            msgInput.focus();
         } else {
-            status.textContent = 'Disconnected';
-            status.className = 'status disconnected';
+            status.textContent = "Disconnected";
+            status.className = "status disconnected";
             connectBtn.disabled = false;
             disconnectBtn.disabled = true;
-            messageInput.disabled = true;
+            msgInput.disabled = true;
             sendBtn.disabled = true;
+            fileInput.disabled = true;
+            uploadBtn.disabled = true;
         }
     }
+
+    // Allow Enter key to send messages
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("msg").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                send();
+            }
+        });
+    });
 
     // Clean up on page unload
     window.addEventListener('beforeunload', () => {

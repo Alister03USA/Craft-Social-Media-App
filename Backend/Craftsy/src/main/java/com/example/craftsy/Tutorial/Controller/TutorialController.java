@@ -219,7 +219,7 @@ public class TutorialController {
             map.put("category", t.getCategory());
             map.put("username", t.getUser().getUsername());
 
-            // ✅ Handle both local and external URLs
+            // Handle both local and external URLs
             String fileUrl = (t.getFileUrl() != null)
                     ? t.getFileUrl()
                     : "/tutorial/" + t.getId(); // local file endpoint
