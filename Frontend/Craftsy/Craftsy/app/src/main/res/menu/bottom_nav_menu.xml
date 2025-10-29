@@ -17,15 +17,8 @@
         android:icon="@drawable/ic_c" />
 
     <item
-        android:id="@+id/nav_view_user"
-        android:title="View User"
-        android:icon="@drawable/ic_spy" />
-
-    <item
-        android:id="@+id/nav_my_profile"
-        android:title="My Profile"
-        android:icon="@drawable/ic_user_profile" />
-
-
+        android:id="@+id/nav_search"
+        android:icon="@drawable/ic_spy"
+        android:title="Search" />
 </menu>
 
