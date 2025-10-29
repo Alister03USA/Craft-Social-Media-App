@@ -75,7 +75,7 @@ public class GroupController {
     }
 
     /**
-     * POST /groups/{groupName}/{admin}/add-member/{username}
+     * POST /{groupName}/{admin}/add-member/{username}
      * @param groupName
      * @param username
      * @param admin
@@ -120,7 +120,7 @@ public class GroupController {
 
 
     /**
-     * GET /groups/{groupName}/members
+     * GET /{groupName}/members
      * Retrieve all members of a group.
      */
     @GetMapping("/{groupName}/members")
@@ -154,7 +154,7 @@ public class GroupController {
     }
 
     /**
-     * POST/groups/{username}/join/{group_name}
+     * POST  /{username}/join/{group_name}
      * Public Group - Join directly
      * Private Group - Sent request (only can be accepted/Declined by Admin)
      */
@@ -301,7 +301,7 @@ public class GroupController {
 
 
     /**
-     * GET /groups/user/{username}
+     * GET /user/{username}
      * Retrieve all groups that a user is a member of.
      */
     @GetMapping("/user/{username}")
@@ -339,6 +339,63 @@ public class GroupController {
                 "groups", groupList
         ));
     }
+
+    /**
+     * DELETE /{username}/leave/{groupName}
+     * Allows a member to leave a group voluntarily.
+     */
+    @DeleteMapping("/{username}/leave/{groupName}")
+    public ResponseEntity<Map<String, String>> leaveGroup(
+            @PathVariable String groupName,
+            @PathVariable String username) {
+
+        // Decode group name if it has spaces or special characters
+        groupName = URLDecoder.decode(groupName, StandardCharsets.UTF_8);
+
+        Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+
+        if (groupOpt.isEmpty() || userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
+        }
+
+        Group group = groupOpt.get();
+        Users user = userOpt.get();
+
+        // Check if user is actually a member
+        if (!group.getMembers().contains(user)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "User is not a member of this group"));
+        }
+
+        // Prevent the admin from leaving their own group
+        if (group.getGroupAdmin().equals(user)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Admin cannot leave their own group. Transfer admin role or delete the group."));
+        }
+
+        // Remove the user from the group
+        group.getMembers().remove(user);
+        group.setMemberCount();
+        groupRepository.save(group);
+
+        // Notify all remaining members
+        for (Users member : group.getMembers()) {
+            Notification notif = new Notification();
+            notif.setUser(member);
+            notif.setTitle("Member Left");
+            notif.setReferenceId(group.getId());
+            notif.setMessage(user.getUsername() + " has left " + group.getGroupName());
+            notif.setCreatedAt(new Date());
+            notif.setIsRead(false);
+
+            notificationRepository.save(notif);
+            NotificationWebSocket.pushNotification(member.getUsername(), notif);
+        }
+
+
+
+        return ResponseEntity.ok(Map.of("message", "You have left the group successfully"));
+    }
+
 
 
 
