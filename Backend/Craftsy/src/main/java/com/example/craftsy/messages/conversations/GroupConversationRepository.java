@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface GroupConversationRepository extends JpaRepository<GroupConversation, Long> {
+public interface GroupConversationRepository extends JpaRepository<GroupConversation, String> {
     Optional<GroupConversation> findById(String id);
 
     @Query("SELECT c FROM GroupConversation c JOIN FETCH c.members WHERE c.id = :id")

@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface DirectConversationRepository extends JpaRepository<DirectConversation, Long> {
+public interface DirectConversationRepository extends JpaRepository<DirectConversation, String> {
 
     Optional<DirectConversation> findById(String id);
     @Query("SELECT c FROM DirectConversation c JOIN FETCH c.members WHERE c.id = :id")
