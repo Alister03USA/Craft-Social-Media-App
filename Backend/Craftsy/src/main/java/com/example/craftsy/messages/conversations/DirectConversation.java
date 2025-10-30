@@ -5,6 +5,7 @@ import com.example.craftsy.messages.Message;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +35,8 @@ public class DirectConversation implements Conversation {
     private List<Message> messages;
 
     private LocalDate dateCreated;
+
+    private LocalDateTime lastMessage;
 
     public DirectConversation(){}
 
@@ -80,5 +83,15 @@ public class DirectConversation implements Conversation {
 
     public void removeMessage(Message message){
         this.messages.remove(message);
+    }
+
+    @Override
+    public LocalDateTime getLastMessage() {
+        return lastMessage;
+    }
+
+    @Override
+    public void setLastMessage(LocalDateTime lastMessage) {
+        this.lastMessage = lastMessage;
     }
 }

@@ -5,6 +5,7 @@ import com.example.craftsy.messages.Message;
 import jakarta.persistence.Id;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface Conversation {
@@ -28,4 +29,8 @@ public interface Conversation {
     void addMessage(Message message);
 
     void removeMessage(Message message);
+
+    void setLastMessage(LocalDateTime time);
+
+    LocalDateTime getLastMessage();
 }

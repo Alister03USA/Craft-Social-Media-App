@@ -2,19 +2,17 @@ package com.example.craftsy.messages;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
-import com.example.craftsy.messages.conversations.DirectConversation;
-import com.example.craftsy.messages.conversations.DirectConversationRepository;
-import com.example.craftsy.messages.conversations.GroupConversation;
-import com.example.craftsy.messages.conversations.GroupConversationRepository;
+import com.example.craftsy.feed.Feed;
+import com.example.craftsy.images.Image;
+import com.example.craftsy.messages.conversations.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.client.WebSocketClient;
 
 import java.net.http.WebSocket;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +36,7 @@ public class ConversationController {
             users.add(userOpt.orElseThrow(() -> new RuntimeException("User not found")));
         }
         GroupConversation newConvo = new GroupConversation(users);
+        newConvo.setLastMessage(LocalDateTime.now());
         GroupConversation savedConvo = groupConvoRepo.save(newConvo);
 
         return savedConvo;
@@ -54,8 +53,91 @@ public class ConversationController {
         users.add(userOpt.orElseThrow(() -> new RuntimeException("User not found")));
 
         DirectConversation newConvo = new DirectConversation(users);
+        newConvo.setLastMessage(LocalDateTime.now());
         DirectConversation savedConvo = directConvoRepo.save(newConvo);
 
         return savedConvo;
+    }
+
+    @GetMapping("/messages/convos/{username}")
+    List<Conversation> getConvosUser(@PathVariable String username){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Conversation> convos = new ArrayList<>();
+        Optional<List<DirectConversation>> directOpt = directConvoRepo.findAllByMemberUsername(username);
+        Optional<List<GroupConversation>> groupOpt = groupConvoRepo.findAllByMemberUsername(username);
+        if(directOpt.isPresent()){
+            convos.addAll(directOpt.orElseThrow(() -> new RuntimeException("conversation not found")));
+        }
+        if(groupOpt.isPresent()){
+            convos.addAll(groupOpt.orElseThrow(() -> new RuntimeException("conversation not found")));
+        }
+        convos.sort(Comparator.comparing(Conversation::getLastMessage).reversed());
+        return convos;
+    }
+
+    @GetMapping("/messages/{convoId}")
+    Conversation getConversation(@PathVariable String convoId){
+        Conversation convo;
+        if(convoId.startsWith("G-")){
+            convo = groupConvoRepo.findById(convoId)
+                    .orElseThrow(() -> new RuntimeException("Conversation not found"));
+        }
+        else if(convoId.startsWith("D-")){
+            convo = directConvoRepo.findById(convoId)
+                    .orElseThrow(() -> new RuntimeException("Conversation not found"));
+        }
+        else{
+            throw(new RuntimeException("Conversation not found"));
+        }
+        return convo;
+    }
+
+    @DeleteMapping("/messages/{convoId}")
+    String deleteConversation(@PathVariable String convoId){
+
+        if(convoId.startsWith("G-")){
+            GroupConversation gconvo = groupConvoRepo.findById(convoId)
+                    .orElseThrow(() -> new RuntimeException("Conversation not found"));
+            groupConvoRepo.delete(gconvo);
+        }
+        else if(convoId.startsWith("D-")){
+            DirectConversation dconvo = directConvoRepo.findById(convoId)
+                    .orElseThrow(() -> new RuntimeException("Conversation not found"));
+            directConvoRepo.delete(dconvo);
+        }
+        else{
+            throw(new RuntimeException("Conversation not found"));
+        }
+        return "Conversation deleted";
+    }
+
+    @PutMapping("/messages/{groupId}/pic")
+    GroupConversation updateGroupPic(@PathVariable String groupId, @RequestBody Image image){
+        GroupConversation convo = groupConvoRepo.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+        convo.setGroupPic(image);
+        return groupConvoRepo.save(convo);
+    }
+
+    @PutMapping("/messages/{groupId}/add/{username}")
+    GroupConversation addUser(@PathVariable String groupId, @PathVariable String username){
+        GroupConversation convo = groupConvoRepo.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        convo.addMember(user);
+        return groupConvoRepo.save(convo);
+    }
+
+    @PutMapping("/messages/{groupId}/remove/{username}")
+    GroupConversation removeUser(@PathVariable String groupId, @PathVariable String username){
+        GroupConversation convo = groupConvoRepo.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        convo.removeMember(user);
+        return groupConvoRepo.save(convo);
     }
 }

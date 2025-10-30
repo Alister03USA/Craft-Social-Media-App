@@ -6,6 +6,7 @@ import com.example.craftsy.messages.Message;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +42,8 @@ public class GroupConversation implements Conversation{
     @ManyToOne
     @JoinColumn(name = "group_pic_id")
     private Image groupPic;
+
+    private LocalDateTime lastMessage;
 
     public GroupConversation(){}
 
@@ -111,5 +114,15 @@ public class GroupConversation implements Conversation{
 
     public void setGroupName(String groupName) {
         this.groupName = groupName;
+    }
+
+    @Override
+    public LocalDateTime getLastMessage() {
+        return lastMessage;
+    }
+
+    @Override
+    public void setLastMessage(LocalDateTime lastMessage) {
+        this.lastMessage = lastMessage;
     }
 }
