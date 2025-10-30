@@ -44,20 +44,16 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<Notification> createNotification(
             @RequestParam String receiverUsername,
-            @RequestParam(required = false) String senderUsername,
             @RequestParam String title,
             @RequestParam String message,
             @RequestParam(required = false) Long referenceId
     ) {
         Users receiver = userRepository.findByUsername(receiverUsername)
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
-        Users sender = senderUsername != null
-                ? userRepository.findByUsername(senderUsername).orElse(null)
-                : null;
+
 
         Notification notification = new Notification();
         notification.setUser(receiver);
-        notification.setSender(sender);
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setReferenceId(referenceId);

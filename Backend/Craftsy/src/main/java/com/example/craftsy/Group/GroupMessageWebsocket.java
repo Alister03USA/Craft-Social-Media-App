@@ -206,7 +206,6 @@ public class GroupMessageWebsocket {
                 .forEach(member -> {
             Notification notification = new Notification();
             notification.setUser(member);
-            notification.setSender(sender);
             notification.setTitle("New Group Message");
             notification.setMessage(sender.getUsername() + " " + action + " in " + group.getGroupName());
             notification.setCreatedAt(new Date());

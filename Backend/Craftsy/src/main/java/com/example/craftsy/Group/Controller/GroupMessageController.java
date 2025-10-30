@@ -195,7 +195,6 @@ public class GroupMessageController {
                 .forEach(member -> {
                     Notification notif = new Notification();
                     notif.setUser(member);
-                    notif.setSender(sender);
                     notif.setTitle("New Group Activity");
                     notif.setMessage(sender.getUsername() + " " + action + " in " + group.getGroupName());
                     notif.setCreatedAt(new Date());
