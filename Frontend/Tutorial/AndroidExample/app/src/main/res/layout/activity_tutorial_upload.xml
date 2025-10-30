@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/craftsy_background">
+
+    <!-- Back button -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="12dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_arrow_back"
+        android:contentDescription="Back"
+        app:tint="@color/dark_text" />
+
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_below="@id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="24dp">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+
+            <!-- Title input -->
+            <EditText
+                android:id="@+id/inputTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tutorial Title"
+                android:inputType="text"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Category input -->
+            <EditText
+                android:id="@+id/inputCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Category"
+                android:layout_marginTop="8dp"
+                android:inputType="text"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Description input -->
+            <EditText
+                android:id="@+id/inputDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Description"
+                android:layout_marginTop="8dp"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:gravity="top"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Video URL input -->
+            <EditText
+                android:id="@+id/inputUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Or paste YouTube / video URL"
+                android:layout_marginTop="16dp"
+                android:inputType="textUri"
+                android:textColor="@color/dark_text"
+                android:backgroundTint="@color/dark_text" />
+
+            <!-- Select file button -->
+            <ImageView
+                android:id="@+id/btnSelectFile"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="16dp"
+                android:src="@drawable/ic_upload"
+                android:contentDescription="Select video"
+                android:background="@drawable/rounded_bg_gray"
+                android:padding="16dp" />
+
+            <!-- Upload button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnUpload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:src="@drawable/ic_upload_arrow"
+                app:backgroundTint="@color/craftsy_accent" />
+
+            <!-- Progress bar -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

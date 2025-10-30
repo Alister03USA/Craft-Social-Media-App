@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Server 1 Section -->
+        <LinearLayout
+            android:id="@+id/chat1Layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Server 1 URL (default to):"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/serverEdt"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="ws://localhost:9090"
+                android:textSize="16sp"
+                android:background="@android:drawable/editbox_background"/>
+
+            <EditText
+                android:id="@+id/unameEdt"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:hint="Enter username"
+                android:textSize="16sp"
+                android:background="@android:drawable/editbox_background"/>
+
+            <Button
+                android:id="@+id/connectBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="Connect to Chat Server 1"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@android:color/holo_blue_dark"/>
+
+            <Button
+                android:id="@+id/backBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Back to Chat Server 1"
+                android:backgroundTint="@android:color/darker_gray"
+                android:textColor="@android:color/white"/>
+
+            <Button
+                android:id="@+id/deleteChat1Btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Delete Chat 1"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+        <!-- Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="40dp"/>
+
+        <!-- Server 2 Section -->
+        <LinearLayout
+            android:id="@+id/chat2Layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Server 2 URL (default to):"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/serverEdt2"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="ws://localhost:9090"
+                android:textSize="16sp"
+                android:background="@android:drawable/editbox_background"/>
+
+            <EditText
+                android:id="@+id/unameEdt2"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:hint="Enter username"
+                android:textSize="16sp"
+                android:background="@android:drawable/editbox_background"/>
+
+            <Button
+                android:id="@+id/connectBtn2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="Connect to Chat Server 2"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@android:color/holo_blue_dark"/>
+
+            <Button
+                android:id="@+id/backBtn2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Back to Chat Server 2"
+                android:backgroundTint="@android:color/darker_gray"
+                android:textColor="@android:color/white"/>
+
+            <Button
+                android:id="@+id/deleteChat2Btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Delete Chat 2"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
