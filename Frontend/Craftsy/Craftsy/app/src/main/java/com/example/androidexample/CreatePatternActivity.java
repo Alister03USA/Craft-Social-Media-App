@@ -168,9 +168,11 @@ public class CreatePatternActivity extends AppCompatActivity {
             Log.e("CreatePatternActivity", "Error building JSON body", e);
         }
 
+        String url = PATTERN_BASE_URL + "/" + username;
+
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,
-                PATTERN_BASE_URL,
+                url,
                 jsonBody,
                 response -> {
                     Toast.makeText(this, "Pattern posted successfully!", Toast.LENGTH_SHORT).show();
@@ -181,6 +183,7 @@ public class CreatePatternActivity extends AppCompatActivity {
                     Toast.makeText(this, "Pattern upload failed", Toast.LENGTH_LONG).show();
                 }
         );
+
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }

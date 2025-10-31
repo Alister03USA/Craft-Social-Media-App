@@ -38,7 +38,7 @@ public class PatternActivity extends BaseActivity {
         // Setup bottom navigation
         setupBottomNavigation(R.id.pattern);
 
-        // ✅ Toolbar setup for top-right "Create" button
+        //  Toolbar setup for top-right "Create" button
         Toolbar toolbar = findViewById(R.id.patternsToolbar);
         setSupportActionBar(toolbar);
         setTitle("Patterns");
@@ -53,14 +53,14 @@ public class PatternActivity extends BaseActivity {
         fetchPatterns();
     }
 
-    // ✅ Inflate the top-right "Create Pattern" menu
+    //  Inflate the top-right "Create Pattern" menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.pattern_feed_menu, menu);
         return true;
     }
 
-    // ✅ Handle the "Create Pattern" button click
+    //  Handle the "Create Pattern" button click
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_create_pattern) {
@@ -79,7 +79,7 @@ public class PatternActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // ✅ Fetch patterns from backend using SessionManager username
+    //  Fetch patterns from backend using SessionManager username
     private void fetchPatterns() {
         SessionManager session = SessionManager.getInstance();
         String username = session.getLoggedInUsername();
