@@ -8,8 +8,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Map /uploads/** URL path to the physical folder on your system
+
+        String uploadDir = System.getProperty("user.home") + "/uploads/";
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:C:/uploads/"); // ✅ Replace with your directory
+                .addResourceLocations("file:" + uploadDir);
     }
 }

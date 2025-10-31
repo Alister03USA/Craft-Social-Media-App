@@ -83,8 +83,8 @@ public abstract class BaseActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == selectedItemId) return true;
 
-            if (id == R.id.nav_group) {
-                Intent intent = new Intent(this, GroupFeedActivity.class);
+            if (id == R.id.nav_notif) {
+                Intent intent = new Intent(this, NotificationCenterActivity.class);
                 startActivity(intent);
             } else if (id == R.id.pattern) {
                 Intent intent = new Intent(this, PatternActivity.class);

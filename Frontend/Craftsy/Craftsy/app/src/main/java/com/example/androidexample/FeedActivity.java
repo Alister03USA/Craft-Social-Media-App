@@ -1,9 +1,9 @@
 package com.example.androidexample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
@@ -22,48 +22,58 @@ public class FeedActivity extends BaseActivity {
 
     private static final String TAG = "FeedActivity";
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/feed";
+    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/"; //  where images are served
+
+    private String loggedInUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
-        setupBottomNavigation(R.id.myFeed);
 
         recyclerViewFeed = findViewById(R.id.recyclerViewFeed);
         recyclerViewFeed.setLayoutManager(new LinearLayoutManager(this));
-        feedAdapter = new FeedAdapter(this, feedList);
+
+        loggedInUsername = getIntent().getStringExtra("username");
+        if (loggedInUsername == null || loggedInUsername.trim().isEmpty()) {
+            loggedInUsername = "Fuji"; // fallback
+        }
+
+        findViewById(R.id.btnAddPost).setOnClickListener(v -> {
+            Intent intent = new Intent(this, FeedCRUDActivity.class);
+            intent.putExtra("mode", "add");
+            intent.putExtra("username", loggedInUsername);
+            startActivity(intent);
+        });
+
+        feedAdapter = new FeedAdapter(this, feedList, "feed", loggedInUsername);
         recyclerViewFeed.setAdapter(feedAdapter);
 
-        // username from Login -> UserProfile -> FeedActivity
-        String username = getIntent().getStringExtra("username");
-        if (username == null || username.trim().isEmpty()) {
-            // last-resort fallback so the screen never crashes on null
-            username = "katiekeck";
-        }
-        Log.d(TAG, "Loading for username=" + username);
+        setupBottomNavigation(R.id.bottom_navigation);
 
-        loadFeed(username);
+        Log.d(TAG, "FeedActivity created for: " + loggedInUsername);
+        loadFeed(loggedInUsername);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadFeed(loggedInUsername);
     }
 
     private void loadFeed(String username) {
         final String url = BASE_URL + "/" + username;
-        Log.d(TAG, "GET " + url);
 
         JsonArrayRequest req = new JsonArrayRequest(
                 Request.Method.GET, url, null,
                 this::handleFeedResponse,
                 error -> {
-                    String detail = "no networkResponse";
-                    if (error != null && error.networkResponse != null) {
-                        try {
-                            detail = "HTTP " + error.networkResponse.statusCode +
-                                    " : " + new String(error.networkResponse.data, "UTF-8");
-                        } catch (Exception ignored) {}
-                    }
-                    Log.e(TAG, "Feed request failed: " + detail, error);
-                    Toast.makeText(this, "Failed to load feed: " + detail, Toast.LENGTH_LONG).show();
-                }
-        );
+                    String detail = (error.networkResponse != null)
+                            ? "HTTP " + error.networkResponse.statusCode
+                            : "Network error";
+                    Log.e(TAG, "Feed load failed: " + detail, error);
+                    Toast.makeText(this, "Failed to load feed", Toast.LENGTH_SHORT).show();
+                });
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
@@ -73,28 +83,34 @@ public class FeedActivity extends BaseActivity {
             feedList.clear();
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject o = arr.getJSONObject(i);
+                JSONObject userObj = o.optJSONObject("user");
 
-                // nested user obj
-                String u = "";
-                JSONObject user = o.optJSONObject("user");
-                if (user != null) {
-                    u = user.optString("username", "");
+                String u = userObj != null ? userObj.optString("username", "") : "";
+                String name = o.optString("projectName", "");
+                String desc = o.optString("projectDesc", "");
+                String type = o.optString("projectType", "");
+                String supplies = o.optString("supplies", "");
+                String visibility = o.optString("visibility", "");
+                String date = o.optString("date", "");
+
+                //  Get first image path if available
+                String imageUrl = null;
+                JSONArray imagesArr = o.optJSONArray("images");
+                if (imagesArr != null && imagesArr.length() > 0) {
+                    JSONObject imgObj = imagesArr.getJSONObject(0);
+                    String filePath = imgObj.optString("filePath", "");
+                    if (filePath != null && !filePath.isEmpty()) {
+                        // Convert backend file path to accessible URL
+                        imageUrl = IMAGE_BASE_URL + filePath.substring(filePath.lastIndexOf("/") + 1);
+                    }
                 }
 
-                String name  = o.optString("projectName",  o.optString("project_name", ""));
-                String desc  = o.optString("projectDesc",  o.optString("project_desc", ""));
-                String type  = o.optString("projectType",  o.optString("project_type", ""));
-                String supp  = o.optString("supplies", "");
-                String vis   = o.optString("visibility", "");
-                String date  = o.optString("date", "");
-
-                feedList.add(new FeedItem(u, name, desc, type, supp, vis, date));
+                feedList.add(new FeedItem(u, name, desc, type, supplies, visibility, date, imageUrl));
             }
             feedAdapter.notifyDataSetChanged();
-            Toast.makeText(this, "Loaded " + feedList.size() + " posts", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Feed reloaded with " + feedList.size() + " posts");
         } catch (JSONException e) {
-            Log.e(TAG, "parse error", e);
-            Toast.makeText(this, "Invalid feed JSON", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Parse error", e);
         }
     }
 }

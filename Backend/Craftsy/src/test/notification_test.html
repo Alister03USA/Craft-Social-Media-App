@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Multi-User Test</title>
+    <style>
+        body { font-family: Arial; background-color: #1f1f1f; color: #d9d9d9; }
+        input, button { margin: 5px; padding: 5px; }
+        textarea { width: 100%; height: 300px; }
+        .user-block { border: 1px solid #444; margin-bottom: 10px; padding: 5px; }
+        h3 { margin: 0; }
+    </style>
+</head>
+<body>
+<h2>WebSocket Multi-User Notification Test</h2>
+
+<div>
+    <label>WebSocket Base URL: </label>
+    <input type="text" id="wsserver" value="ws://localhost:8080/ws/notifications/" style="width: 300px;">
+</div>
+
+<div>
+    <label>Usernames (comma-separated): </label>
+    <input type="text" id="usernames" placeholder="user1,user2,user3" style="width: 300px;">
+    <button onclick="connectAll();">Connect All Users</button>
+</div>
+
+<div id="usersContainer"></div>
+
+<script src="multiwsclient.js"></script>
+</body>
+</html>

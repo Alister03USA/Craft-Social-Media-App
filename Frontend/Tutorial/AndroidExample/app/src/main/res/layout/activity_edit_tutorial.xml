@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E8F3FC">
+
+    <!-- Back button -->
+    <ImageButton
+        android:id="@+id/btnCancelEdit"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_arrow_back"
+        android:tint="@color/grey"
+        android:contentDescription="Back" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Edit Tutorial"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginTop="8dp"
+        android:gravity="center" />
+
+    <EditText
+        android:id="@+id/editTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Tutorial Title"
+        android:layout_marginTop="16dp"
+        android:inputType="text"
+        android:backgroundTint="@color/black" />
+
+    <EditText
+        android:id="@+id/editCategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Category"
+        android:layout_marginTop="8dp"
+        android:inputType="text"
+        android:backgroundTint="@color/black" />
+
+    <EditText
+        android:id="@+id/editDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Description"
+        android:layout_marginTop="8dp"
+        android:inputType="textMultiLine"
+        android:minLines="3"
+        android:gravity="top"
+        android:backgroundTint="@color/black" />
+
+    <Button
+        android:id="@+id/btnSaveChanges"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Save Changes"
+        android:backgroundTint="@color/blue_500"
+        android:textColor="@color/white" />
+
+    <Button
+        android:id="@+id/btnDeleteTutorial"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Delete Tutorial"
+        android:backgroundTint="@color/red"
+        android:textColor="@color/white" />
+</LinearLayout>
