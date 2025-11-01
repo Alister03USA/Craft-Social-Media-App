@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_create_pattern"
+        android:title="Create"
+        android:icon="@android:drawable/ic_input_add"
+        app:showAsAction="always" />
+</menu>

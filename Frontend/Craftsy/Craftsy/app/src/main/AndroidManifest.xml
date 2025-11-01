@@ -2,8 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.androidexample">
 
-    <!-- Internet permission for backend API requests -->
+    <!-- 🌐 Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -15,10 +20,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Craftsy"
-        android:networkSecurityConfig="@xml/network_security_config"
-        >
+        android:networkSecurityConfig="@xml/network_security_config">
 
-        <!-- 🟢 Login Activity (Launcher) -->
+        <!-- 🛰 WebSocket Background Service -->
+        <service
+            android:name=".WebSocketNotificationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice|dataSync" />
+
+        <!-- 🚀 Login (Launcher) -->
         <activity
             android:name=".Login"
             android:exported="true"
@@ -27,55 +38,53 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
-        <!-- User Profile Activity -->
-        <activity
-            android:name=".UserProfile"
+        <!-- 👤 User Management -->
+        <activity android:name=".SignupActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".DeleteActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".UserProfile"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".OutsideUserProfile"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- Feed Activity (newly added) -->
-        <activity
-            android:name=".FeedActivity"
+        <!-- 📰 Feed -->
+        <activity android:name=".FeedActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".FeedCRUDActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".FeedDetailActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- Delete Account Activity -->
-        <activity
-            android:name=".DeleteActivity"
+        <!-- 🔍 Search -->
+        <activity android:name=".SearchActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- Signup Activity -->
-        <activity
-            android:name=".SignupActivity"
+        <!-- 🔔 Notifications -->
+        <activity android:name=".NotificationCenterActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
+        <!-- 🎥 Tutorials -->
+        <activity android:name=".TutorialFeedActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".TutorialDetailActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".TutorialUploadActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
-
-                <!-- Notification Center Activity (currently the launcher) -->
-                <activity
-                    android:name=".NotificationCenterActivity"
-                    android:exported="false"
-                    android:theme="@style/Theme.Craftsy">
-
-                </activity>
-
-                <!-- User Profile Activity -->
-                <activity
-                    android:name=".OutsideUserProfile"
-                    android:exported="false"
-                    android:theme="@style/Theme.Craftsy" >
-
-
-
-
-                </activity>
-            </application>
-
-        </manifest>
-
-
+    </application>
+</manifest>

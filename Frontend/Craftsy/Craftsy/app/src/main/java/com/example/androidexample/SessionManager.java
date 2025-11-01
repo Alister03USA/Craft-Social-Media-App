@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+
 public class SessionManager {
     private static SessionManager instance;
     private String loggedInUsername;
