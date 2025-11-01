@@ -6,12 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.images.Image;
-import com.example.craftsy.messages.conversations.DirectConversation;
-import com.example.craftsy.messages.conversations.GroupConversation;
+import com.example.craftsy.messages.conversations.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity
 @Table(name = "messages")
@@ -29,17 +27,18 @@ public class Message {
             name = "message_reactions",
             joinColumns = @JoinColumn(name = "message_id")
     )
-    @MapKeyColumn(name = "reaction_type")  // e.g., "like", "love", "haha"
-    @Column(name = "count")               // integer count
+    @MapKeyColumn(name = "reaction_type")
+    @Column(name = "count")
     private Map<String, Integer> reactions = new HashMap<>();
 
     private LocalDateTime date;
 
     @ManyToOne
     @JoinColumn(name = "parent_message_id") // foreign key column
+    @JsonIgnore
     private Message parentMessage;
 
-    @OneToMany(mappedBy = "parentMessage", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "parentMessage", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Message> replies = new ArrayList<>();
 
     @ManyToOne
@@ -48,18 +47,40 @@ public class Message {
 
     @ManyToOne
     @JoinColumn(name = "group_convo_id")
+    @JsonIgnore
     private GroupConversation groupConvo;
 
     @ManyToOne
     @JoinColumn(name = "direct_convo_id")
+    @JsonIgnore
     private DirectConversation directConvo;
 
     public Message(){}
 
-    public Message(String username, String text) {
+    public Message(String username, String text, Conversation convo) {
+        if(convo instanceof  GroupConversation){
+            this.groupConvo = (GroupConversation) convo;
+        }
+        else{
+            this.directConvo = (DirectConversation) convo;
+        }
         this.sender = username;
         this.text = text;
         this.date = LocalDateTime.now();
+        reactions = new HashMap<>();
+    }
+
+    public Message(String username, String text, Conversation convo, Message parentMessage) {
+        if(convo instanceof  GroupConversation){
+            this.groupConvo = (GroupConversation) convo;
+        }
+        else{
+            this.directConvo = (DirectConversation) convo;
+        }
+        this.sender = username;
+        this.text = text;
+        this.date = LocalDateTime.now();
+        this.parentMessage = parentMessage;
         reactions = new HashMap<>();
     }
 
@@ -77,6 +98,14 @@ public class Message {
 
     public void setReplies(List<Message> replies) {
         this.replies = replies;
+    }
+
+    public void addReply(Message reply){
+        this.replies.add(reply);
+    }
+
+    public void removeReply(Message reply){
+        this.replies.remove(reply);
     }
 
     public LocalDateTime getDate() {

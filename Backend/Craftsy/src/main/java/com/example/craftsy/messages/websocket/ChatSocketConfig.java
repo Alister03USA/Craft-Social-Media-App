@@ -1,4 +1,4 @@
-package com.example.craftsy.messages;
+package com.example.craftsy.messages.websocket;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

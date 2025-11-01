@@ -28,6 +28,9 @@ public class ConversationController {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    MessageRepository msgRepo;
+
     @PostMapping("/messages/group")
     GroupConversation createGroupConvo(@RequestBody List<String> usernames){
         List<Users> users = new ArrayList<>();
@@ -94,7 +97,7 @@ public class ConversationController {
         return convo;
     }
 
-    @DeleteMapping("/messages/{convoId}")
+    @DeleteMapping("/messages/convo/{convoId}")
     String deleteConversation(@PathVariable String convoId){
 
         if(convoId.startsWith("G-")){
@@ -139,5 +142,13 @@ public class ConversationController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         convo.removeMember(user);
         return groupConvoRepo.save(convo);
+    }
+
+    @DeleteMapping("/messages/{messageId}")
+    String deleteMessage(@PathVariable Long messageId){
+        Message message = msgRepo.findById(messageId)
+                .orElseThrow(()->new RuntimeException("Message not found"));
+        msgRepo.delete(message);
+        return "Message deleted";
     }
 }

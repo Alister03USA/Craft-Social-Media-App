@@ -1,8 +1,10 @@
-package com.example.craftsy.messages;
+package com.example.craftsy.messages.websocket;
 
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import com.example.craftsy.messages.Message;
+import com.example.craftsy.messages.MessageRepository;
 import com.example.craftsy.messages.conversations.*;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
@@ -16,48 +18,34 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Controller
-@ServerEndpoint(value = "/chat/{convoId}/{username}")
+@ServerEndpoint(value = "/chat/{convoId}/{username}", configurator = SpringConfigurator.class)
 public class ChatSocket {
-    private static MessageRepository msgRepo;
-    private static GroupConversationRepository groupConvoRepo;
-    private static DirectConversationRepository directConvoRepo;
-    private static UserRepository userRepo;
+    private static final Logger logger = LoggerFactory.getLogger(ChatSocket.class);
 
-    /*
-     * Grabs the MessageRepository singleton from the Spring Application
-     * Context.  This works because of the @Controller annotation on this
-     * class and because the variable is declared as static.
-     * There are other ways to set this. However, this approach is
-     * easiest.
-     */
-    @Autowired
-    public void setMessageRepository(MessageRepository repo) {
-        msgRepo = repo;  // we are setting the static variable
-    }
-
-    @Autowired
-    public void setGroupConvoRepository(GroupConversationRepository repo) {
-        groupConvoRepo = repo;  // we are setting the static variable
-    }
-
-    @Autowired
-    public void setDirectConvoRepository(DirectConversationRepository repo) {
-        directConvoRepo = repo;  // we are setting the static variable
-    }
-
-    @Autowired
-    public void setUserRepository(UserRepository repo) {
-        userRepo = repo;  // we are setting the static variable
-    }
-
-    // Store all socket session and their corresponding username.
     private static Map<Session, String> sessionUsernameMap = new Hashtable<>();
     private static Map<String, Session> usernameSessionMap = new Hashtable<>();
 
-    private final Logger logger = LoggerFactory.getLogger(ChatSocket.class);
+    private MessageService messageService;
+    private UserRepository userRepo;
+    private MessageRepository msgRepo;
+    private GroupConversationRepository groupConvoRepo;
+    private DirectConversationRepository directConvoRepo;
+
+    private static Map<Session, Conversation> sessionConvoMap = new Hashtable<>();
+    private static Map<Session, String> sessionConvoTypeMap = new Hashtable<>();
+
+    
+
+    public ChatSocket(){}
+
+    public void setGroupConvoRepo(GroupConversationRepository repo) { this.groupConvoRepo = repo; }
+    public void setDirectConvoRepo(DirectConversationRepository repo) { this.directConvoRepo = repo; }
+    public void setMsgRepo(MessageRepository repo) { this.msgRepo = repo; }
+    public void setUserRepo(UserRepository repo) { this.userRepo = repo; }
+    public void setMessageService(MessageService service) { this.messageService = service; }
+
 
     @OnOpen
     public void onOpen(Session session,@PathParam("convoId") String convoId, @PathParam("username") String username){
@@ -65,7 +53,6 @@ public class ChatSocket {
         usernameSessionMap.put(username, session);
 
         Conversation convo;
-
         if (convoId.startsWith("D-")) {
             convo = directConvoRepo.findByIdWithMembers(convoId)
                     .orElseThrow(() -> new RuntimeException("Direct conversation not found"));
@@ -75,8 +62,8 @@ public class ChatSocket {
         } else {
             throw new RuntimeException("Invalid conversation ID format");
         }
-        Users user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        sessionConvoMap.put(session, convo);
+        sessionConvoTypeMap.put(session, convoId.startsWith("G-") ? "GROUP" : "DIRECT");
 
         boolean inConversation = convo.getMembers()
                 .stream()
@@ -85,29 +72,40 @@ public class ChatSocket {
         if (!inConversation) {
             throw new RuntimeException("User not in conversation");
         }
-
         logger.info("Entered into Open");
-
-        // store connecting user information
-
-        //Send chat history to the newly connected user
-        sendMessageToParticularUser(username, getChatHistory());
 
     }
 
 
 
     @OnMessage
-    public void onMessage(Session session, String message) throws IOException {
-
+    public void onMessage(Session session, String text) throws IOException {
         // Handle new messages
-        logger.info("Entered into Message: Got Message:" + message);
+        logger.info("Entered into Message: Got Message:" + text);
         String username = sessionUsernameMap.get(session);
+        Conversation convo = sessionConvoMap.get(session);
+        String convoType = sessionConvoTypeMap.get(session);
+        String convoId = sessionConvoMap.get(session).getId();
 
-        broadcast(username + ": " + message);
+        if (text.startsWith("#react:")) {
+            broadcast(messageService.react(text));
+            return;
+        }
 
-        // Saving chat history to repository
-        msgRepo.save(new Message(username, message));
+        if(text.startsWith("#reply:")){
+            broadcast(messageService.reply(text, username, convoId));
+            return;
+        }
+
+        if(text.startsWith("#!react:")){
+            broadcast(messageService.removeReaction(text));
+            return;
+        }
+
+        Message message = new Message(username, text, convo);
+        messageService.saveMessageAndUpdateConversation(convo.getId(), message);
+
+        broadcast(username + ": " + text);
     }
 
 
@@ -168,7 +166,5 @@ public class ChatSocket {
         }
         return sb.toString();
     }
-
-
 
 }
