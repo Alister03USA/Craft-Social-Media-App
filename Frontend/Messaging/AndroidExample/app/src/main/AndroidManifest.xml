@@ -18,9 +18,9 @@
         android:theme="@style/Theme.Craftsy"
         android:networkSecurityConfig="@xml/network_security_config">
 
-        <!-- Messaging Home is launcher -->
+        <!-- User selection screen is launcher -->
         <activity
-            android:name=".MessagingHomeActivity"
+            android:name=".SelectUserActivity"
             android:exported="true"
             android:theme="@style/Theme.Craftsy">
             <intent-filter>
@@ -29,9 +29,21 @@
             </intent-filter>
         </activity>
 
+        <!-- Messaging Home -->
+        <activity
+            android:name=".MessagingHomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+
+        <!-- New Chat creation screen -->
+        <activity
+            android:name=".NewChatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+
         <!-- Direct message screen -->
         <activity
-            android:name=".DirectMessageActivity"
+            android:name=".DirectMessagingActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
     </application>

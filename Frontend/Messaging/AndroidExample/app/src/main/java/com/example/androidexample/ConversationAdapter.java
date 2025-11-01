@@ -3,53 +3,51 @@ package com.example.androidexample;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
 
-public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.ViewHolder> {
+public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.Holder> {
 
-    public interface OnItemClick { void onClick(ConversationItem convo); }
+    public interface OnConversationClick {
+        void onClick(ConversationItem item);
+    }
 
     private final List<ConversationItem> data;
-    private final OnItemClick listener;
+    private final OnConversationClick onClick;
 
-    public ConversationAdapter(List<ConversationItem> data, OnItemClick listener) {
+    public ConversationAdapter(List<ConversationItem> data, OnConversationClick onClick) {
         this.data = data;
-        this.listener = listener;
+        this.onClick = onClick;
     }
 
     @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_conversation, parent, false);
-        return new ViewHolder(v);
+        return new Holder(v);
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder h, int pos) {
-        ConversationItem c = data.get(pos);
-        h.name.setText(c.getName());
-        h.last.setText(c.getLastMessage());
-        h.time.setText(c.getTimestamp());
-        h.itemView.setOnClickListener(v -> listener.onClick(c));
+    @Override public void onBindViewHolder(@NonNull Holder h, int pos) {
+        ConversationItem it = data.get(pos);
+        h.name.setText(it.getName());
+        h.preview.setText(it.getLastMessage().isEmpty() ? "Tap to open" : it.getLastMessage());
+        h.time.setText(it.getTimestamp());
+        h.itemView.setOnClickListener(v -> onClick.onClick(it));
     }
 
-    @Override
-    public int getItemCount() { return data.size(); }
+    @Override public int getItemCount() { return data.size(); }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView name, last, time;
-        ImageView profile;
-        ViewHolder(View v) {
-            super(v);
-            name = v.findViewById(R.id.convoName);
-            last = v.findViewById(R.id.convoLastMessage);
-            time = v.findViewById(R.id.convoTimestamp);
-            profile = v.findViewById(R.id.convoProfile);
+    static class Holder extends RecyclerView.ViewHolder {
+        TextView name, preview, time;
+        Holder(@NonNull View itemView) {
+            super(itemView);
+            name   = itemView.findViewById(R.id.chatName);
+            preview= itemView.findViewById(R.id.lastMessage);
+            time   = itemView.findViewById(R.id.timeText);
         }
     }
 }

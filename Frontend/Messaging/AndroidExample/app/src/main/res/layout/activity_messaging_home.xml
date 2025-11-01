@@ -1,44 +1,45 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:background="@color/blue_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Header -->
-    <TextView
-        android:id="@+id/homeTitle"
+    <LinearLayout
+        android:padding="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/messages"
-        android:textColor="@color/dark_text"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:padding="16dp"
-        android:gravity="center_horizontal" />
+        android:orientation="horizontal">
 
-    <!-- List of Conversations -->
+        <EditText
+            android:id="@+id/searchBar"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/edittext_bg"
+            android:hint="Search @user or group"
+            android:padding="10dp"/>
+
+        <ImageButton
+            android:id="@+id/newChatBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/round_button"
+            android:src="@drawable/ic_add_chat"
+            android:contentDescription="New chat"/>
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/conversationRecycler"
+        android:id="@+id/recyclerConvos"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/background_light"
         android:padding="8dp"
-        android:clipToPadding="false"
-        android:scrollbars="vertical" />
+        android:clipToPadding="false"/>
 
-    <!-- Floating Action Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabNewChat"
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_gravity="center"
+        android:visibility="gone"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="20dp"
-        android:contentDescription="@string/new_chat"
-        android:src="@drawable/ic_add_chat"
-        app:tint="@color/text_white"
-        app:backgroundTint="@color/button_blue" />
-
+        android:layout_height="wrap_content"/>
 </LinearLayout>

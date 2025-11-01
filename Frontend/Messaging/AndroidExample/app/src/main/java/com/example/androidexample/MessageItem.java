@@ -2,15 +2,15 @@ package com.example.androidexample;
 
 public class MessageItem {
     private final String sender;
-    private final String text;
-    private final boolean isMine;
+    private final String content;
+    private final String timestamp;
 
-    public MessageItem(String sender, String text, boolean isMine) {
+    public MessageItem(String sender, String content, String timestamp) {
         this.sender = sender;
-        this.text = text;
-        this.isMine = isMine;
+        this.content = content;
+        this.timestamp = timestamp;
     }
     public String getSender() { return sender; }
-    public String getText() { return text; }
-    public boolean isMine() { return isMine; }
+    public String getContent() { return content; }
+    public String getTimestamp() { return timestamp; }
 }

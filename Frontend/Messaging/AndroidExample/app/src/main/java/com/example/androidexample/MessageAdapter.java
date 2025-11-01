@@ -4,11 +4,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
 
-public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.Holder> {
+public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int LEFT = 0;
+    private static final int RIGHT = 1;
+
     private final List<MessageItem> data;
     private final String currentUser;
 
@@ -19,30 +25,55 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.Holder> 
 
     @Override
     public int getItemViewType(int position) {
-        return data.get(position).isMine() ? 1 : 0;
+        MessageItem m = data.get(position);
+        return currentUser.equals(m.getSender()) ? RIGHT : LEFT;
     }
 
     @NonNull
     @Override
-    public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        int layout = viewType == 1 ? R.layout.item_message_sent : R.layout.item_message_received;
-        View v = LayoutInflater.from(parent.getContext()).inflate(layout, parent, false);
-        return new Holder(v);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == RIGHT) {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_message_right, parent, false);
+            return new RightHolder(v);
+        } else {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_message_left, parent, false);
+            return new LeftHolder(v);
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull Holder h, int i) {
-        h.text.setText(data.get(i).getText());
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder vh, int position) {
+        MessageItem m = data.get(position);
+        if (vh instanceof RightHolder) {
+            ((RightHolder) vh).msg.setText(m.getContent());
+            ((RightHolder) vh).time.setText(m.getTimestamp());
+        } else {
+            ((LeftHolder) vh).name.setText(m.getSender());
+            ((LeftHolder) vh).msg.setText(m.getContent());
+            ((LeftHolder) vh).time.setText(m.getTimestamp());
+        }
     }
 
-    @Override
-    public int getItemCount() { return data.size(); }
+    @Override public int getItemCount() { return data.size(); }
 
-    static class Holder extends RecyclerView.ViewHolder {
-        TextView text;
-        Holder(View v) {
-            super(v);
-            text = v.findViewById(R.id.textMessage);
+    static class LeftHolder extends RecyclerView.ViewHolder {
+        TextView name, msg, time;
+        LeftHolder(@NonNull View itemView) {
+            super(itemView);
+            name = itemView.findViewById(R.id.leftName);
+            msg  = itemView.findViewById(R.id.leftMsg);
+            time = itemView.findViewById(R.id.leftTime);
+        }
+    }
+
+    static class RightHolder extends RecyclerView.ViewHolder {
+        TextView msg, time;
+        RightHolder(@NonNull View itemView) {
+            super(itemView);
+            msg  = itemView.findViewById(R.id.rightMsg);
+            time = itemView.findViewById(R.id.rightTime);
         }
     }
 }

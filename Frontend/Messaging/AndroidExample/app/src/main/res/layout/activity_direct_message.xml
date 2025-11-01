@@ -1,77 +1,47 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/blue_background">
+    android:layout_height="match_parent">
 
-    <!-- Header Bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/button_blue"
-        android:padding="10dp">
-
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/back"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="@color/text_white"
-            android:background="@android:color/transparent" />
-
-        <TextView
-            android:id="@+id/chatTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/chat"
-            android:textColor="@color/text_white"
-            android:textSize="20sp"
-            android:layout_marginStart="12dp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <!-- Message List -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/messageRecycler"
+        android:id="@+id/recyclerMessages"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:padding="8dp"
-        android:scrollbars="vertical" />
+        android:clipToPadding="false"
+        android:scrollbars="vertical"/>
 
-    <!-- Input Row -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@color/card_background"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
         <EditText
             android:id="@+id/inputMessage"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/input_bg"
-            android:hint="@string/type_message"
-            android:padding="10dp"
-            android:inputType="textCapSentences|textMultiLine"
-            android:maxLines="4"
-            android:textColor="@color/dark_text"
-            android:textColorHint="@color/text_light_gray" />
+            android:layout_height="wrap_content"
+            android:hint="Type a message…"
+            android:maxLines="6"
+            android:background="@drawable/edittext_bg"
+            android:padding="10dp"/>
 
         <ImageButton
-            android:id="@+id/btnSend"
+            android:id="@+id/sendButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/round_button"
             android:src="@drawable/ic_send"
-            android:contentDescription="@string/send"
-            app:tint="@color/text_white"
-            app:backgroundTint="@color/button_blue" />
+            android:contentDescription="Send"/>
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 </LinearLayout>
