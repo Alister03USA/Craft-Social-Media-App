@@ -23,9 +23,9 @@ public class Notification {
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
-//    @ManyToOne
-//    @JoinColumn(name = "sender_id")
-//    private Users sender;
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    private Users sender;
 
     // Title of the notification
     @Column(nullable = false)
@@ -55,8 +55,9 @@ public class Notification {
     public Notification() {}
 
     // Full constructor
-    public Notification(Users user, String title, String message, String type, Long referenceId) {
+    public Notification(Users user, Users sender, String title, String message, String type, Long referenceId) {
         this.user = user;
+        this.sender = sender;
         this.title = title;
         this.message = message;
         this.referenceId = referenceId;
@@ -124,12 +125,16 @@ public class Notification {
         this.createdAt = createdAt;
     }
 
-
-
-    public void setReferenceType(String referenceType) {
+    public Users getSender() {
+        return sender;
+    }
+    public void setSender(Users sender) {
+        this.sender = sender;
     }
 
 
 
 
+    public void setReferenceType(String referenceType) {
+    }
 }

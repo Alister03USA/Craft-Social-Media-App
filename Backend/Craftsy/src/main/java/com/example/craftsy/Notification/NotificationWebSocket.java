@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @ServerEndpoint("/ws/notifications/{username}")
@@ -29,9 +28,8 @@ public class NotificationWebSocket {
     private static final Logger logger = LoggerFactory.getLogger(NotificationWebSocket.class);
 
     // Maps to track sessions
-    private static final Map<Session, String> sessionUsernameMap = new ConcurrentHashMap<>();
-    private static final Map<String, Session> usernameSessionMap = new ConcurrentHashMap<>();
-
+    private static Map<Session, String> sessionUsernameMap = new Hashtable<>();
+    private static Map<String, Session> usernameSessionMap = new Hashtable<>();
 
     private static ObjectMapper mapper = new ObjectMapper();
 
