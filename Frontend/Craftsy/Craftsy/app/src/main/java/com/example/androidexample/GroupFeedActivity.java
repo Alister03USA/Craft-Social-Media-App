@@ -2,11 +2,14 @@ package com.example.androidexample;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -26,10 +29,8 @@ public class GroupFeedActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_feed);
 
-        // ✅ Setup bottom navigation (must match BaseActivity)
         setupBottomNavigation(R.id.nav_group);
 
-        // ✅ Setup RecyclerView
         recyclerView = findViewById(R.id.groupRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -40,7 +41,6 @@ public class GroupFeedActivity extends BaseActivity {
         });
         recyclerView.setAdapter(adapter);
 
-        // ✅ Setup Search
         searchView = findViewById(R.id.searchGroups);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -56,19 +56,27 @@ public class GroupFeedActivity extends BaseActivity {
             }
         });
 
-        // ✅ Fetch user’s groups from backend
         fetchUserGroups();
+
+        // ✅ FAB for creating groups
+        FloatingActionButton fab = findViewById(R.id.addGroupFab);
+        fab.setOnClickListener(v -> {
+            Intent intent = new Intent(GroupFeedActivity.this, CreateGroupActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void fetchUserGroups() {
         String username = SessionManager.getInstance().getLoggedInUsername();
+        Log.d("GroupFeed", "Fetching groups for: " + username); // <-- add this
         String url = BASE_URL + "/user/" + username;
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
-                    groupList.clear();
+                    Log.d("GroupFeed", "Response: " + response.toString());
                     try {
                         JSONArray groupsArray = response.getJSONArray("groups");
+                        groupList.clear();
                         for (int i = 0; i < groupsArray.length(); i++) {
                             JSONObject obj = groupsArray.getJSONObject(i);
                             groupList.add(new GroupModel(
@@ -76,20 +84,19 @@ public class GroupFeedActivity extends BaseActivity {
                                     obj.optString("description")
                             ));
                         }
-
                         filteredList.clear();
                         filteredList.addAll(groupList);
                         adapter.notifyDataSetChanged();
-
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e("GroupFeed", "JSON parse error", e);
                     }
                 },
-                error -> error.printStackTrace()
+                error -> Log.e("GroupFeed", "Volley error", error)
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
 
     private void filterGroups(String query) {
         filteredList.clear();

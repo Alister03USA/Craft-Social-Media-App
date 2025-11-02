@@ -30,13 +30,14 @@ public class FeedActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
+        setupBottomNavigation(R.id.myFeed);
 
         recyclerViewFeed = findViewById(R.id.recyclerViewFeed);
         recyclerViewFeed.setLayoutManager(new LinearLayoutManager(this));
 
         loggedInUsername = getIntent().getStringExtra("username");
         if (loggedInUsername == null || loggedInUsername.trim().isEmpty()) {
-            loggedInUsername = "Fuji"; // fallback
+            loggedInUsername = "Fuji"; // This needs to change
         }
 
         findViewById(R.id.btnAddPost).setOnClickListener(v -> {

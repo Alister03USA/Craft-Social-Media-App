@@ -83,25 +83,31 @@ public abstract class BaseActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == selectedItemId) return true;
 
-            if (id == R.id.nav_notif) {
-                Intent intent = new Intent(this, NotificationCenterActivity.class);
-                startActivity(intent);
-            } else if (id == R.id.pattern) {
+            if (id == R.id.pattern) {
+                // Open Notification Center
                 Intent intent = new Intent(this, PatternActivity.class);
                 startActivity(intent);
-            } else if (id == R.id.nav_view_user) {
-                Intent intent = new Intent(this, OutsideUserProfile.class);
-                String loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
-                intent.putExtra("logged_in_username", loggedInUsername);
-                intent.putExtra("username", "Fuji"); // Example
+            }
+            else if (id == R.id.nav_group) {
+                // Open another user’s profile
+                Intent intent = new Intent(this, GroupFeedActivity.class);
                 startActivity(intent);
-            } else if (id == R.id.nav_my_profile) {
+            }
+            else if (id == R.id.nav_profile) {
+                // Open logged-in user’s profile
                 Intent intent = new Intent(this, UserProfile.class);
                 startActivity(intent);
-            } else if (id == R.id.myFeed) {
+            }
+            else if (id == R.id.myFeed) {
+                // Open Feed Activity
                 Intent intent = new Intent(this, FeedActivity.class);
                 String loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
                 intent.putExtra("username", loggedInUsername);
+                startActivity(intent);
+            }
+            else if (id == R.id.nav_search) {
+                // Open Search Activity
+                Intent intent = new Intent(this, SearchActivity.class);
                 startActivity(intent);
             }
 

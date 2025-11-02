@@ -20,9 +20,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Craftsy"
         android:networkSecurityConfig="@xml/network_security_config">
-        <service android:name=".WebSocketNotificationService"
-        <activity
-            android:foregroundServiceType="connectedDevice|dataSync" />
+        <service android:name=".WebSocketNotificationService"/>
+        <!--<activity
+            android:foregroundServiceType="connectedDevice|dataSync" />-->
 
 
         <!-- Login Activity (Launcher) -->

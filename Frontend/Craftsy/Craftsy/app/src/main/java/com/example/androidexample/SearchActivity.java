@@ -27,7 +27,7 @@ import java.util.List;
  * - Passes queries to fragments
  * - Directly supports tutorial search
  */
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends BaseActivity {
 
     private EditText searchInput;
     private Button searchButton;
@@ -42,6 +42,7 @@ public class SearchActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_tabs);
+        setupBottomNavigation(R.id.nav_search);
 
         searchInput = findViewById(R.id.searchInput);
         searchButton = findViewById(R.id.searchButton);
