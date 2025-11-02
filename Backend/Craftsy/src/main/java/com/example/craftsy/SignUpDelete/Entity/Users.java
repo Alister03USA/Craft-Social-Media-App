@@ -1,6 +1,10 @@
 package com.example.craftsy.SignUpDelete.Entity;
 
+import com.example.craftsy.messages.conversations.DirectConversation;
+import com.example.craftsy.messages.conversations.GroupConversation;
 import jakarta.persistence.*;
+
+import java.util.List;
 
 /**
  * Users entity represents a registered user in the system.
