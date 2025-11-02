@@ -55,6 +55,15 @@
         android:background="@drawable/bg_reply"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+        <ImageButton
+            android:id="@+id/btnCancelReply"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_close"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Cancel reply"
+            android:tint="@color/gray"
+            android:layout_gravity="end"/>
         <TextView
             android:id="@+id/tvReplyPreview"
             android:text="Replying to"

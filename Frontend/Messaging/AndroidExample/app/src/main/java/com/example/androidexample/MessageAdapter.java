@@ -3,6 +3,7 @@ package com.example.androidexample;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,24 +18,36 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public interface MessageActions {
-        void onReact(MessageItem m, String reaction);
+        void onReact(MessageItem m, String reactionType);
+        void onRemoveReact(MessageItem m, String reactionType);
         void onReply(MessageItem m);
         void onLongPress(MessageItem m);
     }
 
     private static final int LEFT = 0;
     private static final int RIGHT = 1;
+    private static final String TAG = "MessageAdapter";
 
     private final List<MessageItem> data;
     private final String me;
     private final MessageActions actions;
+
+    private static final Map<String, String> reactionEmojiMap = new HashMap<>();
+    static {
+        reactionEmojiMap.put("like", "👍");
+        reactionEmojiMap.put("love", "❤️");
+        reactionEmojiMap.put("laugh", "😂");
+        reactionEmojiMap.put("wow", "😮");
+        reactionEmojiMap.put("sad", "😢");
+        reactionEmojiMap.put("fire", "🔥");
+    }
 
     public MessageAdapter(List<MessageItem> data, String currentUser, MessageActions actions) {
         this.data = data;
@@ -54,10 +67,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_message_sent, parent, false);
             return new RightHolder(v);
+        } else {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_message_received, parent, false);
+            return new LeftHolder(v);
         }
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_message_received, parent, false);
-        return new LeftHolder(v);
     }
 
     @Override
@@ -68,9 +82,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public int getItemCount() {
-        return data.size();
-    }
+    public int getItemCount() { return data.size(); }
 
     abstract class BaseHolder extends RecyclerView.ViewHolder {
         TextView tvMsg, tvMeta, tvReply, tvReacts;
@@ -79,50 +91,87 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         BaseHolder(@NonNull View v) { super(v); }
 
         void bindCommon(MessageItem m) {
-            // (1) Reply preview
+            // Reply header
             if (m.getReplyTo() != null) {
                 tvReply.setVisibility(View.VISIBLE);
-                SpannableString s = new SpannableString("Replying to • #" + m.getReplyTo());
-                s.setSpan(new StyleSpan(Typeface.BOLD), 0, 11, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tvReply.setText(s);
+                String parentText = findParentText(m.getReplyTo());
+                if (!TextUtils.isEmpty(parentText)) {
+                    if (parentText.length() > 40)
+                        parentText = parentText.substring(0, 40) + "...";
+                    SpannableString s = new SpannableString("Replying to \"" + parentText + "\"");
+                    s.setSpan(new StyleSpan(Typeface.BOLD), 0, 12, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    tvReply.setText(s);
+                } else tvReply.setText("Replying to message");
             } else {
                 tvReply.setVisibility(View.GONE);
             }
 
-            // (2) Message + timestamp
+            // Message + timestamp
             tvMsg.setText(m.getContent());
             tvMeta.setText(m.getTimestamp());
 
-            // (3) Reactions display inline
+            // Reactions
             Map<String, Integer> reacts = m.getReactions();
             if (!reacts.isEmpty()) {
-                StringJoiner joiner = new StringJoiner("  ");
+                StringBuilder sb = new StringBuilder();
                 for (Map.Entry<String, Integer> e : reacts.entrySet()) {
-                    joiner.add(e.getKey() + " " + e.getValue());
+                    String emoji = reactionEmojiMap.getOrDefault(e.getKey(), e.getKey());
+                    sb.append(emoji);
+                    if (e.getValue() > 1) sb.append(" x").append(e.getValue());
+                    sb.append("  ");
                 }
                 tvReacts.setVisibility(View.VISIBLE);
-                tvReacts.setText(joiner.toString());
-            } else {
-                tvReacts.setVisibility(View.GONE);
-            }
+                tvReacts.setText(sb.toString().trim());
+            } else tvReacts.setVisibility(View.GONE);
 
-            // (4) Reaction and reply actions
+            // React and Reply buttons
             btnReact.setOnClickListener(v -> showReactMenu(v, m));
             btnReply.setOnClickListener(v -> actions.onReply(m));
-
-            // (5) Long press → edit/delete placeholder
             itemView.setOnLongClickListener(v -> { actions.onLongPress(m); return true; });
+        }
+
+        private String findParentText(Long parentId) {
+            if (parentId == null) return null;
+            for (MessageItem msg : data) {
+                if (msg.getId() == parentId)
+                    return msg.getContent();
+            }
+            return null;
         }
 
         private void showReactMenu(View anchor, MessageItem m) {
             PopupMenu pm = new PopupMenu(anchor.getContext(), anchor);
             MenuInflater mi = pm.getMenuInflater();
             mi.inflate(R.menu.menu_reactions, pm.getMenu());
+
             pm.setOnMenuItemClickListener((MenuItem i) -> {
-                actions.onReact(m, String.valueOf(i.getTitle()));
+                String reactionType = mapMenuItemToType(i.getItemId());
+                Log.d(TAG, "React pressed: messageId=" + m.getId() + " type=" + reactionType);
+
+                // Toggle logic
+                if (m.getReactions().containsKey(reactionType)) {
+                    actions.onRemoveReact(m, reactionType);
+                    m.getReactions().remove(reactionType);
+                } else {
+                    m.getReactions().clear(); // one per user
+                    m.getReactions().put(reactionType, 1);
+                    actions.onReact(m, reactionType);
+                }
+
+                notifyItemChanged(getBindingAdapterPosition());
                 return true;
             });
             pm.show();
+        }
+
+        private String mapMenuItemToType(int itemId) {
+            if (itemId == R.id.reaction_like) return "like";
+            else if (itemId == R.id.reaction_love) return "love";
+            else if (itemId == R.id.reaction_laugh) return "laugh";
+            else if (itemId == R.id.reaction_wow) return "wow";
+            else if (itemId == R.id.reaction_sad) return "sad";
+            else if (itemId == R.id.reaction_fire) return "fire";
+            else return "unknown";
         }
     }
 
@@ -136,7 +185,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             btnReact = v.findViewById(R.id.btnReact);
             btnReply = v.findViewById(R.id.btnReply);
         }
-
         void bind(MessageItem m) { bindCommon(m); }
     }
 
@@ -150,7 +198,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             btnReact = v.findViewById(R.id.btnReact);
             btnReply = v.findViewById(R.id.btnReply);
         }
-
         void bind(MessageItem m) { bindCommon(m); }
     }
 }

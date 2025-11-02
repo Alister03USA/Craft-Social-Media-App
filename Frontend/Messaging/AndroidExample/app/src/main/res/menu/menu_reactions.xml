@@ -1,7 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/like" android:title="👍"/>
-    <item android:id="@+id/love" android:title="❤️"/>
-    <item android:id="@+id/laugh" android:title="😂"/>
-    <item android:id="@+id/wow" android:title="😮"/>
-    <item android:id="@+id/sad" android:title="😢"/>
+    <item android:id="@+id/reaction_like" android:title="👍"/>
+    <item android:id="@+id/reaction_love" android:title="❤️"/>
+    <item android:id="@+id/reaction_laugh" android:title="😂"/>
+    <item android:id="@+id/reaction_wow" android:title="😮"/>
+    <item android:id="@+id/reaction_sad" android:title="😢"/>
+    <item android:id="@+id/reaction_fire" android:title="🔥"/>
 </menu>
