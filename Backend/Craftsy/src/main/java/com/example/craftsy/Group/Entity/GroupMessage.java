@@ -31,6 +31,14 @@ public class GroupMessage {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
 
+
+    @ManyToOne
+    @JoinColumn(name = "reply_to_message_id")
+    private GroupMessage replyToMessage;
+
+    @Column(name = "reply_to_username")
+    private String replyToUsername;
+
     public void setId(long id) {
         this.id = id;
     }
@@ -77,5 +85,22 @@ public class GroupMessage {
 
     public Date getCreatedAt() {
         return createdAt;
+    }
+
+
+    public GroupMessage getReplyToMessage() {
+        return replyToMessage;
+    }
+
+    public void setReplyToMessage(GroupMessage replyToMessage) {
+        this.replyToMessage = replyToMessage;
+    }
+
+    public String getReplyToUsername() {
+        return replyToUsername;
+    }
+
+    public void setReplyToUsername(String replyToUsername) {
+        this.replyToUsername = replyToUsername;
     }
 }

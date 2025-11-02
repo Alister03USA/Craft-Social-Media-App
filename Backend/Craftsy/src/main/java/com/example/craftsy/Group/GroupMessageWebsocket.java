@@ -93,31 +93,66 @@ public class GroupMessageWebsocket {
 
 
     @OnMessage
-    public void onMessage(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username, String message) {
+    public void onMessage(Session session, @PathParam("groupId") Long groupId,
+                          @PathParam("username") String username, String message) {
 
-        logger.info("[onMessage] " + username + "in group " + groupId + " received message: " + message);
+        logger.info("[onMessage] " + username + " in group " + groupId + " received message: " + message);
 
-        Users sender =  userRepository.findByUsername(username).orElse(null);
+        Users sender = userRepository.findByUsername(username).orElse(null);
         Group group = groupRepository.findById(groupId).orElse(null);
 
-        if(sender == null ||  group == null) {
-            logger.error("[onMessage] Sender or Group not found: ");
+        if (sender == null || group == null) {
+            logger.error("[onMessage] Sender or Group not found");
+            return;
         }
 
-        // Save messages in groupMessage table
+        // Parse message format: "REPLY:messageId:actualMessage" or just "actualMessage"
+        Long replyToMessageId = null;
+        String actualMessage = message;
+
+        if (message.startsWith("REPLY:")) {
+            String[] parts = message.split(":", 3);
+            if (parts.length == 3) {
+                try {
+                    replyToMessageId = Long.parseLong(parts[1]);
+                    actualMessage = parts[2];
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid reply format: " + message);
+                }
+            }
+        }
+
+        // Save message in groupMessage table
         GroupMessage groupMessage = new GroupMessage();
         groupMessage.setSender(sender);
         groupMessage.setGroup(group);
-        groupMessage.setMessage(message);
+        groupMessage.setMessage(actualMessage);
         groupMessage.setCreatedAt(new Date());
+
+        // Handle reply
+        if (replyToMessageId != null) {
+            GroupMessage replyToMsg = groupMessageRepository.findById(replyToMessageId).orElse(null);
+            if (replyToMsg != null) {
+                groupMessage.setReplyToMessage(replyToMsg);
+                groupMessage.setReplyToUsername(replyToMsg.getSender().getUsername());
+            }
+        }
+
         groupMessageRepository.save(groupMessage);
 
-        // Broadcast message to all active users
-        broadcastToGroup(groupId, username, message);
+        // Broadcast message with reply info
+        String broadcastMessage = formatBroadcastMessage(username, actualMessage, groupMessage.getReplyToUsername());
+        broadcastToGroup(groupId, username, broadcastMessage);
 
-        // create notifications for all members except sender
+        // Create notifications for all members except sender
         createNotificationsForMembers(group, sender, "sent a message", groupMessage.getId());
+    }
 
+    private String formatBroadcastMessage(String sender, String message, String replyToUsername) {
+        if (replyToUsername != null) {
+            return message + " [replying to @" + replyToUsername + "]";
+        }
+        return message;
     }
 
 

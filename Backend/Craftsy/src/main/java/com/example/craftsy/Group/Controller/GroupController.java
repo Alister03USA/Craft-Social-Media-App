@@ -285,6 +285,43 @@ public class GroupController {
         }
     }
 
+    /**
+     * PUT {username}/update/{groupId}
+     */
+    @PutMapping("/{username}/update/{groupId}")
+    public ResponseEntity<?> updateGroup(
+            @PathVariable String username,
+            @PathVariable Long groupId,
+            @RequestBody Map<String, Object> updates) {
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Check if user is admin
+        if (!group.getGroupAdmin().equals(user)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Only admin can update group"));
+        }
+
+        // Update fields
+        if (updates.containsKey("groupName")) {
+            group.setGroupName((String) updates.get("groupName"));
+        }
+        if (updates.containsKey("description")) {
+            group.setDescription((String) updates.get("description"));
+        }
+        if (updates.containsKey("craft")) {
+            group.setCraft((String) updates.get("craft"));
+        }
+
+        groupRepository.save(group);
+
+        return ResponseEntity.ok(Map.of("message", "Group updated successfully"));
+    }
+
 
     /**
      * GET /user/{username}
@@ -324,6 +361,54 @@ public class GroupController {
                 "totalGroups", groupList.size(),
                 "groups", groupList
         ));
+    }
+
+
+    /**
+     * PUT /{currentAdmin}/{groupId}/transfer-admin/{newAdmin}
+     */
+    @PutMapping("/{currentAdmin}/{groupId}/transfer-admin/{newAdmin}")
+    public ResponseEntity<?> transferAdmin(
+            @PathVariable String currentAdmin,
+            @PathVariable Long groupId,
+            @PathVariable String newAdmin) {
+
+        Users currentUser = userRepository.findByUsername(currentAdmin)
+                .orElseThrow(() -> new RuntimeException("Current admin not found"));
+
+        Users newUser = userRepository.findByUsername(newAdmin)
+                .orElseThrow(() -> new RuntimeException("New admin not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Check if current user is admin
+        if (!group.getGroupAdmin().equals(currentUser)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Only current admin can transfer admin rights"));
+        }
+
+        // Check if new admin is a member
+        if (!group.getMembers().contains(newUser)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "New admin must be a group member"));
+        }
+
+        group.setGroupAdmin(newUser);
+        groupRepository.save(group);
+
+        // Notify new admin
+        Notification notif = new Notification();
+        notif.setUser(newUser);
+        notif.setTitle("Admin Rights Transferred");
+        notif.setMessage("You are now the admin of " + group.getGroupName());
+        notif.setReferenceId(groupId);
+        notif.setCreatedAt(new Date());
+        notif.setIsRead(false);
+        notificationRepository.save(notif);
+        NotificationWebSocket.pushNotification(newUser.getUsername(), notif);
+
+        return ResponseEntity.ok(Map.of("message", "Admin transferred successfully"));
     }
 
     /**
@@ -379,6 +464,43 @@ public class GroupController {
 
 
         return ResponseEntity.ok(Map.of("message", "You have left the group successfully"));
+    }
+
+    /**
+     * DELETE /{username}/delete/{groupId}
+     */
+    @DeleteMapping("/{username}/delete/{groupId}")
+    public ResponseEntity<?> deleteGroup(
+            @PathVariable String username,
+            @PathVariable Long groupId) {
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Check if user is admin
+        if (!group.getGroupAdmin().equals(user)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Only admin can delete group"));
+        }
+
+        // Notify all members before deleting
+        for (Users member : group.getMembers()) {
+            Notification notif = new Notification();
+            notif.setUser(member);
+            notif.setTitle("Group Deleted");
+            notif.setMessage(group.getGroupName() + " has been deleted by the admin");
+            notif.setCreatedAt(new Date());
+            notif.setIsRead(false);
+            notificationRepository.save(notif);
+            NotificationWebSocket.pushNotification(member.getUsername(), notif);
+        }
+
+        groupRepository.delete(group);
+
+        return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
     }
 
 

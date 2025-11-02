@@ -170,6 +170,37 @@ public class GroupMessageController {
     }
 
     /**
+     * Get a specific message by ID (for reply preview)
+     */
+    @GetMapping("/{groupId}/message/{messageId}")
+    public ResponseEntity<?> getMessage(
+            @PathVariable Long groupId,
+            @PathVariable Long messageId,
+            @RequestParam String username) {
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Authorization check
+        if (!isUserInGroup(user, group)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You are not a member of this group"));
+        }
+
+        GroupMessage message = groupMessageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!message.getGroup().getId().equals(groupId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Message does not belong to this group"));
+        }
+
+        return ResponseEntity.ok(message);
+    }
+
+    /**
      * Check if a user is a member of a group
      */
     private boolean isUserInGroup(Users user, Group group) {
