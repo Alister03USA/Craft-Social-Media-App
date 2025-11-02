@@ -32,6 +32,7 @@ public class GroupController {
     private NotificationRepository notificationRepository;
 
 
+    // Hello
     /**
      * POST /{adminUsername}/create/
      * This endpoint lets a user create a new group.
