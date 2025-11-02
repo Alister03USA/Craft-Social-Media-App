@@ -2,35 +2,52 @@ package com.example.androidexample;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.Spinner;
+import android.widget.ListView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class SelectUserActivity extends AppCompatActivity {
 
-    private Spinner spinner;
-    private Button btnContinue;
+    private static final String TAG = "SelectUserActivity";
+    private ListView listUsers;
+    private static final String CURRENT_USER = "Fuji"; // dev mode
+    private final List<String> mockUsers = Arrays.asList("Fuji", "Quinn", "alister_gan", "kkeck");
+    private final List<String> displayUsers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_user);
 
-        spinner = findViewById(R.id.spinnerUsers);
-        btnContinue = findViewById(R.id.btnContinue);
+        listUsers = findViewById(R.id.listUsers);
 
-        // Test usernames
-        String[] users = {"Fuji", "Quinn", "alister_gan", "kkeck"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, users);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        // ✅ Filter list to include Fuji (current user), show all available mock users
+        displayUsers.clear();
+        displayUsers.addAll(mockUsers);
 
-        btnContinue.setOnClickListener(v -> {
-            String selectedUser = spinner.getSelectedItem().toString();
-            Intent i = new Intent(this, MessagingHomeActivity.class);
-            i.putExtra("username", selectedUser);
-            startActivity(i);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_list_item_1, displayUsers
+        );
+        listUsers.setAdapter(adapter);
+
+        listUsers.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
+            String selectedUser = displayUsers.get(position);
+            Log.d(TAG, "🟦 Selected user: " + selectedUser);
+
+            // ✅ Launch MessagingHomeActivity for that user
+            Intent intent = new Intent(this, MessagingHomeActivity.class);
+            intent.putExtra("username", selectedUser);
+            Log.d(TAG, "➡️ Launching MessagingHomeActivity for user: " + selectedUser);
+            startActivity(intent);
+            finish();
         });
     }
 }

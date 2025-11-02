@@ -1,45 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:text="Messages"
+        android:textStyle="bold"
+        android:textSize="28sp"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
     <LinearLayout
-        android:padding="12dp"
+        android:paddingHorizontal="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content">
 
         <EditText
             android:id="@+id/searchBar"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:hint="Search @username or group"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
             android:layout_weight="1"
-            android:background="@drawable/edittext_bg"
-            android:hint="Search @user or group"
-            android:padding="10dp"/>
+            android:layout_width="0dp"
+            android:layout_height="40dp"/>
 
         <ImageButton
             android:id="@+id/newChatBtn"
+            android:src="@drawable/ic_add"
+            android:contentDescription="New chat"
+            android:background="@android:color/transparent"
             android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/round_button"
-            android:src="@drawable/ic_add_chat"
-            android:contentDescription="New chat"/>
+            android:layout_height="40dp"/>
     </LinearLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerConvos"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp"
-        android:clipToPadding="false"/>
 
     <ProgressBar
         android:id="@+id/progressBar"
-        android:layout_gravity="center"
         android:visibility="gone"
+        android:layout_gravity="center_horizontal"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"/>
+
+    <TextView
+        android:text="Direct Messages"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDirect"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <TextView
+        android:text="Group Messages"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvGroups"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+
 </LinearLayout>
