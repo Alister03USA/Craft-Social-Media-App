@@ -33,14 +33,13 @@ public class Group {
 
     private String craft;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
+    @ManyToMany
+    @JoinTable( //Creates a join table to manage the many-to-many relationship.
             name = "group_members",
             joinColumns = @JoinColumn(name = "group_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<Users> members = new HashSet<>();
-
+    private Set<Users> members = new HashSet<>(); //Stores the group members as a set. Initialized to avoid null pointer issues.
 
     @Column(name = "member_count", nullable = false)
     private int memberCount  = 0;

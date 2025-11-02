@@ -127,6 +127,7 @@ public class FollowController {
         // Notify TARGET user (the one being followed)
         Notification targetNotification = new Notification();
         targetNotification.setUser(target); // receiver
+        targetNotification.setSender(follower); // sender
         targetNotification.setTitle("New Follow Request");
         targetNotification.setMessage(follower.getDisplayName() + " sent you a follow request.");
         targetNotification.setReferenceId(follow.getId());
@@ -137,24 +138,21 @@ public class FollowController {
         // Real-time push to TARGET user
         NotificationWebSocket.pushNotification(target.getUsername(), savedTargetNotification);
 
-//        // Notify SENDER that request was successfully sent
-//        Notification senderNotification = new Notification();
-//        senderNotification.setUser(follower); // receiver = sender
-//        senderNotification.setTitle("Follow Request Sent");
-//        senderNotification.setMessage("Your follow request to " + target.getDisplayName() + " has been sent.");
-//        senderNotification.setReferenceId(follow.getId());
-//        senderNotification.setIsRead(false);
-//        senderNotification.setCreatedAt(new Date());
-//        Notification savedSenderNotification = notificationRepository.save(senderNotification);
+        // Notify SENDER that request was successfully sent
+        Notification senderNotification = new Notification();
+        senderNotification.setUser(follower); // receiver = sender
+        senderNotification.setSender(target); // for clarity (target is context)
+        senderNotification.setTitle("Follow Request Sent");
+        senderNotification.setMessage("Your follow request to " + target.getDisplayName() + " has been sent.");
+        senderNotification.setReferenceId(follow.getId());
+        senderNotification.setIsRead(false);
+        senderNotification.setCreatedAt(new Date());
+        Notification savedSenderNotification = notificationRepository.save(senderNotification);
 
         // Real-time push to SENDER user
-     //   NotificationWebSocket.pushNotification(follower.getUsername(), savedSenderNotification);
+        NotificationWebSocket.pushNotification(follower.getUsername(), savedSenderNotification);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Follow request sent successfully",
-                "notificationId", savedTargetNotification.getId().toString()
-        ));
-
+        return ResponseEntity.ok(Map.of("message", "Follow request sent successfully"));
     }
 
     /**
@@ -261,6 +259,7 @@ public class FollowController {
             // Notify sender that their request was accepted
             Notification acceptedNotification = new Notification();
             acceptedNotification.setUser(sender);
+            acceptedNotification.setSender(target);
             acceptedNotification.setTitle("Follow Request Accepted");
             acceptedNotification.setMessage(target.getDisplayName() + " accepted your follow request!");
             acceptedNotification.setReferenceId(follow.getId());
@@ -277,6 +276,7 @@ public class FollowController {
             // Notify sender that their request was declined
             Notification declinedNotification = new Notification();
             declinedNotification.setUser(sender);
+            declinedNotification.setSender(target);
             declinedNotification.setTitle("Follow Request Declined");
             declinedNotification.setMessage(target.getDisplayName() + " declined your follow request.");
             declinedNotification.setReferenceId(notification.getReferenceId());
