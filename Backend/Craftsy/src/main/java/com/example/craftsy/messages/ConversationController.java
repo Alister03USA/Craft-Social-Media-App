@@ -76,7 +76,11 @@ public class ConversationController {
         if(groupOpt.isPresent()){
             convos.addAll(groupOpt.orElseThrow(() -> new RuntimeException("conversation not found")));
         }
-        convos.sort(Comparator.comparing(Conversation::getLastMessage).reversed());
+        convos.sort(Comparator.comparing(
+                        Conversation::getLastMessage,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ).reversed()
+        );
         return convos;
     }
 

@@ -93,6 +93,7 @@ public class GroupConversation implements Conversation{
     }
 
     public void addMessage(Message message){
+        this.lastMessage = message.getDate();
         this.messages.add(message);
     }
 
