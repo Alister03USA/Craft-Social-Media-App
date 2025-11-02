@@ -220,4 +220,19 @@ public class FeedController {
         feedCommentsRepository.save(comment);
         return feed;
     }
+
+    @PutMapping("/feed/{username}/{projectName}/{id}/unlike")
+    Feed unlikeComment(@PathVariable String username, @PathVariable String projectName,
+                       @PathVariable Long id){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed feed = feedRepository.findByUserAndProjectName(user,projectName)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        FeedComments comment = feedCommentsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        comment.setLikes(comment.getLikes()-1);
+        feedCommentsRepository.save(comment);
+        return feed;
+    }
 }
