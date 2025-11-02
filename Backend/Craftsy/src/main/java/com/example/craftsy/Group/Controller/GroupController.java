@@ -324,10 +324,10 @@ public class GroupController {
 
 
     /**
-     * GET /user/{username}
+     * GET /{username}/groups
      * Retrieve all groups that a user is a member of.
      */
-    @GetMapping("/user/{username}")
+    @GetMapping("/{username}/groups")
     public ResponseEntity<?> getUserGroups(@PathVariable String username) {
         // Find the user
         Optional<Users> userOpt = userRepository.findByUsername(username);
