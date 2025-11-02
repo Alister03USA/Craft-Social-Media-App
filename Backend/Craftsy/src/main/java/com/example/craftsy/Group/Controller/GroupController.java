@@ -33,11 +33,11 @@ public class GroupController {
 
 
     /**
-     * POST /groups/create/{adminUsername}
+     * POST /{adminUsername}/create/
      * This endpoint lets a user create a new group.
      * The user who creates the group becomes the admin automatically.
      */
-    @PostMapping("/create/{adminUsername}")
+    @PostMapping("/{adminUsername}/create")
     public ResponseEntity<Map<String, String>> createGroup(
             @PathVariable String adminUsername, // takes value from url path to the parameter
             @RequestBody Group groupRequest) { // convert the json body from client to Group object
@@ -75,56 +75,58 @@ public class GroupController {
     }
 
     /**
-     * POST /groups/{groupName}/add-member/{username}
-     * Add a new user to an existing group.
+     * POST /{groupId}/{admin}/add-member/{username}
+     * @param groupId
+     * @param username
+     * @param admin
+     * @return
      */
-    @PostMapping("/{groupName}/add-member/{username}")
+    @PostMapping("/{groupId}/{admin}/add-member/{username}")
     public ResponseEntity<Map<String, String>> addMember(
-            @PathVariable String groupName,
-            @PathVariable String username) {
+            @PathVariable Long groupId,
+            @PathVariable String username,
+            @PathVariable String admin) {
 
-        // Decode any spaces or special characters in the group name
-        groupName = URLDecoder.decode(groupName, StandardCharsets.UTF_8);
-
-        // Look up the group and user in the database
-        Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
+        Optional<Group> groupOpt = groupRepository.findById(groupId);
         Optional<Users> userOpt = userRepository.findByUsername(username);
+        Optional<Users> adminOpt = userRepository.findByUsername(admin);
 
-        if (groupOpt.isEmpty() || userOpt.isEmpty()) {
+        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
         }
 
         Group group = groupOpt.get();
         Users user = userOpt.get();
+        Users currentUser = adminOpt.get();
 
-        // Prevent adding the same user twice
+        if (!group.getGroupAdmin().equals(currentUser)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Only the group admin can add members"));
+        }
+
         if (group.getMembers().contains(user)) {
             return ResponseEntity.badRequest().body(Map.of("message", "User already in group"));
         }
 
-        // Add the user to the group
         group.getMembers().add(user);
         groupRepository.save(group);
 
         return ResponseEntity.ok(Map.of("message", "Member added successfully"));
     }
 
+
+
     /**
-     * GET /groups/{groupName}/members
+     * GET /{groupId}/members
      * Retrieve all members of a group.
      */
-    @GetMapping("/{groupName}/members")
-    public ResponseEntity<?> getGroupMembers(@PathVariable String groupName) {
-
-        Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
-
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<?> getGroupMembers(@PathVariable Long groupId) {
+        Optional<Group> groupOpt = groupRepository.findById(groupId);
         if (groupOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Group not found"));
         }
 
         Group group = groupOpt.get();
-
-        // Build a list of members with their basic info
         List<Map<String, Object>> membersList = new ArrayList<>();
         for (Users user : group.getMembers()) {
             Map<String, Object> map = new HashMap<>();
@@ -134,26 +136,26 @@ public class GroupController {
             membersList.add(map);
         }
 
-        // Build the response
-        Map<String, Object> response = new HashMap<>();
-        response.put("groupName", group.getGroupName());
-        response.put("totalMembers", membersList.size());
-        response.put("members", membersList);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of(
+                "groupId", group.getId(),
+                "groupName", group.getGroupName(),
+                "totalMembers", membersList.size(),
+                "members", membersList
+        ));
     }
 
+
     /**
-     * POST/groups/{username}/join/{group_name}
+     * POST  /{username}/join/{groupId}
      * Public Group - Join directly
      * Private Group - Sent request (only can be accepted/Declined by Admin)
      */
-    @PostMapping("/{username}/join/{groupName}")
+    @PostMapping("/{username}/join/{groupId}")
     public ResponseEntity<Map<String, String>> joinGroup(
             @PathVariable String username,
-            @PathVariable String groupName) {
+            @PathVariable Long groupId) {
 
-        Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
+        Optional<Group> groupOpt = groupRepository.findById(groupId);
         Optional<Users> userOpt = userRepository.findByUsername(username);
 
         if (groupOpt.isEmpty() || userOpt.isEmpty()) {
@@ -167,55 +169,49 @@ public class GroupController {
             return ResponseEntity.badRequest().body(Map.of("message", "User already in group"));
         }
 
-        // public group: add immediately
         if (!group.isPrivate()) {
-            // Public group: add user immediately
             group.getMembers().add(user);
             group.setMemberCount();
             groupRepository.save(group);
 
-            // Notify all members
             for (Users member : group.getMembers()) {
-                if (member.equals(user)) continue; // optional: skip self
-
+                if (member.equals(user)) continue;
                 Notification notif = new Notification();
                 notif.setUser(member);
                 notif.setTitle("New Member Joined");
-                notif.setMessage(user.getUsername() + " has joined " + group.getGroupName());
+                notif.setReferenceId(group.getId());
+                notif.setMessage(user.getUsername() + " joined " + group.getGroupName());
                 notif.setCreatedAt(new Date());
                 notif.setIsRead(false);
-
                 notificationRepository.save(notif);
                 NotificationWebSocket.pushNotification(member.getUsername(), notif);
             }
 
-            return ResponseEntity.ok(Map.of("message", "User added to the group successfully"));
-
+            return ResponseEntity.ok(Map.of("message", "User added successfully"));
         } else {
-            // Private group: create join request
             if (groupJoinRequestRepository.findByGroupAndUser(group, user).isPresent()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Request already sent"));
             }
 
-            GroupJoinRequest groupJoinRequest = new GroupJoinRequest();
-            groupJoinRequest.setGroup(group);
-            groupJoinRequest.setUser(user);
-            groupJoinRequestRepository.save(groupJoinRequest);
+            GroupJoinRequest request = new GroupJoinRequest();
+            request.setGroup(group);
+            request.setUser(user);
+            groupJoinRequestRepository.save(request);
 
             Notification notif = new Notification();
             notif.setUser(group.getGroupAdmin());
             notif.setTitle("New Join Request");
             notif.setMessage(user.getUsername() + " wants to join " + group.getGroupName());
-            notif.setReferenceId(groupJoinRequest.getId());
+            notif.setReferenceId(request.getId());
             notif.setCreatedAt(new Date());
             notif.setIsRead(false);
-
             notificationRepository.save(notif);
             NotificationWebSocket.pushNotification(group.getGroupAdmin().getUsername(), notif);
 
-            return ResponseEntity.ok(Map.of("message", "Join request sent successfully"));
+            return ResponseEntity.ok(Map.of("message", "Join request sent"));
         }
-        }
+    }
+
 
 
 
@@ -289,17 +285,144 @@ public class GroupController {
         }
     }
 
+    /**
+     * PUT {username}/update/{groupId}
+     */
+    @PutMapping("/{username}/update/{groupId}")
+    public ResponseEntity<?> updateGroup(
+            @PathVariable String username,
+            @PathVariable Long groupId,
+            @RequestBody Map<String, Object> updates) {
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Check if user is admin
+        if (!group.getGroupAdmin().equals(user)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Only admin can update group"));
+        }
+
+        // Update fields
+        if (updates.containsKey("groupName")) {
+            group.setGroupName((String) updates.get("groupName"));
+        }
+        if (updates.containsKey("description")) {
+            group.setDescription((String) updates.get("description"));
+        }
+        if (updates.containsKey("craft")) {
+            group.setCraft((String) updates.get("craft"));
+        }
+
+        groupRepository.save(group);
+
+        return ResponseEntity.ok(Map.of("message", "Group updated successfully"));
+    }
+
 
     /**
-     * DELETE /groups/{groupName}/remove-member/{username}
-     * Remove a user from a group. Only admins can do this.
+     * GET /user/{username}
+     * Retrieve all groups that a user is a member of.
      */
-    @DeleteMapping("/{groupName}/removeMember/{username}")
-    public ResponseEntity<Map<String, String>> removeMember(
-            @PathVariable String groupName,
+    @GetMapping("/user/{username}")
+    public ResponseEntity<?> getUserGroups(@PathVariable String username) {
+        // Find the user
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "User not found"));
+        }
+
+        Users user = userOpt.get();
+
+        // Find all groups the user is a member of
+        List<Group> userGroups = groupRepository.findAll()
+                .stream()
+                .filter(g -> g.getMembers().contains(user))
+                .toList();
+
+        List<Map<String, Object>> groupList = new ArrayList<>();
+        for (Group group : userGroups) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", group.getId());
+            map.put("groupName", group.getGroupName());
+            map.put("description", group.getDescription());
+            map.put("isPrivate", group.isPrivate());
+            map.put("craft", group.getCraft());
+            map.put("memberCount", group.getMembers().size());
+            map.put("admin", group.getGroupAdmin().getUsername());
+            groupList.add(map);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "username", username,
+                "totalGroups", groupList.size(),
+                "groups", groupList
+        ));
+    }
+
+
+    /**
+     * PUT /{currentAdmin}/{groupId}/transfer-admin/{newAdmin}
+     */
+    @PutMapping("/{currentAdmin}/{groupId}/transfer-admin/{newAdmin}")
+    public ResponseEntity<?> transferAdmin(
+            @PathVariable String currentAdmin,
+            @PathVariable Long groupId,
+            @PathVariable String newAdmin) {
+
+        Users currentUser = userRepository.findByUsername(currentAdmin)
+                .orElseThrow(() -> new RuntimeException("Current admin not found"));
+
+        Users newUser = userRepository.findByUsername(newAdmin)
+                .orElseThrow(() -> new RuntimeException("New admin not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Check if current user is admin
+        if (!group.getGroupAdmin().equals(currentUser)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Only current admin can transfer admin rights"));
+        }
+
+        // Check if new admin is a member
+        if (!group.getMembers().contains(newUser)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "New admin must be a group member"));
+        }
+
+        group.setGroupAdmin(newUser);
+        groupRepository.save(group);
+
+        // Notify new admin
+        Notification notif = new Notification();
+        notif.setUser(newUser);
+        notif.setTitle("Admin Rights Transferred");
+        notif.setMessage("You are now the admin of " + group.getGroupName());
+        notif.setReferenceId(groupId);
+        notif.setCreatedAt(new Date());
+        notif.setIsRead(false);
+        notificationRepository.save(notif);
+        NotificationWebSocket.pushNotification(newUser.getUsername(), notif);
+
+        return ResponseEntity.ok(Map.of("message", "Admin transferred successfully"));
+    }
+
+    /**
+     * DELETE /{username}/leave/{groupId}
+     * Allows a member to leave a group voluntarily.
+     */
+    @DeleteMapping("/{username}/leave/{groupId}")
+    public ResponseEntity<Map<String, String>> leaveGroup(
+            @PathVariable Long groupId,
             @PathVariable String username) {
 
-        Optional<Group> groupOpt = groupRepository.findByGroupName(groupName);
+
+
+        Optional<Group> groupOpt = groupRepository.findById(groupId);
         Optional<Users> userOpt = userRepository.findByUsername(username);
 
         if (groupOpt.isEmpty() || userOpt.isEmpty()) {
@@ -308,6 +431,106 @@ public class GroupController {
 
         Group group = groupOpt.get();
         Users user = userOpt.get();
+
+        // Check if user is actually a member
+        if (!group.getMembers().contains(user)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "User is not a member of this group"));
+        }
+
+        // Prevent the admin from leaving their own group
+        if (group.getGroupAdmin().equals(user)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Admin cannot leave their own group. Transfer admin role or delete the group."));
+        }
+
+        // Remove the user from the group
+        group.getMembers().remove(user);
+        group.setMemberCount();
+        groupRepository.save(group);
+
+        // Notify all remaining members
+        for (Users member : group.getMembers()) {
+            Notification notif = new Notification();
+            notif.setUser(member);
+            notif.setTitle("Member Left");
+            notif.setReferenceId(group.getId());
+            notif.setMessage(user.getUsername() + " has left " + group.getGroupName());
+            notif.setCreatedAt(new Date());
+            notif.setIsRead(false);
+
+            notificationRepository.save(notif);
+            NotificationWebSocket.pushNotification(member.getUsername(), notif);
+        }
+
+
+
+        return ResponseEntity.ok(Map.of("message", "You have left the group successfully"));
+    }
+
+    /**
+     * DELETE /{username}/delete/{groupId}
+     */
+    @DeleteMapping("/{username}/delete/{groupId}")
+    public ResponseEntity<?> deleteGroup(
+            @PathVariable String username,
+            @PathVariable Long groupId) {
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Check if user is admin
+        if (!group.getGroupAdmin().equals(user)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Only admin can delete group"));
+        }
+
+        // Notify all members before deleting
+        for (Users member : group.getMembers()) {
+            Notification notif = new Notification();
+            notif.setUser(member);
+            notif.setTitle("Group Deleted");
+            notif.setMessage(group.getGroupName() + " has been deleted by the admin");
+            notif.setCreatedAt(new Date());
+            notif.setIsRead(false);
+            notificationRepository.save(notif);
+            NotificationWebSocket.pushNotification(member.getUsername(), notif);
+        }
+
+        groupRepository.delete(group);
+
+        return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
+    }
+
+
+
+
+    /**
+     * DELETE /{groupId}/{admin}/remove-member/{username}
+     * Remove a user from a group. Only admins can do this.
+     */
+    @DeleteMapping("/{groupId}/{admin}/removeMember/{username}")
+    public ResponseEntity<Map<String, String>> removeMember(
+            @PathVariable Long groupId,
+            @PathVariable String username,
+            @PathVariable String admin) {
+
+        Optional<Group> groupOpt = groupRepository.findById(groupId);
+        Optional<Users> userOpt = userRepository.findByUsername(username);
+
+        if (groupOpt.isEmpty() || userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
+        }
+
+        Group group = groupOpt.get();
+        Users user = userOpt.get();
+
+        // Check admin
+        if (!group.getGroupAdmin().equals(admin)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Only the group admin can remove members"));
+
+        }
 
         // Check if the user is actually in the group
         if (!group.getMembers().contains(user)) {
