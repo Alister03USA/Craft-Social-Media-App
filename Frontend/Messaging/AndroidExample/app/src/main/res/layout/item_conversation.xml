@@ -33,6 +33,16 @@
         android:maxLines="1"
         android:ellipsize="end"/>
 
+    <ImageButton
+        android:id="@+id/btnDelete"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="42dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Delete conversation"
+        android:src="@drawable/ic_delete" />
+
     <TextView
         android:id="@+id/tvTime"
         android:textColor="#999"

@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import android.app.AlertDialog;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -29,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -49,14 +51,12 @@ import okhttp3.WebSocketListener;
 public class DirectMessagingActivity extends AppCompatActivity implements MessageAdapter.MessageActions {
 
     private static final String TAG = "DirectMessage";
-
-    // ✅ Backend endpoints
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
     private static final String WS_BASE = "ws://coms-3090-028.class.las.iastate.edu:8080";
 
     private String convoId;
     private String chatName;
-    private String currentUser; // ✅ dynamically assigned now
+    private String currentUser;
 
     private RecyclerView recycler;
     private MessageAdapter adapter;
@@ -80,14 +80,14 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
 
         convoId = getIntent().getStringExtra("convoId");
         chatName = getIntent().getStringExtra("chatName");
-        currentUser = getIntent().getStringExtra("username"); // ✅ always passed from previous activity
+        currentUser = getIntent().getStringExtra("username");
 
         if (currentUser == null || currentUser.isEmpty()) {
-            Toast.makeText(this, "⚠️ No active user detected. Using test fallback.", Toast.LENGTH_SHORT).show();
-            currentUser = "Fuji"; // fallback only if missing
+            currentUser = "Fuji";
+            Toast.makeText(this, "⚠️ No active user detected. Using fallback 'Fuji'", Toast.LENGTH_SHORT).show();
         }
 
-        Log.d(TAG, "👤 Active user in chat: " + currentUser + " | Chat: " + chatName);
+        Log.d(TAG, "👤 Active user: " + currentUser + " | Chat: " + chatName);
 
         tvTitle = findViewById(R.id.tvTitle);
         etInput = findViewById(R.id.etInput);
@@ -197,10 +197,8 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     public void onReply(MessageItem m) {
         replyingTo = m.getId();
         replyingToText = m.getContent();
-
         String shortText = replyingToText != null && replyingToText.length() > 40
                 ? replyingToText.substring(0, 40) + "..." : replyingToText;
-
         replyContainer.setVisibility(View.VISIBLE);
         tvReplyPreview.setText("Replying to \"" + shortText + "\"");
     }
@@ -212,6 +210,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         tvReplyPreview.setText("");
     }
 
+    /* ==================== SEND MESSAGE ==================== */
     private void sendMessage() {
         String text = etInput.getText().toString().trim();
         if (TextUtils.isEmpty(text)) return;
@@ -261,11 +260,37 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         Log.d(TAG, "🗑 Removed reaction: " + reactionType + " for message " + m.getId());
     }
 
+    /* ==================== LONG PRESS DELETE ==================== */
     @Override
     public void onLongPress(MessageItem m) {
-        Log.d(TAG, "🟨 Long pressed " + m.getContent());
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Message")
+                .setMessage("Are you sure you want to delete this message?")
+                .setPositiveButton("Delete", (d, i) -> deleteMessage(m))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
+    private void deleteMessage(MessageItem m) {
+        String url = BASE_URL + "/messages/" + m.getId();
+        Log.d(TAG, "🗑 Deleting message: " + url);
+
+        StringRequest req = new StringRequest(Request.Method.DELETE, url,
+                res -> {
+                    Log.d(TAG, "✅ Message deleted: " + res);
+                    Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show();
+                    messages.remove(m);
+                    adapter.notifyDataSetChanged();
+                },
+                err -> {
+                    Log.e(TAG, "❌ Failed to delete message", err);
+                    Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
+                });
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    /* ==================== WS LISTENER ==================== */
     private final class WsListener extends WebSocketListener {
         @Override
         public void onMessage(WebSocket ws, String t) {
@@ -300,9 +325,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                     String sender = i > 0 ? t.substring(0, i) : "unknown";
                     String body = i > 0 ? t.substring(i + 2) : t;
 
-// ✅ Prevent duplicate: ignore our own echoed messages
+                    // ✅ Avoid self-echo duplicates
                     if (sender.equals(currentUser)) {
-                        Log.d(TAG, " Skipping duplicate message from self: " + body);
+                        Log.d(TAG, "Skipping duplicate self-message: " + body);
                         return;
                     }
 
@@ -351,7 +376,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     }
 
     private void openPicker() {
-        Toast.makeText(this, "Attachment disabled for this test build", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Attachment disabled for this build", Toast.LENGTH_SHORT).show();
     }
 
     private String getFileName(Uri uri) {
@@ -376,7 +401,8 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         try (InputStream in = getContentResolver().openInputStream(uri);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             if (in == null) return null;
-            byte[] buf = new byte[4096]; int n;
+            byte[] buf = new byte[4096];
+            int n;
             while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
             return out.toByteArray();
         } catch (Exception e) {

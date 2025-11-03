@@ -9,7 +9,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,7 +41,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
     private EditText searchBar;
     private ImageButton newChatBtn;
     private ProgressBar progressBar;
-    private String currentUsername = "Fuji"; // default dev user
+    private String currentUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,19 +57,18 @@ public class MessagingHomeActivity extends AppCompatActivity {
         rvDirect.setLayoutManager(new LinearLayoutManager(this));
         rvGroups.setLayoutManager(new LinearLayoutManager(this));
 
-        directAdapter = new ConversationAdapter(direct, this::openConversation);
-        groupAdapter = new ConversationAdapter(groups, this::openConversation);
+        directAdapter = new ConversationAdapter(direct, this::openConversation, this::deleteConversation);
+        groupAdapter = new ConversationAdapter(groups, this::openConversation, this::deleteConversation);
         rvDirect.setAdapter(directAdapter);
         rvGroups.setAdapter(groupAdapter);
 
-        // ✅ Get user from SelectUserActivity
-        String fromIntent = getIntent().getStringExtra("username");
-        if (fromIntent != null && !fromIntent.isEmpty()) {
-            currentUsername = fromIntent;
+        currentUsername = getIntent().getStringExtra("username");
+        if (currentUsername == null || currentUsername.isEmpty()) {
+            currentUsername = "Fuji";
+            Toast.makeText(this, "⚠️ No user passed, using default 'Fuji'", Toast.LENGTH_SHORT).show();
         }
         Log.d(TAG, "👤 Active user: " + currentUsername);
 
-        // ✅ Pass username to NewChatActivity
         newChatBtn.setOnClickListener(v -> {
             Log.d(TAG, "🟢 Opening NewChatActivity for " + currentUsername);
             Intent i = new Intent(this, NewChatActivity.class);
@@ -84,6 +85,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
         fetchConversations();
     }
 
+    /* ==================== FILTER ==================== */
     private void filter(String query) {
         query = query.trim().toLowerCase();
         direct.clear();
@@ -100,22 +102,24 @@ public class MessagingHomeActivity extends AppCompatActivity {
         groupAdapter.notifyDataSetChanged();
     }
 
+    /* ==================== FETCH ==================== */
     private void fetchConversations() {
         progressBar.setVisibility(View.VISIBLE);
         String url = BASE_URL + "/messages/convos/" + currentUsername;
         Log.d(TAG, "🌍 GET " + url);
 
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url, null,
-                response -> {
+        JsonArrayRequest req = new JsonArrayRequest(Request.Method.GET, url, null,
+                res -> {
                     progressBar.setVisibility(View.GONE);
-                    parseConvoArray(response);
+                    parseConvoArray(res);
                 },
-                error -> {
+                err -> {
                     progressBar.setVisibility(View.GONE);
+                    Log.e(TAG, "❌ JSON request failed, trying fallback", err);
                     fallbackStringRequest(url);
                 });
 
-        VolleySingleton.getInstance(this).addToRequestQueue(jsonArrayRequest);
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
     private void fallbackStringRequest(String url) {
@@ -132,6 +136,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(stringRequest);
     }
 
+    /* ==================== PARSE ==================== */
     private void parseConvoArray(JSONArray arr) {
         all.clear(); direct.clear(); groups.clear();
         for (int i = 0; i < arr.length(); i++) {
@@ -161,12 +166,40 @@ public class MessagingHomeActivity extends AppCompatActivity {
         groupAdapter.notifyDataSetChanged();
     }
 
+    /* ==================== OPEN CHAT ==================== */
     private void openConversation(ConversationItem item) {
         Log.d(TAG, "💬 Opening conversation: " + item.getConvoId());
         Intent i = new Intent(this, DirectMessagingActivity.class);
         i.putExtra("convoId", item.getConvoId());
         i.putExtra("chatName", item.getName());
-        i.putExtra("username", currentUsername); // ✅ Pass username forward
+        i.putExtra("username", currentUsername);
         startActivity(i);
+    }
+
+    /* ==================== DELETE CONVO ==================== */
+    private void deleteConversation(ConversationItem item) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Conversation")
+                .setMessage("Are you sure you want to delete this conversation?")
+                .setPositiveButton("Delete", (d, i) -> {
+                    String url = BASE_URL + "/messages/convo/" + item.getConvoId();
+                    Log.d(TAG, "🗑 Deleting conversation: " + url);
+
+                    StringRequest req = new StringRequest(Request.Method.DELETE, url,
+                            res -> {
+                                Toast.makeText(this, "Conversation deleted", Toast.LENGTH_SHORT).show();
+                                all.remove(item);
+                                if (item.isGroup()) groups.remove(item); else direct.remove(item);
+                                directAdapter.notifyDataSetChanged();
+                                groupAdapter.notifyDataSetChanged();
+                            },
+                            err -> {
+                                Log.e(TAG, "❌ Failed to delete conversation", err);
+                                Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
+                            });
+                    VolleySingleton.getInstance(this).addToRequestQueue(req);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }
