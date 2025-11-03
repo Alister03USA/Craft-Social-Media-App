@@ -82,7 +82,6 @@ public class GroupMessageWebsocket {
         groupSessionsMap.computeIfAbsent(groupId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
         logger.info("onOpen" + username + " successfully joined group " +  groupId );
-        ;
 
         groupSessionsMap.computeIfAbsent(groupId, k-> ConcurrentHashMap.newKeySet()).add(session);
 
