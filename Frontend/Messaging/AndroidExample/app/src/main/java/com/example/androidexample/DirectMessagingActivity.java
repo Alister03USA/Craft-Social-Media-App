@@ -1,9 +1,5 @@
 package com.example.androidexample;
 
-import static com.example.androidexample.ApiConfig.BASE_URL;
-import static com.example.androidexample.ApiConfig.CURRENT_USERNAME;
-import static com.example.androidexample.ApiConfig.WS_BASE;
-
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -54,8 +50,14 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
 
     private static final String TAG = "DirectMessage";
 
+    // ✅ Backend endpoints
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
+    private static final String WS_BASE = "ws://coms-3090-028.class.las.iastate.edu:8080";
+
     private String convoId;
     private String chatName;
+    private String currentUser; // ✅ dynamically assigned now
+
     private RecyclerView recycler;
     private MessageAdapter adapter;
     private final List<MessageItem> messages = new ArrayList<>();
@@ -69,7 +71,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
 
     private Long replyingTo = null;
     private String replyingToText = null;
-
     private WebSocket socket;
 
     @Override
@@ -79,6 +80,14 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
 
         convoId = getIntent().getStringExtra("convoId");
         chatName = getIntent().getStringExtra("chatName");
+        currentUser = getIntent().getStringExtra("username"); // ✅ always passed from previous activity
+
+        if (currentUser == null || currentUser.isEmpty()) {
+            Toast.makeText(this, "⚠️ No active user detected. Using test fallback.", Toast.LENGTH_SHORT).show();
+            currentUser = "Fuji"; // fallback only if missing
+        }
+
+        Log.d(TAG, "👤 Active user in chat: " + currentUser + " | Chat: " + chatName);
 
         tvTitle = findViewById(R.id.tvTitle);
         etInput = findViewById(R.id.etInput);
@@ -99,7 +108,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         lm.setStackFromEnd(true);
         recycler.setLayoutManager(lm);
 
-        adapter = new MessageAdapter(messages, CURRENT_USERNAME, this);
+        adapter = new MessageAdapter(messages, currentUser, this);
         recycler.setAdapter(adapter);
 
         btnSend.setOnClickListener(v -> sendMessage());
@@ -174,7 +183,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
             if (arr != null) {
                 for (int i = 0; i < arr.length(); i++) {
                     String u = arr.getJSONObject(i).optString("username", "");
-                    if (!TextUtils.isEmpty(u) && !u.equals(CURRENT_USERNAME))
+                    if (!TextUtils.isEmpty(u) && !u.equals(currentUser))
                         memberUsernames.add("@" + u);
                 }
             }
@@ -186,26 +195,14 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     /* ==================== REPLY LOGIC ==================== */
     @Override
     public void onReply(MessageItem m) {
-        // Store the actual parent message text and ID
         replyingTo = m.getId();
         replyingToText = m.getContent();
 
-        // Clean and shorten the parent message text for preview
-        String shortText;
-        if (TextUtils.isEmpty(replyingToText)) {
-            shortText = "message";
-        } else {
-            shortText = replyingToText.trim();
-            if (shortText.length() > 40) {
-                shortText = shortText.substring(0, 40) + "...";
-            }
-        }
+        String shortText = replyingToText != null && replyingToText.length() > 40
+                ? replyingToText.substring(0, 40) + "..." : replyingToText;
 
-        // Show reply preview using the actual message content
         replyContainer.setVisibility(View.VISIBLE);
         tvReplyPreview.setText("Replying to \"" + shortText + "\"");
-
-        Log.d(TAG, "💬 Replying to actual message: " + shortText + " (id=" + replyingTo + ")");
     }
 
     private void clearReplyPreview() {
@@ -213,22 +210,18 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         replyingToText = null;
         replyContainer.setVisibility(View.GONE);
         tvReplyPreview.setText("");
-        Log.d(TAG, "↩️ Reply mode cleared");
     }
 
     private void sendMessage() {
         String text = etInput.getText().toString().trim();
         if (TextUtils.isEmpty(text)) return;
 
-        // We only send the message itself (not the "replying to" header inside it)
-        if (replyingTo != null) {
+        if (replyingTo != null)
             socketSend("#reply:" + replyingTo + ":" + text);
-        } else {
+        else
             socketSend(text);
-        }
 
-        // Locally show message bubble only with actual content (no "Replied to")
-        messages.add(new MessageItem(0, CURRENT_USERNAME, highlightMentions(text).toString(), now(), replyingTo));
+        messages.add(new MessageItem(0, currentUser, highlightMentions(text).toString(), now(), replyingTo));
         adapter.notifyItemInserted(messages.size() - 1);
         recycler.scrollToPosition(messages.size() - 1);
         etInput.setText("");
@@ -238,7 +231,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     /* ==================== SOCKET ==================== */
     private void connectSocket() {
         try {
-            String url = WS_BASE + "/chat/" + convoId + "/" + CURRENT_USERNAME;
+            String url = WS_BASE + "/chat/" + convoId + "/" + currentUser;
             OkHttpClient client = new OkHttpClient.Builder().build();
             okhttp3.Request r = new Builder().url(url).build();
             socket = client.newWebSocket(r, new WsListener());
@@ -258,15 +251,16 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
 
     @Override
     public void onReact(MessageItem m, String reactionType) {
-        // Send reaction instantly to backend
         socketSend("#react:" + m.getId() + ":" + reactionType);
         Log.d(TAG, "💥 Sent reaction: " + reactionType + " for message " + m.getId());
     }
+
     @Override
     public void onRemoveReact(MessageItem m, String reactionType) {
         socketSend("#!react:" + m.getId() + ":" + reactionType);
         Log.d(TAG, "🗑 Removed reaction: " + reactionType + " for message " + m.getId());
     }
+
     @Override
     public void onLongPress(MessageItem m) {
         Log.d(TAG, "🟨 Long pressed " + m.getContent());
@@ -277,7 +271,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         public void onMessage(WebSocket ws, String t) {
             runOnUiThread(() -> {
                 try {
-                    // Reaction broadcasts
                     if (!t.startsWith("#") && t.split(":").length == 3) {
                         String[] p = t.split(":");
                         long id = Long.parseLong(p[0]);
@@ -293,7 +286,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                         return;
                     }
 
-                    // Reply broadcasts: {parentId}-{text}
                     if (t.contains("-")) {
                         int idx = t.indexOf("-");
                         long parent = Long.parseLong(t.substring(0, idx));
@@ -304,10 +296,16 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                         return;
                     }
 
-                    // Normal messages
                     int i = t.indexOf(": ");
                     String sender = i > 0 ? t.substring(0, i) : "unknown";
                     String body = i > 0 ? t.substring(i + 2) : t;
+
+// ✅ Prevent duplicate: ignore our own echoed messages
+                    if (sender.equals(currentUser)) {
+                        Log.d(TAG, " Skipping duplicate message from self: " + body);
+                        return;
+                    }
+
                     messages.add(new MessageItem(0, sender, highlightMentions(body).toString(), now(), null));
                     adapter.notifyItemInserted(messages.size() - 1);
                     recycler.scrollToPosition(messages.size() - 1);

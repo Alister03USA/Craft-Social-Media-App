@@ -1,8 +1,5 @@
 package com.example.androidexample;
 
-import static com.example.androidexample.ApiConfig.BASE_URL;
-import static com.example.androidexample.ApiConfig.CURRENT_USERNAME;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,7 +9,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,19 +21,14 @@ import com.android.volley.toolbox.StringRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * MessagingHomeActivity
- * ---------------------
- * Displays all Direct + Group Conversations for the current user.
- * Supports both backend JSON and mockserver "json [ ... ]" string responses.
- * Logs each step for easy debugging via Logcat.
- */
 public class MessagingHomeActivity extends AppCompatActivity {
 
     private static final String TAG = "MessagingHome";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
     private RecyclerView rvDirect, rvGroups;
     private ConversationAdapter directAdapter, groupAdapter;
@@ -48,8 +39,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
     private EditText searchBar;
     private ImageButton newChatBtn;
     private ProgressBar progressBar;
-
-    private String currentUsername = CURRENT_USERNAME;
+    private String currentUsername = "Fuji"; // default dev user
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,14 +60,14 @@ public class MessagingHomeActivity extends AppCompatActivity {
         rvDirect.setAdapter(directAdapter);
         rvGroups.setAdapter(groupAdapter);
 
-        // ✅ Get logged-in or test user
+        // ✅ Get user from SelectUserActivity
         String fromIntent = getIntent().getStringExtra("username");
         if (fromIntent != null && !fromIntent.isEmpty()) {
             currentUsername = fromIntent;
         }
         Log.d(TAG, "👤 Active user: " + currentUsername);
 
-        // ✅ Launch NewChatActivity when clicking "New Chat"
+        // ✅ Pass username to NewChatActivity
         newChatBtn.setOnClickListener(v -> {
             Log.d(TAG, "🟢 Opening NewChatActivity for " + currentUsername);
             Intent i = new Intent(this, NewChatActivity.class);
@@ -94,7 +84,6 @@ public class MessagingHomeActivity extends AppCompatActivity {
         fetchConversations();
     }
 
-    /** 🔍 Filters search results in both lists */
     private void filter(String query) {
         query = query.trim().toLowerCase();
         direct.clear();
@@ -111,7 +100,6 @@ public class MessagingHomeActivity extends AppCompatActivity {
         groupAdapter.notifyDataSetChanged();
     }
 
-    /** 🌐 Fetches all conversations from backend */
     private void fetchConversations() {
         progressBar.setVisibility(View.VISIBLE);
         String url = BASE_URL + "/messages/convos/" + currentUsername;
@@ -120,92 +108,65 @@ public class MessagingHomeActivity extends AppCompatActivity {
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
                     progressBar.setVisibility(View.GONE);
-                    Log.d(TAG, "✅ JSON Array response: " + response.length());
                     parseConvoArray(response);
                 },
                 error -> {
                     progressBar.setVisibility(View.GONE);
-                    Log.e(TAG, "❌ Volley JSON parse error, switching to fallback", error);
                     fallbackStringRequest(url);
                 });
 
         VolleySingleton.getInstance(this).addToRequestQueue(jsonArrayRequest);
     }
 
-    /** 🧩 Fallback handler for "json [ ... ]" string response */
     private void fallbackStringRequest(String url) {
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 response -> {
                     try {
-                        Log.d(TAG, "📦 Raw response: " + response);
                         String clean = response.trim();
-
-                        if (clean.startsWith("json")) {
-                            clean = clean.substring(4).trim();
-                        }
-
+                        if (clean.startsWith("json")) clean = clean.substring(4).trim();
                         JSONArray arr = new JSONArray(clean);
                         parseConvoArray(arr);
-                    } catch (JSONException e) {
-                        Log.e(TAG, "💥 JSON parsing failed in fallback", e);
-                    }
+                    } catch (JSONException e) { Log.e(TAG, "JSON fallback failed", e); }
                 },
-                error -> Log.e(TAG, "❌ StringRequest fallback failed", error));
-
+                error -> Log.e(TAG, "Fallback failed", error));
         VolleySingleton.getInstance(this).addToRequestQueue(stringRequest);
     }
 
-    /** 🧠 Parses array of conversations */
     private void parseConvoArray(JSONArray arr) {
         all.clear(); direct.clear(); groups.clear();
-
         for (int i = 0; i < arr.length(); i++) {
             try {
                 JSONObject o = arr.getJSONObject(i);
                 String id = o.optString("id", "");
                 String name = o.optString("groupName", "");
-
                 if (name.isEmpty()) {
                     JSONArray members = o.optJSONArray("members");
                     if (members != null) {
                         for (int m = 0; m < members.length(); m++) {
                             String u = members.getJSONObject(m).optString("username");
-                            if (!currentUsername.equals(u)) {
-                                name = u;
-                                break;
-                            }
+                            if (!currentUsername.equals(u)) { name = u; break; }
                         }
                     }
                 }
-
                 String last = "";
                 JSONArray msgs = o.optJSONArray("messages");
-                if (msgs != null && msgs.length() > 0) {
-                    JSONObject lm = msgs.getJSONObject(msgs.length() - 1);
-                    last = lm.optString("text", "");
-                }
-
+                if (msgs != null && msgs.length() > 0)
+                    last = msgs.getJSONObject(msgs.length() - 1).optString("text", "");
                 ConversationItem item = new ConversationItem(id, name, last, "");
                 all.add(item);
-                if (item.isGroup()) groups.add(item);
-                else direct.add(item);
-
-            } catch (JSONException e) {
-                Log.e(TAG, "⚠️ Error parsing conversation index " + i, e);
-            }
+                if (item.isGroup()) groups.add(item); else direct.add(item);
+            } catch (JSONException e) { Log.e(TAG, "⚠️ Parse error", e); }
         }
-
         directAdapter.notifyDataSetChanged();
         groupAdapter.notifyDataSetChanged();
-        Log.d(TAG, "✅ Loaded " + all.size() + " total conversations");
     }
 
-    /** 💬 Opens a selected conversation */
     private void openConversation(ConversationItem item) {
         Log.d(TAG, "💬 Opening conversation: " + item.getConvoId());
         Intent i = new Intent(this, DirectMessagingActivity.class);
         i.putExtra("convoId", item.getConvoId());
         i.putExtra("chatName", item.getName());
+        i.putExtra("username", currentUsername); // ✅ Pass username forward
         startActivity(i);
     }
 }

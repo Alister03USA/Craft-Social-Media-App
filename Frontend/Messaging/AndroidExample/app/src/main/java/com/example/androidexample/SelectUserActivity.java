@@ -18,7 +18,8 @@ public class SelectUserActivity extends AppCompatActivity {
 
     private static final String TAG = "SelectUserActivity";
     private ListView listUsers;
-    private static final String CURRENT_USER = "Fuji"; // dev mode
+
+    // Mock users available for testing
     private final List<String> mockUsers = Arrays.asList("Fuji", "Quinn", "alister_gan", "kkeck");
     private final List<String> displayUsers = new ArrayList<>();
 
@@ -28,8 +29,6 @@ public class SelectUserActivity extends AppCompatActivity {
         setContentView(R.layout.activity_select_user);
 
         listUsers = findViewById(R.id.listUsers);
-
-        // ✅ Filter list to include Fuji (current user), show all available mock users
         displayUsers.clear();
         displayUsers.addAll(mockUsers);
 
