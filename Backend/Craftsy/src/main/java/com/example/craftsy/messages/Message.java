@@ -160,11 +160,13 @@ public class Message {
 
     public void removeReaction(String reaction){
         if(this.reactions.containsKey(reaction)){
+            int oldVal = this.reactions.get(reaction);
             if(this.reactions.get(reaction) <= 1){
                 this.reactions.remove(reaction);
             }
-            int oldVal = this.reactions.get(reaction);
-            this.reactions.replace(reaction, oldVal, oldVal - 1);
+            else {
+                this.reactions.replace(reaction, oldVal, oldVal - 1);
+            }
         }
     }
 

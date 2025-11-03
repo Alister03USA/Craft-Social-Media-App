@@ -93,8 +93,15 @@ public class MessageService {
         String reaction = text.substring(idIndex + 1);
         Message message = msgRepo.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
+        int numReacts;
+        if(message.getReactions().get(reaction) <= 1){
+            numReacts = 0;
+        }
+        else{
+            numReacts = message.getReactions().get(reaction) - 1;
+        }
         message.removeReaction(reaction);
         msgRepo.save(message);
-        return messageId + ":" + reaction + ":" + message.getReactions().get(reaction);
+        return messageId + ":" + reaction + ":" + numReacts;
     }
 }
