@@ -64,7 +64,6 @@ public class GroupMessageController {
 
     /**
      * Upload an image/media to group
-     * NOTE: Text messages should be sent via WebSocket, not REST API
      */
     @PostMapping(
             value = "/{groupId}/{senderUsername}/upload",
