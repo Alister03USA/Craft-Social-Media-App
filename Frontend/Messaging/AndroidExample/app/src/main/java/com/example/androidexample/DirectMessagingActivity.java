@@ -1,6 +1,7 @@
 package com.example.androidexample;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
@@ -22,12 +24,14 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.Button;
+import android.widget.AutoCompleteTextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
@@ -40,6 +44,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,6 +58,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     private static final String TAG = "DirectMessage";
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
     private static final String WS_BASE = "ws://coms-3090-028.class.las.iastate.edu:8080";
+    private static final int PICK_FILE_REQUEST = 100;
 
     private String convoId;
     private String chatName;
@@ -72,7 +78,8 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     private Long replyingTo = null;
     private String replyingToText = null;
     private WebSocket socket;
-
+    private ImageButton btnAddUser, btnRemoveUser;
+    private View groupActionsContainer;
     @Override
     protected void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -83,7 +90,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         currentUser = getIntent().getStringExtra("username");
 
         if (currentUser == null || currentUser.isEmpty()) {
-            currentUser = "Fuji";
+            currentUser = "Fuji"; // fallback for test
             Toast.makeText(this, "⚠️ No active user detected. Using fallback 'Fuji'", Toast.LENGTH_SHORT).show();
         }
 
@@ -98,6 +105,17 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         btnCancelReply = findViewById(R.id.btnCancelReply);
         progress = findViewById(R.id.progress);
         replyContainer = findViewById(R.id.replyContainer);
+        groupActionsContainer = findViewById(R.id.groupActionsContainer);
+        btnAddUser = findViewById(R.id.btnAddUser);
+        btnRemoveUser = findViewById(R.id.btnRemoveUser);
+
+        if (convoId != null && convoId.startsWith("G-")) {
+            groupActionsContainer.setVisibility(View.VISIBLE);
+            btnAddUser.setOnClickListener(v -> promptUserAdd());
+            btnRemoveUser.setOnClickListener(v -> promptUserRemove());
+        } else {
+            groupActionsContainer.setVisibility(View.GONE);
+        }
         ImageView btnBack = findViewById(R.id.btnBack);
 
         tvTitle.setText(chatName);
@@ -121,7 +139,83 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         connectSocket();
     }
 
-    /* ==================== FETCH HISTORY ==================== */
+    /* ==================== FILE PICKER ==================== */
+    private void openPicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "application/pdf"});
+        startActivityForResult(Intent.createChooser(intent, "Select File"), PICK_FILE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri uri = data.getData();
+            uploadImageToBackend(uri);
+        }
+    }
+
+    private void uploadImageToBackend(Uri uri) {
+        try {
+            final byte[] fileData = readBytesFromUri(uri);
+            final String fileName = getFileName(uri);
+            String tempType = getContentResolver().getType(uri);
+            if (tempType == null)
+                tempType = MimeTypeMap.getSingleton()
+                        .getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()));
+            final String mimeType = tempType;
+
+            String url = BASE_URL + "/images";
+            Log.d(TAG, "📤 Uploading image to: " + url + " (" + fileName + ")");
+
+            VolleyMultipartRequest request = new VolleyMultipartRequest(Request.Method.POST, url,
+                    response -> {
+                        try {
+                            String result = new String(response.data);
+                            Log.d(TAG, "✅ Upload success: " + result);
+                            JSONObject res = new JSONObject(result);
+                            long imageId = res.optLong("id", -1);
+                            String filePath = res.optString("filePath", "");
+
+                            if (imageId != -1 && !TextUtils.isEmpty(filePath)) {
+                                String uploadedFileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+                                String imageUrl = BASE_URL + "/uploads/" + uploadedFileName;
+
+                                // Add temporary local message
+                                messages.add(new MessageItem(0, currentUser, "", now(), null, imageId, imageUrl));
+                                adapter.notifyItemInserted(messages.size() - 1);
+                                recycler.scrollToPosition(messages.size() - 1);
+
+                                socketSend("#image:" + imageId);
+                                Toast.makeText(this, "Image uploaded & displayed", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(this, "Image uploaded but no valid response", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "⚠️ Parse error", e);
+                        }
+                    },
+                    error -> {
+                        Log.e(TAG, "❌ Upload failed", error);
+                        Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
+                    }) {
+                @Override
+                protected Map<String, VolleyMultipartRequest.DataPart> getByteData() throws AuthFailureError {
+                    Map<String, VolleyMultipartRequest.DataPart> params = new java.util.HashMap<>();
+                    params.put("image", new VolleyMultipartRequest.DataPart(fileName, fileData, mimeType));
+                    return params;
+                }
+            };
+
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
+
+        } catch (Exception e) {
+            Log.e(TAG, "💥 File upload error", e);
+        }
+    }
+
+    /* ==================== MESSAGE LOGIC ==================== */
     private void fetchHistory() {
         progress.setVisibility(View.VISIBLE);
         String url = BASE_URL + "/messages/" + convoId;
@@ -151,12 +245,37 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                     String sender = o.optString("sender", "");
                     String text = o.optString("text", "");
                     String ts = o.optString("date", "");
+
+                    // 🔍 Handle image objects or "#image:" text markers
+                    Long imageId = null;
+                    String imageUrl = null;
+
+                    JSONObject imageObj = o.optJSONObject("image");
+                    if (imageObj != null) {
+                        imageId = imageObj.optLong("id", -1);
+                        String filePath = imageObj.optString("filePath", "");
+                        if (!TextUtils.isEmpty(filePath)) {
+                            // ✅ Convert absolute server path → accessible uploads URL
+                            String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+                            imageUrl = BASE_URL + "/uploads/" + fileName;
+                        }
+                    }
+
+                    // remove placeholder text for image-only messages
+                    if (text != null && text.startsWith("#image:")) text = "";
+
                     Long parent = o.isNull("parentMessage") ? null :
                             (o.optJSONObject("parentMessage") != null
                                     ? o.optJSONObject("parentMessage").optLong("id", 0)
                                     : null);
 
-                    MessageItem m = new MessageItem(id, sender, highlightMentions(text).toString(), ts, parent);
+                    MessageItem m = new MessageItem(
+                            id, sender,
+                            highlightMentions(text).toString(),
+                            ts, parent,
+                            imageId, imageUrl
+                    );
+
                     JSONObject reactObj = o.optJSONObject("reactions");
                     if (reactObj != null) {
                         Iterator<String> keys = reactObj.keys();
@@ -165,11 +284,12 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                             m.getReactions().put(k, reactObj.optInt(k, 0));
                         }
                     }
+
                     messages.add(m);
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "⚠️ parse error", e);
+            Log.e(TAG, "⚠️ Parse error", e);
         }
 
         adapter.notifyDataSetChanged();
@@ -188,29 +308,10 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "⚠️ Error parsing members", e);
+            Log.e(TAG, "⚠️ Member parse error", e);
         }
     }
 
-    /* ==================== REPLY LOGIC ==================== */
-    @Override
-    public void onReply(MessageItem m) {
-        replyingTo = m.getId();
-        replyingToText = m.getContent();
-        String shortText = replyingToText != null && replyingToText.length() > 40
-                ? replyingToText.substring(0, 40) + "..." : replyingToText;
-        replyContainer.setVisibility(View.VISIBLE);
-        tvReplyPreview.setText("Replying to \"" + shortText + "\"");
-    }
-
-    private void clearReplyPreview() {
-        replyingTo = null;
-        replyingToText = null;
-        replyContainer.setVisibility(View.GONE);
-        tvReplyPreview.setText("");
-    }
-
-    /* ==================== SEND MESSAGE ==================== */
     private void sendMessage() {
         String text = etInput.getText().toString().trim();
         if (TextUtils.isEmpty(text)) return;
@@ -227,7 +328,25 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         clearReplyPreview();
     }
 
-    /* ==================== SOCKET ==================== */
+    @Override
+    public void onReply(MessageItem m) {
+        replyingTo = m.getId();
+        replyingToText = m.getContent();
+
+        String shortText = replyingToText != null && replyingToText.length() > 40
+                ? replyingToText.substring(0, 40) + "..." : replyingToText;
+
+        replyContainer.setVisibility(View.VISIBLE);
+        tvReplyPreview.setText("Replying to \"" + shortText + "\"");
+    }
+
+    private void clearReplyPreview() {
+        replyingTo = null;
+        replyingToText = null;
+        replyContainer.setVisibility(View.GONE);
+        tvReplyPreview.setText("");
+    }
+
     private void connectSocket() {
         try {
             String url = WS_BASE + "/chat/" + convoId + "/" + currentUser;
@@ -239,7 +358,50 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
             Log.e(TAG, "💥 Socket connect fail", e);
         }
     }
+    private void promptUserAdd() {
+        AutoCompleteTextView input = new AutoCompleteTextView(this);
+        input.setHint("Enter username to add");
+        new AlertDialog.Builder(this)
+                .setTitle("Add Member")
+                .setView(input)
+                .setPositiveButton("Add", (d, i) -> {
+                    String username = input.getText().toString().trim();
+                    if (!username.isEmpty()) modifyGroupMember(username, true);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 
+    private void promptUserRemove() {
+        AutoCompleteTextView input = new AutoCompleteTextView(this);
+        input.setHint("Enter username to remove");
+        new AlertDialog.Builder(this)
+                .setTitle("Remove Member")
+                .setView(input)
+                .setPositiveButton("Remove", (d, i) -> {
+                    String username = input.getText().toString().trim();
+                    if (!username.isEmpty()) modifyGroupMember(username, false);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void modifyGroupMember(String username, boolean add) {
+        String endpoint = add ? "add" : "remove";
+        String url = BASE_URL + "/messages/" + convoId + "/" + endpoint + "/" + username;
+        Log.d(TAG, (add ? "➕ Adding" : "➖ Removing") + " user: " + username + " → " + url);
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.PUT, url, null,
+                res -> {
+                    Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
+                    parseMembers(res);
+                },
+                err -> {
+                    Log.e(TAG, "❌ Modify member failed", err);
+                    Toast.makeText(this, "Failed to modify member", Toast.LENGTH_SHORT).show();
+                });
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
     private void socketSend(String payload) {
         try {
             if (socket != null) socket.send(payload);
@@ -251,16 +413,13 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     @Override
     public void onReact(MessageItem m, String reactionType) {
         socketSend("#react:" + m.getId() + ":" + reactionType);
-        Log.d(TAG, "💥 Sent reaction: " + reactionType + " for message " + m.getId());
     }
 
     @Override
     public void onRemoveReact(MessageItem m, String reactionType) {
         socketSend("#!react:" + m.getId() + ":" + reactionType);
-        Log.d(TAG, "🗑 Removed reaction: " + reactionType + " for message " + m.getId());
     }
 
-    /* ==================== LONG PRESS DELETE ==================== */
     @Override
     public void onLongPress(MessageItem m) {
         new AlertDialog.Builder(this)
@@ -273,29 +432,24 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
 
     private void deleteMessage(MessageItem m) {
         String url = BASE_URL + "/messages/" + m.getId();
-        Log.d(TAG, "🗑 Deleting message: " + url);
-
         StringRequest req = new StringRequest(Request.Method.DELETE, url,
                 res -> {
-                    Log.d(TAG, "✅ Message deleted: " + res);
                     Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show();
                     messages.remove(m);
                     adapter.notifyDataSetChanged();
                 },
-                err -> {
-                    Log.e(TAG, "❌ Failed to delete message", err);
-                    Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
-                });
-
+                err -> Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /* ==================== WS LISTENER ==================== */
     private final class WsListener extends WebSocketListener {
         @Override
         public void onMessage(WebSocket ws, String t) {
             runOnUiThread(() -> {
                 try {
+                    Log.d(TAG, "🧩 WS RAW MESSAGE: " + t);
+
+                    // ✅ Handle reaction updates like "66:like:1"
                     if (!t.startsWith("#") && t.split(":").length == 3) {
                         String[] p = t.split(":");
                         long id = Long.parseLong(p[0]);
@@ -308,46 +462,90 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                             }
                         }
                         adapter.notifyDataSetChanged();
+                        Log.d(TAG, "🟡 Reaction update applied → " + t);
                         return;
                     }
 
-                    if (t.contains("-")) {
+                    // ✅ Handle replies like "107-Test reply"
+                    if (t.contains("-") && !t.contains(": ")) {
                         int idx = t.indexOf("-");
-                        long parent = Long.parseLong(t.substring(0, idx));
-                        String msg = t.substring(idx + 1);
-                        messages.add(new MessageItem(0, "•reply•", highlightMentions(msg).toString(), now(), parent));
+                        long parentId = Long.parseLong(t.substring(0, idx));
+                        String replyText = t.substring(idx + 1).trim();
+
+                        Log.d(TAG, "🟢 Detected REPLY pattern → parentId=" + parentId + ", replyText=" + replyText);
+
+                        // Determine who sent it (since backend reply() doesn’t include sender)
+                        String sender;
+                        if (replyText.startsWith(currentUser + ":")) {
+                            sender = currentUser;
+                            replyText = replyText.replaceFirst(currentUser + ":", "").trim();
+                        } else {
+                            sender = chatName; // other user in direct convo
+                        }
+
+                        // 🧩 Find parent message text (for display)
+                        String parentPreview = null;
+                        for (MessageItem m : messages) {
+                            if (m.getId() == parentId) {
+                                parentPreview = m.getContent();
+                                break;
+                            }
+                        }
+                        if (parentPreview == null) parentPreview = "(original message)";
+
+                        // Add reply message to list
+                        MessageItem replyItem = new MessageItem(
+                                0,
+                                sender,
+                                highlightMentions(replyText).toString(),
+                                now(),
+                                parentId
+                        );
+                        messages.add(replyItem);
                         adapter.notifyItemInserted(messages.size() - 1);
                         recycler.scrollToPosition(messages.size() - 1);
+
+                        Log.d(TAG, "💬 Displayed reply from " + sender + " → replying to \"" + parentPreview + "\"");
                         return;
                     }
 
+                    // ✅ Normal message "sender: message"
                     int i = t.indexOf(": ");
                     String sender = i > 0 ? t.substring(0, i) : "unknown";
                     String body = i > 0 ? t.substring(i + 2) : t;
 
-                    // ✅ Avoid self-echo duplicates
+                    Log.d(TAG, "💬 Parsed sender=" + sender + " body=" + body);
+
+                    // Avoid echoing back own message
                     if (sender.equals(currentUser)) {
-                        Log.d(TAG, "Skipping duplicate self-message: " + body);
+                        Log.d(TAG, "Skipping self-message echo");
                         return;
                     }
 
-                    messages.add(new MessageItem(0, sender, highlightMentions(body).toString(), now(), null));
+                    // Handle image messages
+                    if (body.startsWith("#image:")) {
+                        long imageId = Long.parseLong(body.replace("#image:", "").trim());
+                        String fileName = "image_" + imageId + ".jpg";
+                        String imgUrl = BASE_URL + "/uploads/" + fileName;
+                        messages.add(new MessageItem(0, sender, "", now(), null, imageId, imgUrl));
+                    } else {
+                        messages.add(new MessageItem(0, sender, highlightMentions(body).toString(), now(), null));
+                    }
+
                     adapter.notifyItemInserted(messages.size() - 1);
                     recycler.scrollToPosition(messages.size() - 1);
                 } catch (Exception e) {
-                    Log.e(TAG, "WS parse error", e);
+                    Log.e(TAG, "💥 WS parse error", e);
                 }
             });
         }
     }
 
-    /* ==================== UTILITIES ==================== */
     private void setupMentionWatcher() {
         etInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
             @Override public void afterTextChanged(Editable s) {}
-            @Override
-            public void onTextChanged(CharSequence s, int st, int b, int c) {
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
                 if (s.toString().endsWith("@")) showMentionDropdown();
             }
         });
@@ -375,8 +573,17 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         return s;
     }
 
-    private void openPicker() {
-        Toast.makeText(this, "Attachment disabled for this build", Toast.LENGTH_SHORT).show();
+    private byte[] readBytesFromUri(Uri uri) {
+        try (InputStream in = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            if (in == null) return null;
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            return out.toByteArray();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String getFileName(Uri uri) {
@@ -395,23 +602,5 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
             if (cut != -1) result = result.substring(cut + 1);
         }
         return result;
-    }
-
-    private byte[] readBytesFromUri(Uri uri) {
-        try (InputStream in = getContentResolver().openInputStream(uri);
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            if (in == null) return null;
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-            return out.toByteArray();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    @Override protected void onDestroy() {
-        super.onDestroy();
-        if (socket != null) socket.close(1000, "bye");
     }
 }

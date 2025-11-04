@@ -1,32 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
-    android:background="@color/blue_background"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/blue_background"
+    android:padding="24dp">
 
     <TextView
-        android:text="Start a new chat"
+        android:id="@+id/tvHeader"
+        android:text="Start a New Chat"
         android:textColor="@color/dark_text"
-        android:textSize="20sp"
-        android:layout_marginBottom="16dp"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-    <Spinner
-        android:id="@+id/spinnerOtherUser"
-        android:layout_width="wrap_content"
+    <AutoCompleteTextView
+        android:id="@+id/autoUserSearch"
+        android:hint="Search username..."
+        android:padding="12dp"
+        android:textSize="16sp"
+        android:background="@android:drawable/edit_text"
+        android:dropDownVerticalOffset="10dp"
+        android:dropDownHeight="300dp"
+        android:dropDownWidth="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"/>
+        app:layout_constraintTop_toBottomOf="@id/tvHeader"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/btnCreateChat"
-        android:text="Create Chat"
-        android:layout_marginTop="20dp"
-        android:backgroundTint="@color/button_blue"
-        android:textColor="@color/text_white"
+    <TextView
+        android:id="@+id/tvSelectedUsers"
+        android:text="Selected: None"
+        android:textColor="@color/dark_text"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/autoUserSearch"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="8dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
-</LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/btnContainer"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/tvSelectedUsers"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/btnCreateDirect"
+            android:text="Create Direct Chat"
+            android:layout_marginEnd="12dp"
+            android:backgroundTint="@color/button_blue"
+            android:textColor="@color/text_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btnCreateGroup"
+            android:text="Create Group Chat"
+            android:backgroundTint="@color/button_blue"
+            android:textColor="@color/text_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

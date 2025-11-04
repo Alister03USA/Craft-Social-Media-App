@@ -21,7 +21,16 @@
             android:textSize="12sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-
+        <!-- Sender name (only visible in group chat) -->
+        <TextView
+            android:id="@+id/tvSender"
+            android:visibility="gone"
+            android:textColor="#1565C0"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp" />
         <!-- Message text -->
         <TextView
             android:id="@+id/tvMsg"
@@ -31,7 +40,15 @@
             android:layout_marginBottom="2dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-
+        <!-- Image preview -->
+        <ImageView
+            android:id="@+id/imgContent"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            android:visibility="gone" />
         <!-- Timestamp -->
         <TextView
             android:id="@+id/tvMeta"

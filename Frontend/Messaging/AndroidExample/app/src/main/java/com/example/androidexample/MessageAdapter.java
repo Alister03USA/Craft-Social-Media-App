@@ -12,11 +12,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.HashMap;
 import java.util.List;
@@ -87,10 +90,22 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     abstract class BaseHolder extends RecyclerView.ViewHolder {
         TextView tvMsg, tvMeta, tvReply, tvReacts;
         ImageButton btnReact, btnReply;
+        ImageView imgContent;
+        TextView tvSender;
 
         BaseHolder(@NonNull View v) { super(v); }
 
         void bindCommon(MessageItem m) {
+            // Show sender name for received messages in group chats
+            if (tvSender != null) {
+                if (!m.getSender().equals(me) && !TextUtils.isEmpty(m.getSender())) {
+                    tvSender.setVisibility(View.VISIBLE);
+                    tvSender.setText(m.getSender());
+                } else {
+                    tvSender.setVisibility(View.GONE);
+                }
+            }
+
             // Reply header
             if (m.getReplyTo() != null) {
                 tvReply.setVisibility(View.VISIBLE);
@@ -106,8 +121,22 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 tvReply.setVisibility(View.GONE);
             }
 
-            // Message + timestamp
+            // Message text
             tvMsg.setText(m.getContent());
+
+            // Image content
+            if (m.hasImage()) {
+                imgContent.setVisibility(View.VISIBLE);
+                Glide.with(itemView.getContext())
+                        .load(m.getImageUrl())
+                        .placeholder(R.drawable.ic_post_placeholder)
+                        .error(R.drawable.ic_post_placeholder)
+                        .into(imgContent);
+            } else {
+                imgContent.setVisibility(View.GONE);
+            }
+
+            // Timestamp
             tvMeta.setText(m.getTimestamp());
 
             // Reactions
@@ -124,7 +153,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 tvReacts.setText(sb.toString().trim());
             } else tvReacts.setVisibility(View.GONE);
 
-            // React and Reply buttons
+            // Buttons and long press
             btnReact.setOnClickListener(v -> showReactMenu(v, m));
             btnReply.setOnClickListener(v -> actions.onReply(m));
             itemView.setOnLongClickListener(v -> { actions.onLongPress(m); return true; });
@@ -148,7 +177,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 String reactionType = mapMenuItemToType(i.getItemId());
                 Log.d(TAG, "React pressed: messageId=" + m.getId() + " type=" + reactionType);
 
-                // Toggle logic
                 if (m.getReactions().containsKey(reactionType)) {
                     actions.onRemoveReact(m, reactionType);
                     m.getReactions().remove(reactionType);
@@ -178,12 +206,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     class LeftHolder extends BaseHolder {
         LeftHolder(@NonNull View v) {
             super(v);
+            tvSender = v.findViewById(R.id.tvSender);
             tvMsg = v.findViewById(R.id.tvMsg);
             tvMeta = v.findViewById(R.id.tvMeta);
             tvReply = v.findViewById(R.id.tvReply);
             tvReacts = v.findViewById(R.id.tvReacts);
             btnReact = v.findViewById(R.id.btnReact);
             btnReply = v.findViewById(R.id.btnReply);
+            imgContent = v.findViewById(R.id.imgContent);
         }
         void bind(MessageItem m) { bindCommon(m); }
     }
@@ -191,12 +221,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     class RightHolder extends BaseHolder {
         RightHolder(@NonNull View v) {
             super(v);
+            // tvSender is not used for sent messages
             tvMsg = v.findViewById(R.id.tvMsg);
             tvMeta = v.findViewById(R.id.tvMeta);
             tvReply = v.findViewById(R.id.tvReply);
             tvReacts = v.findViewById(R.id.tvReacts);
             btnReact = v.findViewById(R.id.btnReact);
             btnReply = v.findViewById(R.id.btnReply);
+            imgContent = v.findViewById(R.id.imgContent);
         }
         void bind(MessageItem m) { bindCommon(m); }
     }

@@ -29,6 +29,36 @@
             android:layout_marginStart="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:id="@+id/groupActionsContainer"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
+            android:visibility="gone"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnAddUser"
+                android:src="@drawable/ic_add_user"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add Member"
+                android:tint="@color/button_blue"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnRemoveUser"
+                android:src="@drawable/ic_remove_user"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Remove Member"
+                android:tint="@color/red_error"
+                android:layout_width="32dp"
+                android:layout_height="32dp" />
+        </LinearLayout>
     </RelativeLayout>
 
     <!-- (2) Recycler -->
@@ -62,7 +92,7 @@
             android:src="@drawable/ic_close"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Cancel reply"
-            android:tint="@color/gray"
+            android:tint="@color/text_gray"
             android:layout_gravity="end"/>
         <TextView
             android:id="@+id/tvReplyPreview"
@@ -70,7 +100,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>
-    <!-- (8) Scroll to latest -->
+
+
+    <!-- (5) Scroll to latest -->
     <ImageButton
         android:id="@+id/btnScrollLatest"
         android:src="@drawable/ic_down"
@@ -79,7 +111,8 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginBottom="6dp" />
-    <!-- (4)(5)(6) Input row -->
+
+    <!-- (6) Input row -->
     <LinearLayout
         android:padding="8dp"
         android:layout_width="match_parent"
@@ -111,6 +144,7 @@
             android:dropDownVerticalOffset="4dp"
             android:dropDownHorizontalOffset="8dp"
             android:popupBackground="@android:color/white" />
+
         <ImageButton
             android:id="@+id/btnSend"
             android:src="@drawable/ic_send"
@@ -119,7 +153,5 @@
             android:layout_width="40dp"
             android:layout_height="40dp" />
     </LinearLayout>
-
-
 
 </LinearLayout>
