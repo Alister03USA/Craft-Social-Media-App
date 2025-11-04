@@ -4,6 +4,7 @@ import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.feed.Feed;
 import com.example.craftsy.images.Image;
+import com.example.craftsy.images.ImageRepository;
 import com.example.craftsy.messages.conversations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,9 @@ public class ConversationController {
 
     @Autowired
     MessageRepository msgRepo;
+
+    @Autowired
+    ImageRepository imgRepo;
 
     @PostMapping("/messages/group")
     GroupConversation createGroupConvo(@RequestBody List<String> usernames){
@@ -124,7 +128,9 @@ public class ConversationController {
     GroupConversation updateGroupPic(@PathVariable String groupId, @RequestBody Image image){
         GroupConversation convo = groupConvoRepo.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found"));
-        convo.setGroupPic(image);
+        Image groupPic = imgRepo.findById(image.getId())
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+        convo.setGroupPic(groupPic);
         return groupConvoRepo.save(convo);
     }
 
