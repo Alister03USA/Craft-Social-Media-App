@@ -50,6 +50,7 @@ public class GroupMessageWebsocket {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username) {
+        logger.info("[onOpen] Connection attempt - User: " + username + ", Group: " + groupId);
 
         // Verify user exists
         Users user = userRepository.findByUsername(username).orElse(null);
@@ -67,23 +68,23 @@ public class GroupMessageWebsocket {
             return;
         }
 
-        // Make sure user is a member of the group
-        boolean isMember = group.getMembers().stream().anyMatch(member -> member.getId().equals(user.getId()));
+        // Check membership
+        boolean isMember = group.getMembers().stream()
+                .anyMatch(member -> member.getId().equals(user.getId()));
 
-        if(!isMember){
+        if (!isMember) {
             logger.warn("[onOpen] User is not a member of group: " + groupId);
-            closeSession(session, "You are not a member of group: " + groupId);
+            closeSession(session, "You are not a member of this group");
             return;
         }
 
-        // User is authorized - register the connection
+        // User is authorized - register the connection (ONLY ONCE!)
         sessionUsernameMap.put(session, username);
         usernameSessionMap.put(username, session);
         groupSessionsMap.computeIfAbsent(groupId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
-        logger.info("onOpen" + username + " successfully joined group " +  groupId );
+        logger.info("[onOpen] " + username + " successfully joined group " + groupId);
 
-        groupSessionsMap.computeIfAbsent(groupId, k-> ConcurrentHashMap.newKeySet()).add(session);
 
         broadcastToGroup(groupId, "System", username + " has joined the group.");
     }
