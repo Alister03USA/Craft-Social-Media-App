@@ -14,15 +14,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Thumbnail -->
-        <ImageView
-            android:id="@+id/tutorialThumbnail"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_post_placeholder"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="@string/tutorial_thumbnail" />
 
         <!-- Title -->
         <TextView

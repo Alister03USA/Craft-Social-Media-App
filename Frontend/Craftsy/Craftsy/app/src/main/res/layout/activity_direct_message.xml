@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- (1) Header -->
+    <RelativeLayout
+        android:padding="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentStart="true" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_toEndOf="@id/btnBack"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:id="@+id/groupActionsContainer"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
+            android:visibility="gone"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnAddUser"
+                android:src="@drawable/ic_add_user"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add Member"
+                android:tint="@color/button_blue"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnRemoveUser"
+                android:src="@drawable/ic_remove_user"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Remove Member"
+                android:tint="@color/red_error"
+                android:layout_width="32dp"
+                android:layout_height="32dp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- (2) Recycler -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingBottom="4dp"
+        android:clipToPadding="false" />
+
+    <ProgressBar
+        android:id="@+id/progress"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- (3) Reply preview -->
+    <LinearLayout
+        android:id="@+id/replyContainer"
+        android:visibility="gone"
+        android:padding="8dp"
+        android:background="@drawable/bg_reply"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageButton
+            android:id="@+id/btnCancelReply"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_close"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Cancel reply"
+            android:tint="@color/text_gray"
+            android:layout_gravity="end"/>
+        <TextView
+            android:id="@+id/tvReplyPreview"
+            android:text="Replying to"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+
+    <!-- (5) Scroll to latest -->
+    <ImageButton
+        android:id="@+id/btnScrollLatest"
+        android:src="@drawable/ic_down"
+        android:contentDescription="Latest"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="6dp" />
+
+    <!-- (6) Input row -->
+    <LinearLayout
+        android:padding="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnAttach"
+            android:src="@drawable/ic_attach"
+            android:background="@android:color/transparent"
+            android:contentDescription="Attach"
+            android:layout_width="36dp"
+            android:layout_height="36dp" />
+
+        <AutoCompleteTextView
+            android:id="@+id/etInput"
+            android:background="@drawable/bg_input"
+            android:padding="10dp"
+            android:hint="Message..."
+            android:maxLines="4"
+            android:minLines="1"
+            android:completionThreshold="1"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine|textCapSentences|textAutoCorrect"
+            android:scrollbars="vertical"
+            android:dropDownHeight="wrap_content"
+            android:dropDownVerticalOffset="4dp"
+            android:dropDownHorizontalOffset="8dp"
+            android:popupBackground="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:src="@drawable/ic_send"
+            android:background="@android:color/transparent"
+            android:contentDescription="Send"
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+    </LinearLayout>
+
+</LinearLayout>

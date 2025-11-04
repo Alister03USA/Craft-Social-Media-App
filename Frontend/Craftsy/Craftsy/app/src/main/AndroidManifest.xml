@@ -39,7 +39,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".PatternActivity"
+            android:exported="true" />
         <!-- 👤 User Management -->
         <activity android:name=".SignupActivity"
             android:exported="false"
@@ -85,6 +86,20 @@
         <activity android:name=".TutorialUploadActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <!--  Messaging -->
+        <activity android:name=".MessagingHomeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Craftsy" />
+        <activity android:name=".DirectMessagingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
+        <activity android:name=".NewChatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+
+        <activity android:name=".SelectUserActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
     </application>
 </manifest>

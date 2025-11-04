@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,114 +11,146 @@
         android:id="@+id/btnBack"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_alignParentStart="true"
         android:background="@android:color/transparent"
         android:src="@drawable/ic_arrow_back"
         app:tint="@color/dark_text"
-        android:contentDescription="@string/back" />
+        android:contentDescription="@string/back"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Scrollable tutorial content -->
-    <ScrollView
-        android:id="@+id/tutorialScroll"
-        android:layout_width="388dp"
-        android:layout_height="578dp"
-        android:layout_above="@+id/bottomButtonsLayout"
-        android:layout_below="@id/btnBack"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="1dp">
+    <!-- CardView wrapping the main tutorial content -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardTutorialDetail"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
+        android:background="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/btnBack"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomButtonsLayout"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp">
 
-        <LinearLayout
+        <ScrollView
+            android:id="@+id/tutorialScroll"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
+            android:fillViewport="true"
+            android:padding="16dp">
 
-            <!-- Tutorial Title -->
-            <TextView
-                android:id="@+id/detailTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/tutorial_title"
-                android:textColor="@color/dark_text"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <!-- Tutorial Author -->
-            <TextView
-                android:id="@+id/detailUsername"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/by_user"
-                android:textColor="@color/text_gray" />
-
-            <!-- Tutorial Category -->
-            <TextView
-                android:id="@+id/detailCategory"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/category"
-                android:textColor="@color/text_gray" />
-
-            <!-- Tutorial Video/WebView -->
-            <WebView
-                android:id="@+id/webView"
-                android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:layout_marginTop="16dp"
-                android:background="@android:color/white"
-                android:visibility="gone" />
-
-            <VideoView
-                android:id="@+id/videoView"
-                android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:layout_marginTop="16dp"
-                android:background="@android:color/black"
-                android:visibility="gone" />
-
-            <!-- Tutorial Description -->
-            <TextView
-                android:id="@+id/detailDescription"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:paddingBottom="16dp"
-                android:text="@string/tutorial_description"
-                android:textColor="@color/dark_text" />
-        </LinearLayout>
-    </ScrollView>
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <!-- Title, Author, Category Container -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:id="@+id/detailTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tutorial_title"
+                        android:textColor="@color/dark_text"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:lineSpacingExtra="4dp" />
+
+                    <TextView
+                        android:id="@+id/detailUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/by_user"
+                        android:textColor="@color/craftsy_accent"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp" />
+
+                    <TextView
+                        android:id="@+id/detailCategory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/category"
+                        android:textColor="@color/text_gray"
+                        android:textSize="14sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <!-- Video or Web Preview -->
+                <WebView
+                    android:id="@+id/webView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/white"
+                    android:visibility="gone"
+                    android:layout_marginBottom="16dp" />
+
+                <VideoView
+                    android:id="@+id/videoView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/black"
+                    android:visibility="gone"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Description -->
+                <TextView
+                    android:id="@+id/detailDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tutorial_description"
+                    android:textColor="@color/dark_text"
+                    android:textSize="16sp"
+                    android:lineSpacingExtra="4dp"
+                    android:paddingBottom="8dp" />
+
+            </LinearLayout>
+        </ScrollView>
+    </androidx.cardview.widget.CardView>
 
     <!-- Bottom Button Bar (Edit & Delete) -->
     <LinearLayout
         android:id="@+id/bottomButtonsLayout"
-        android:layout_alignParentBottom="true"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
         android:paddingTop="12dp"
         android:paddingBottom="12dp"
-        android:background="@android:color/transparent">
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:weightSum="2">
 
         <Button
             android:id="@+id/btnEdit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
             android:text="@string/edit_button"
             android:backgroundTint="@color/craftsy_accent"
             android:textColor="@color/white"
-            android:layout_marginEnd="16dp" />
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/rounded_button" />
 
         <Button
             android:id="@+id/btnDelete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
             android:text="@string/delete_button"
             android:backgroundTint="@color/red_error"
-            android:textColor="@color/white" />
+            android:textColor="@color/white"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/rounded_button" />
     </LinearLayout>
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
