@@ -52,6 +52,13 @@
             android:name=".CreateGroupPostActivity"
             android:exported="false"
             android:theme ="@style/Theme.Craftsy"/>
+        <activity android:name=".GroupDetailsActivity"
+            android:exported="false"
+            android:theme ="@style/Theme.Craftsy"/>
+        <activity android:name=".AdminActivity"
+            android:exported="false"
+            android:theme ="@style/Theme.Craftsy"/>
+
 
         <!-- User Profile -->
         <activity

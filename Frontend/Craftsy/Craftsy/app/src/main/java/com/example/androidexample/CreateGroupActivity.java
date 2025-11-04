@@ -66,7 +66,7 @@ public class CreateGroupActivity extends AppCompatActivity {
             return;
         }
 
-        String url = BASE_URL + "/create/" + username;
+        String url = BASE_URL  + "/"+ username + "/create";
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,
