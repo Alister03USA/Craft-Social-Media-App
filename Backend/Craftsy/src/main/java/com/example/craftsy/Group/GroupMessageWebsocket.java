@@ -48,13 +48,14 @@ public class GroupMessageWebsocket {
     }
 
 
+
     @OnOpen
     public void onOpen(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username) {
         logger.info("[onOpen] Connection attempt - User: " + username + ", Group: " + groupId);
 
         // Verify user exists
         Users user = userRepository.findByUsername(username).orElse(null);
-        Group group = groupRepository.findById(groupId).orElse(null);
+        Group group = groupRepository.findByIdWithMembers(groupId).orElse(null);
 
         if (user == null) {
             logger.error("[onOpen] User not found: " + username);
@@ -98,7 +99,7 @@ public class GroupMessageWebsocket {
         logger.info("[onMessage] " + username + "in group " + groupId + " received message: " + message);
 
         Users sender =  userRepository.findByUsername(username).orElse(null);
-        Group group = groupRepository.findById(groupId).orElse(null);
+        Group group = groupRepository.findByIdWithMembers(groupId).orElse(null);
 
         if(sender == null ||  group == null) {
             logger.error("[onMessage] Sender or Group not found: ");
