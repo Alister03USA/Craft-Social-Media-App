@@ -3,6 +3,7 @@ package com.example.androidexample;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
@@ -56,7 +57,7 @@ public class WebSocketNotificationService extends Service {
                 return;
             }
 
-            String serverUrl = "ws://10.0.2.2:9090/ws/notifications/Quinn";
+            String serverUrl = "ws://coms-3090-028.class.las.iastate.edu:8080/ws/notifications/" + username;
 
             URI uri = new URI(serverUrl);
 
@@ -71,16 +72,19 @@ public class WebSocketNotificationService extends Service {
                     Log.d(TAG, "Received: " + message);
                     try {
                         JSONObject json = new JSONObject(message);
+
+                        int id = json.optInt("id", -1);  // ✅ Get ID
                         String title = json.optString("title", "Notification");
                         String body = json.optString("message", "");
 
-                        // Show system notification only if app is not in foreground
                         if (!isAppInForeground()) {
-                            showNotification(title, body);
+                            showNotification(title, body, id);
+
                         }
 
-                        // Always send broadcast for in-app display
+                        // ✅ Send broadcast including ID
                         Intent intent = new Intent("NEW_NOTIFICATION");
+                        intent.putExtra("id", id);
                         intent.putExtra("title", title);
                         intent.putExtra("message", body);
                         sendBroadcast(intent);
@@ -89,6 +93,7 @@ public class WebSocketNotificationService extends Service {
                         Log.e(TAG, "Error parsing notification JSON", e);
                     }
                 }
+
 
 
 
@@ -111,18 +116,39 @@ public class WebSocketNotificationService extends Service {
         }
     }
 
-    private void showNotification(String title, String message) {
+    private void showNotification(String title, String message, int notificationId) {
+
+        Intent intent = new Intent(this, NotificationCenterActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setSmallIcon(R.drawable.ic_message) // Make sure this drawable exists
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(R.drawable.ic_message)
                 .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build();
 
-        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.notify((int) System.currentTimeMillis(), notification);
+        NotificationManager manager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Use backend ID or fallback to random ID
+        int finalId = (notificationId != -1)
+                ? notificationId
+                : (int) System.currentTimeMillis();
+
+        manager.notify(finalId, notification);
     }
+
+
 
     private Notification buildNotification(String content) {
         return new NotificationCompat.Builder(this, CHANNEL_ID)

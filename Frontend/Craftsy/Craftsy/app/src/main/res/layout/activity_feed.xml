@@ -6,16 +6,19 @@
     android:orientation="vertical"
     android:background="@color/blue_background">
 
-    <TextView
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/feedToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Craftsy Feed"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:padding="12dp"
         android:background="@color/button_blue"
-        android:textColor="@color/text_white" />
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:title="Craftsy Feed"
+        app:titleCentered="true"
+        app:titleTextColor="@color/text_white"
+        app:menu="@menu/feed_toolbar_menu"/>
+
+
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewFeed"

@@ -73,14 +73,13 @@ public class CreateReviewActivity extends AppCompatActivity {
     }
 
     private void sendReviewToBackend(int rating, String reviewText) {
-        // ✅ Build correct endpoint dynamically
-        String url = BASE_URL + "/patterns/" + username + "/" + patternName + "/reviews";
+        // Backend endpoint uses comments
+        String url = BASE_URL + "/patterns/" + username + "/" + patternName + "/comment";
 
         JSONObject jsonBody = new JSONObject();
         try {
-            jsonBody.put("username", username);
-            jsonBody.put("rating", rating);
             jsonBody.put("text", reviewText);
+            jsonBody.put("rating", rating);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -99,4 +98,5 @@ public class CreateReviewActivity extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
 }

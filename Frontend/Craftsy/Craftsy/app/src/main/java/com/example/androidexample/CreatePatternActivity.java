@@ -20,8 +20,10 @@ public class CreatePatternActivity extends AppCompatActivity {
 
     private Button selectImageButton, uploadPatternButton, backToFeedButton;
     private ImageView imagePreview;
-    private EditText patternTitleInput, patternDescInput;
+    private EditText patternTitleInput, patternDescInput, patternTypeInput;
+    private Spinner difficultySpinner;
     private Uri selectedUri;
+
 
     private static final String IMAGE_UPLOAD_URL = "http://coms-3090-028.class.las.iastate.edu:8080/images";
     private static final String PATTERN_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/patterns";
@@ -39,6 +41,17 @@ public class CreatePatternActivity extends AppCompatActivity {
         imagePreview = findViewById(R.id.imagePreview);
         patternTitleInput = findViewById(R.id.patternTitleInput);
         patternDescInput = findViewById(R.id.patternDescInput);
+        patternTypeInput = findViewById(R.id.patternTypeInput);
+        difficultySpinner = findViewById(R.id.difficultySpinner);
+
+        // Difficulty options
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"Easy", "Moderate", "Difficult"}
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        difficultySpinner.setAdapter(adapter);
 
         // Back button
         backToFeedButton.setOnClickListener(v -> finish());
@@ -54,6 +67,7 @@ public class CreatePatternActivity extends AppCompatActivity {
                 }
         );
         selectImageButton.setOnClickListener(v -> getContentLauncher.launch("image/*"));
+
 
         // Upload handler
         uploadPatternButton.setOnClickListener(v -> uploadPattern());
@@ -71,43 +85,46 @@ public class CreatePatternActivity extends AppCompatActivity {
             return;
         }
 
-        if (selectedUri != null) {
-            final byte[] fileData = convertImageUriToBytes(selectedUri);
-            if (fileData == null) {
-                Toast.makeText(this, "Failed to read image", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            final String fileName = getFileNameFromUri(selectedUri);
-            final String mimeType = (getContentResolver().getType(selectedUri) != null) ?
-                    getContentResolver().getType(selectedUri) : "image/jpeg";
-
-            MultipartRequest request = new MultipartRequest(
-                    Request.Method.POST,
-                    IMAGE_UPLOAD_URL,
-                    "image",
-                    fileName,
-                    mimeType,
-                    fileData,
-                    response -> {
-                        try {
-                            JSONObject json = new JSONObject(response);
-                            long imageId = json.getLong("id");
-                            createPatternPost(username, title, description, imageId);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Toast.makeText(this, "Error parsing image upload response", Toast.LENGTH_SHORT).show();
-                        }
-                    },
-                    error -> Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show()
-            );
-
-            VolleySingleton.getInstance(this).addToRequestQueue(request);
-
-        } else {
-            createPatternPost(username, title, description, null);
+        //  Force user to select an image
+        if (selectedUri == null) {
+            Toast.makeText(this, "You must select an image to post a pattern", Toast.LENGTH_SHORT).show();
+            return; // stop here
         }
+
+        // Existing image upload logic
+        final byte[] fileData = convertImageUriToBytes(selectedUri);
+        if (fileData == null) {
+            Toast.makeText(this, "Failed to read image", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final String fileName = getFileNameFromUri(selectedUri);
+        final String mimeType = (getContentResolver().getType(selectedUri) != null) ?
+                getContentResolver().getType(selectedUri) : "image/jpeg";
+
+        MultipartRequest request = new MultipartRequest(
+                Request.Method.POST,
+                IMAGE_UPLOAD_URL,
+                "image",
+                fileName,
+                mimeType,
+                fileData,
+                response -> {
+                    try {
+                        JSONObject json = new JSONObject(response);
+                        long imageId = json.getLong("id");
+                        createPatternPost(username, title, description, imageId);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, "Error parsing image upload response", Toast.LENGTH_SHORT).show();
+                    }
+                },
+                error -> Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show()
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
 
     private String getFileNameFromUri(Uri uri) {
         String result = null;
@@ -141,6 +158,11 @@ public class CreatePatternActivity extends AppCompatActivity {
     }
 
     private void createPatternPost(String username, String title, String description, Long imageId) {
+        String patternType = patternTypeInput.getText().toString().trim();
+        if(patternType.isEmpty()) patternType = "Knitting"; // default
+
+        String difficulty = difficultySpinner.getSelectedItem().toString();
+
         JSONObject jsonBody = new JSONObject();
         try {
             JSONObject userObj = new JSONObject();
@@ -148,10 +170,10 @@ public class CreatePatternActivity extends AppCompatActivity {
             jsonBody.put("user", userObj);
 
             jsonBody.put("patternName", title);
-            jsonBody.put("patternType", "Knitting");
+            jsonBody.put("patternType", patternType);
             jsonBody.put("rating", 0);
             jsonBody.put("patternLink", "");
-            jsonBody.put("difficulty", "Intermediate");
+            jsonBody.put("difficulty", difficulty);
             jsonBody.put("description", description);
             jsonBody.put("supplies", "Needles, Yarn");
             jsonBody.put("numRatings", 0);
@@ -184,7 +206,7 @@ public class CreatePatternActivity extends AppCompatActivity {
                 }
         );
 
-
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
 }

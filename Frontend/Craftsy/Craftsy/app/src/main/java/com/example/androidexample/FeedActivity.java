@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.google.android.material.appbar.MaterialToolbar;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,7 +32,19 @@ public class FeedActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
-        setupBottomNavigation(R.id.myFeed);
+
+        MaterialToolbar toolbar = findViewById(R.id.feedToolbar);
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.menu_notifications) {
+                Intent intent = new Intent(this, NotificationCenterActivity.class);
+                intent.putExtra("username", loggedInUsername);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+
+
 
         recyclerViewFeed = findViewById(R.id.recyclerViewFeed);
         recyclerViewFeed.setLayoutManager(new LinearLayoutManager(this));

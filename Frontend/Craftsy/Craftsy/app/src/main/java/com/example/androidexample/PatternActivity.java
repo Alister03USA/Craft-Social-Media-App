@@ -88,6 +88,7 @@ public class PatternActivity extends BaseActivity {
             Log.w(TAG, "No logged-in username found. Using fallback: testUser");
         }
 
+
         String url = BASE_URL + "/" + username;
         Log.d(TAG, "Fetching patterns from: " + url);
 
@@ -101,21 +102,13 @@ public class PatternActivity extends BaseActivity {
                         try {
                             JSONObject obj = response.getJSONObject(i);
 
-                            // 🔹 Extract image if present (backend uses images list)
-                            String imageUrl = "";
-                            JSONArray imagesArray = obj.optJSONArray("images");
-                            if (imagesArray != null && imagesArray.length() > 0) {
-                                JSONObject firstImage = imagesArray.getJSONObject(0);
-                                imageUrl = firstImage.optString("imageUrl", "");
-                            }
-
                             Pattern pattern = new Pattern(
-                                    obj.getInt("id"),
+                                    i, // temporary ID
                                     obj.optString("patternName", "Untitled"),
                                     obj.getJSONObject("user").optString("username", "Unknown"),
                                     obj.optString("patternType", "N/A"),
-                                    (float) obj.optDouble("rating", 0.0),
-                                    imageUrl,
+                                    (float) obj.optDouble("rating", 0.0f),
+                                    getFirstImagePath(obj.optJSONArray("images")),
                                     obj.optString("patternLink", ""),
                                     obj.optString("difficulty", "N/A"),
                                     obj.optString("description", ""),
@@ -126,6 +119,7 @@ public class PatternActivity extends BaseActivity {
                             patterns.add(pattern);
                         } catch (JSONException e) {
                             Log.e(TAG, "JSON parsing error", e);
+                            Log.d(TAG, "Raw response: " + response.toString());
                         }
                     }
                     adapter.notifyDataSetChanged();
@@ -148,6 +142,24 @@ public class PatternActivity extends BaseActivity {
                 }
         );
 
+
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/";
+
+    private String getFirstImagePath(JSONArray images) {
+        if (images != null && images.length() > 0) {
+            JSONObject img = images.optJSONObject(0);
+            if (img != null) {
+                String path = img.optString("filePath", "");
+                if (!path.isEmpty()) {
+                    return IMAGE_BASE_URL + path.substring(path.lastIndexOf("/") + 1);
+                }
+            }
+        }
+        return "";
+    }
+
+
 }
+

@@ -10,25 +10,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
-        android:padding="8dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        android:elevation="4dp">
 
-    <!-- RecyclerView for Chat Messages -->
+        <ImageButton
+            android:id="@+id/groupBackBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Posts List -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/chatRecyclerView"
+        android:id="@+id/groupRecyclerView"
         android:layout_below="@id/groupToolbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp" />
+        android:padding="8dp"/>
 
-    <!-- Floating Action Button -->
+    <!-- Floating Add Post Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/addPostButton"
+        android:id="@+id/groupAddPostButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_margin="16dp"
-        android:contentDescription="Add Post"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        android:layout_margin="20dp"
+        app:backgroundTint="@color/blue_primary"
+        app:srcCompat="@android:drawable/ic_input_add"/>
+
 </RelativeLayout>

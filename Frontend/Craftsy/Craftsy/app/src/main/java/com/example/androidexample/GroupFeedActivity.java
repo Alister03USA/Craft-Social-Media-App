@@ -35,9 +35,12 @@ public class GroupFeedActivity extends BaseActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new GroupAdapter(filteredList, group -> {
-            Intent intent = new Intent(GroupFeedActivity.this, GroupChatActivity.class);
+            // GroupFeedActivity adapter click
+            Intent intent = new Intent(GroupFeedActivity.this, GroupActivity.class);
             intent.putExtra("groupName", group.getName());
+            intent.putExtra("groupId", group.getId()); // pass id
             startActivity(intent);
+
         });
         recyclerView.setAdapter(adapter);
 
@@ -69,7 +72,7 @@ public class GroupFeedActivity extends BaseActivity {
     private void fetchUserGroups() {
         String username = SessionManager.getInstance().getLoggedInUsername();
         Log.d("GroupFeed", "Fetching groups for: " + username); // <-- add this
-        String url = BASE_URL + "/user/" + username;
+        String url = BASE_URL  +"/" + username + "/groups";
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
@@ -80,6 +83,7 @@ public class GroupFeedActivity extends BaseActivity {
                         for (int i = 0; i < groupsArray.length(); i++) {
                             JSONObject obj = groupsArray.getJSONObject(i);
                             groupList.add(new GroupModel(
+                                    obj.optLong("id"),
                                     obj.optString("groupName"),
                                     obj.optString("description")
                             ));

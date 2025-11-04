@@ -77,6 +77,26 @@
             android:layout_marginTop="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+        <!-- Pattern Type Input -->
+        <EditText
+            android:id="@+id/patternTypeInput"
+            android:hint="Pattern Type (e.g., Knitting)"
+            android:textColor="@color/text_black"
+            android:background="@drawable/craftsy_card_bg"
+            android:padding="12dp"
+            android:textSize="16sp"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- Difficulty Spinner -->
+        <Spinner
+            android:id="@+id/difficultySpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/craftsy_card_bg"/>
+
 
         <!-- Submit -->
         <Button

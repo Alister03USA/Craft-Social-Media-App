@@ -2,16 +2,20 @@ package com.example.androidexample;
 
 public class GroupPostModel {
     private final String username;
-    private final String text;
-    private final String imageUri;
+    private final String content;
+    private final Long messageId;
+    private final String mediaUrl;
 
-    public GroupPostModel(String username, String text, String imageUri) {
+    public GroupPostModel(String username, String content, Long messageId, String mediaUrl) {
         this.username = username;
-        this.text = text;
-        this.imageUri = imageUri;
+        this.content = content;
+        this.messageId = messageId;
+        this.mediaUrl = mediaUrl;
     }
 
     public String getUsername() { return username; }
-    public String getText() { return text; }
-    public String getImageUri() { return imageUri; }
+    public String getContent() { return content; }
+    public Long getMessageId() { return messageId; }
+    public String getMediaUrl() { return mediaUrl; }
 }
+

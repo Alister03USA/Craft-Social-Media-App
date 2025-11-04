@@ -5,19 +5,14 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
-import android.util.Log;
 import android.widget.*;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.android.volley.toolbox.JsonObjectRequest;
-
 
 import java.io.*;
 
@@ -30,8 +25,7 @@ public class CreateGroupPostActivity extends AppCompatActivity {
     private String groupName;
     private ActivityResultLauncher<String> getContentLauncher;
 
-    private static final String IMAGE_UPLOAD_URL = "http://coms-3090-028.class.las.iastate.edu:8080/images";
-    private static final String POST_URL_BASE = "http://coms-3090-028.class.las.iastate.edu:8080/groups";
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,75 +58,80 @@ public class CreateGroupPostActivity extends AppCompatActivity {
     private void uploadPost() {
         String content = postTextInput.getText().toString().trim();
         String username = SessionManager.getInstance().getLoggedInUsername();
+        long groupId = getIntent().getLongExtra("groupId", -1);
+
+        if (groupId == -1) {
+            Toast.makeText(this, "Group ID missing", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (content.isEmpty() && selectedUri == null) {
             Toast.makeText(this, "Please write something or add an image", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Case 1: Image selected (may also have text)
         if (selectedUri != null) {
             byte[] imageData = convertUriToBytes(selectedUri);
-            if (imageData == null) { Toast.makeText(this, "Failed to read image", Toast.LENGTH_SHORT).show(); return; }
+            if (imageData == null) {
+                Toast.makeText(this, "Failed to read image", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             String fileName = getFileNameFromUri(selectedUri);
             String mimeType = getContentResolver().getType(selectedUri);
             if (mimeType == null) mimeType = "image/jpeg";
 
+            String uploadUrl = BASE_URL + "/groupMessage/" + groupId + "/" + username + "/upload";
+
             MultipartRequest request = new MultipartRequest(
                     Request.Method.POST,
-                    IMAGE_UPLOAD_URL,
-                    "image",
+                    uploadUrl,
+                    "file",
                     fileName,
                     mimeType,
                     imageData,
                     response -> {
                         try {
-                            long imageId = new JSONObject(response).getLong("id");
-                            createTextPost(username, content, imageId);
+                            JSONObject json = new JSONObject(response);
+                            long messageId = json.optLong("messageId", -1);
+                            String imageGetUrl = messageId != -1
+                                    ? BASE_URL + "/groupMessage/image/" + messageId
+                                    : json.optString("filePath", "");
+
+                            // ✅ Send text if it exists
+                            if (!content.isEmpty()) {
+                                WebSocketManager ws = WebSocketManager.getInstance();
+                                ws.sendMessage(content);
+                            }
+
+                            Toast.makeText(this, "Posted!", Toast.LENGTH_SHORT).show();
+                            finish();
                         } catch (JSONException e) {
-                            Toast.makeText(this, "Error parsing upload response", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                            Toast.makeText(this, "Upload parse error", Toast.LENGTH_SHORT).show();
                         }
                     },
-                    error -> Toast.makeText(this, "Image upload failed", Toast.LENGTH_SHORT).show()
+                    error -> {
+                        error.printStackTrace();
+                        Toast.makeText(this, "Image upload failed", Toast.LENGTH_SHORT).show();
+                    }
             );
+
             VolleySingleton.getInstance(this).addToRequestQueue(request);
+
         } else {
-            createTextPost(username, content, null);
+            // Case 2: Text-only post
+            WebSocketManager ws = WebSocketManager.getInstance();
+            ws.sendMessage(content);
+
+            Toast.makeText(this, "Posted!", Toast.LENGTH_SHORT).show();
+            finish();
         }
-    }
-
-    private void createTextPost(String username, String content, Long imageId) {
-        try {
-            JSONObject jsonBody = new JSONObject();
-            jsonBody.put("username", username);
-            jsonBody.put("content", content);
-            if (imageId != null) {
-                JSONArray images = new JSONArray();
-                JSONObject img = new JSONObject();
-                img.put("id", imageId);
-                images.put(img);
-                jsonBody.put("images", images);
-            }
-
-            String url = POST_URL_BASE + "/" + groupName + "/posts";
-
-            JsonObjectRequest request = new JsonObjectRequest(
-                    Request.Method.POST, url, jsonBody,
-                    response -> {
-                        Toast.makeText(this, "Post uploaded!", Toast.LENGTH_SHORT).show();
-                        finish();
-                    },
-                    error -> Toast.makeText(this, "Failed to upload post", Toast.LENGTH_SHORT).show()
-            );
-
-            VolleySingleton.getInstance(this).addToRequestQueue(request);
-
-        } catch (JSONException e) { e.printStackTrace(); }
     }
 
     private String getFileNameFromUri(Uri uri) {
         String name = null;
-
         if ("content".equals(uri.getScheme())) {
             try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
@@ -143,15 +142,12 @@ public class CreateGroupPostActivity extends AppCompatActivity {
                 }
             }
         }
-
         if (name == null) {
             name = uri.getLastPathSegment();
             if (name == null) name = "uploaded_file";
         }
-
         return name;
     }
-
 
     private byte[] convertUriToBytes(Uri uri) {
         try (InputStream is = getContentResolver().openInputStream(uri);
