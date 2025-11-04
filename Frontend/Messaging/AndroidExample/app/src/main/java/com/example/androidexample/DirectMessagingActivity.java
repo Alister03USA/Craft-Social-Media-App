@@ -24,21 +24,16 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Button;
-import android.widget.AutoCompleteTextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -47,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request.Builder;
 import okhttp3.WebSocket;
@@ -80,6 +74,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     private WebSocket socket;
     private ImageButton btnAddUser, btnRemoveUser;
     private View groupActionsContainer;
+
     @Override
     protected void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -116,8 +111,8 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         } else {
             groupActionsContainer.setVisibility(View.GONE);
         }
-        ImageView btnBack = findViewById(R.id.btnBack);
 
+        ImageView btnBack = findViewById(R.id.btnBack);
         tvTitle.setText(chatName);
         btnBack.setOnClickListener(v -> finish());
 
@@ -182,7 +177,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                                 String uploadedFileName = filePath.substring(filePath.lastIndexOf("/") + 1);
                                 String imageUrl = BASE_URL + "/uploads/" + uploadedFileName;
 
-                                // Add temporary local message
                                 messages.add(new MessageItem(0, currentUser, "", now(), null, imageId, imageUrl));
                                 adapter.notifyItemInserted(messages.size() - 1);
                                 recycler.scrollToPosition(messages.size() - 1);
@@ -234,68 +228,95 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
+    /** ✅ Flatten replies recursively **/
     private void parseConversation(JSONObject convo) {
         messages.clear();
         try {
             JSONArray arr = convo.optJSONArray("messages");
             if (arr != null) {
                 for (int i = 0; i < arr.length(); i++) {
-                    JSONObject o = arr.getJSONObject(i);
-                    long id = o.optLong("id", 0);
-                    String sender = o.optString("sender", "");
-                    String text = o.optString("text", "");
-                    String ts = o.optString("date", "");
-
-                    // 🔍 Handle image objects or "#image:" text markers
-                    Long imageId = null;
-                    String imageUrl = null;
-
-                    JSONObject imageObj = o.optJSONObject("image");
-                    if (imageObj != null) {
-                        imageId = imageObj.optLong("id", -1);
-                        String filePath = imageObj.optString("filePath", "");
-                        if (!TextUtils.isEmpty(filePath)) {
-                            // ✅ Convert absolute server path → accessible uploads URL
-                            String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
-                            imageUrl = BASE_URL + "/uploads/" + fileName;
-                        }
-                    }
-
-                    // remove placeholder text for image-only messages
-                    if (text != null && text.startsWith("#image:")) text = "";
-
-                    Long parent = o.isNull("parentMessage") ? null :
-                            (o.optJSONObject("parentMessage") != null
-                                    ? o.optJSONObject("parentMessage").optLong("id", 0)
-                                    : null);
-
-                    MessageItem m = new MessageItem(
-                            id, sender,
-                            highlightMentions(text).toString(),
-                            ts, parent,
-                            imageId, imageUrl
-                    );
-
-                    JSONObject reactObj = o.optJSONObject("reactions");
-                    if (reactObj != null) {
-                        Iterator<String> keys = reactObj.keys();
-                        while (keys.hasNext()) {
-                            String k = keys.next();
-                            m.getReactions().put(k, reactObj.optInt(k, 0));
-                        }
-                    }
-
-                    messages.add(m);
+                    JSONObject msg = arr.getJSONObject(i);
+                    parseMessageWithReplies(msg, null);
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "⚠️ Parse error", e);
         }
-
         adapter.notifyDataSetChanged();
         recycler.scrollToPosition(Math.max(messages.size() - 1, 0));
     }
 
+    /** 🔁 Recursive flatten replies (enhanced for missing image metadata) **/
+    private void parseMessageWithReplies(JSONObject o, Long parentId) {
+        try {
+            long id = o.optLong("id", 0);
+            String sender = o.optString("sender", "");
+            String text = o.optString("text", "");
+            String ts = o.optString("date", "");
+
+            Long imageId = null;
+            String imageUrl = null;
+            JSONObject imageObj = o.optJSONObject("image");
+
+            if (imageObj != null) {
+                imageId = imageObj.optLong("id", -1);
+                String filePath = imageObj.optString("filePath", "");
+                if (!TextUtils.isEmpty(filePath)) {
+                    String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+                    imageUrl = BASE_URL + "/uploads/" + fileName;
+                }
+            } else if (text != null && text.startsWith("#image:")) {
+                try {
+                    long tempId = Long.parseLong(text.replace("#image:", "").trim());
+                    String metaUrl = BASE_URL + "/images/" + tempId;
+                    Log.d(TAG, "📦 Fetching image meta for history id=" + tempId);
+
+                    JsonObjectRequest imgReq = new JsonObjectRequest(Request.Method.GET, metaUrl, null,
+                            res -> {
+                                String fp = res.optString("filePath", "");
+                                if (!TextUtils.isEmpty(fp)) {
+                                    String fn = fp.substring(fp.lastIndexOf("/") + 1);
+                                    String iUrl = BASE_URL + "/uploads/" + fn;
+                                    Log.d(TAG, "✅ History image resolved: " + iUrl);
+                                    messages.add(new MessageItem(id, sender, "", ts, parentId, tempId, iUrl));
+                                    adapter.notifyDataSetChanged();
+                                }
+                            },
+                            err -> Log.e(TAG, "❌ Image meta fetch fail", err)
+                    );
+                    VolleySingleton.getInstance(this).addToRequestQueue(imgReq);
+                } catch (Exception ex) {
+                    Log.e(TAG, "⚠️ History image parse fail", ex);
+                }
+                text = "";
+            }
+
+            MessageItem m = new MessageItem(id, sender, highlightMentions(text).toString(), ts, parentId, imageId, imageUrl);
+
+            JSONObject reactObj = o.optJSONObject("reactions");
+            if (reactObj != null) {
+                Iterator<String> keys = reactObj.keys();
+                while (keys.hasNext()) {
+                    String k = keys.next();
+                    m.getReactions().put(k, reactObj.optInt(k, 0));
+                }
+            }
+
+            messages.add(m);
+
+            JSONArray repliesArr = o.optJSONArray("replies");
+            if (repliesArr != null) {
+                for (int i = 0; i < repliesArr.length(); i++) {
+                    parseMessageWithReplies(repliesArr.getJSONObject(i), id);
+                }
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "⚠️ Reply parse error", e);
+        }
+    }
+
+    // everything else remains the same — keep your onMessage() (already correct), socketSend, and helper methods…
     private void parseMembers(JSONObject convo) {
         memberUsernames.clear();
         try {
@@ -358,6 +379,106 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
             Log.e(TAG, "💥 Socket connect fail", e);
         }
     }
+
+    private final class WsListener extends WebSocketListener {
+        @Override
+        public void onMessage(WebSocket ws, String t) {
+            runOnUiThread(() -> {
+                try {
+                    Log.d(TAG, "🧩 WS RAW MESSAGE: " + t);
+
+                    // ✅ Reaction updates
+                    if (t.matches("^\\d+:\\w+:\\d+$")) {
+                        String[] p = t.split(":");
+                        long id = Long.parseLong(p[0]);
+                        String emoji = p[1];
+                        int count = Integer.parseInt(p[2]);
+                        for (MessageItem mi : messages) {
+                            if (mi.getId() == id) {
+                                mi.getReactions().put(emoji, count);
+                                break;
+                            }
+                        }
+                        adapter.notifyDataSetChanged();
+                        return;
+                    }
+
+                    // ✅ Normal message pattern: sender: body
+                    int i = t.indexOf(": ");
+                    String sender = i > 0 ? t.substring(0, i) : "unknown";
+                    String body = i > 0 ? t.substring(i + 2) : t;
+                    Log.d(TAG, "💬 Parsed sender=" + sender + " body=" + body);
+
+                    if (sender.equals(currentUser)) {
+                        Log.d(TAG, "Skipping self-message echo");
+                        return;
+                    }
+
+                    // 🖼️ Handle image messages (#image:id)
+                    if (body.startsWith("#image:")) {
+                        try {
+                            long imageId = Long.parseLong(body.substring(7).trim());
+                            String url = BASE_URL + "/images/" + imageId;
+                            Log.d(TAG, "🖼️ Fetching image metadata from " + url);
+
+                            JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, url, null,
+                                    res -> {
+                                        String filePath = res.optString("filePath", "");
+                                        if (!TextUtils.isEmpty(filePath)) {
+                                            String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+                                            String imageUrl = BASE_URL + "/uploads/" + fileName;
+                                            Log.d(TAG, "✅ Image resolved: " + imageUrl);
+                                            messages.add(new MessageItem(0, sender, "", now(), null, imageId, imageUrl));
+                                            adapter.notifyItemInserted(messages.size() - 1);
+                                            recycler.scrollToPosition(messages.size() - 1);
+                                        } else {
+                                            Log.w(TAG, "⚠️ Missing filePath for image " + imageId);
+                                        }
+                                    },
+                                    err -> Log.e(TAG, "❌ Failed to fetch image metadata", err)
+                            );
+                            VolleySingleton.getInstance(DirectMessagingActivity.this).addToRequestQueue(req);
+
+                        } catch (Exception ex) {
+                            Log.e(TAG, "⚠️ Image parse error", ex);
+                        }
+                        return;
+                    }
+
+                    // 💬 Handle replies
+                    if (body.matches("\\d+-.*")) {
+                        int idx = body.indexOf("-");
+                        long parentId = Long.parseLong(body.substring(0, idx));
+                        String replyText = body.substring(idx + 1).trim();
+                        messages.add(new MessageItem(0, sender, replyText, now(), parentId));
+                        adapter.notifyItemInserted(messages.size() - 1);
+                        recycler.scrollToPosition(messages.size() - 1);
+                        return;
+                    }
+
+                    // 🧾 Regular text message
+                    messages.add(new MessageItem(0, sender, highlightMentions(body).toString(), now(), null));
+                    adapter.notifyItemInserted(messages.size() - 1);
+                    recycler.scrollToPosition(messages.size() - 1);
+
+                } catch (Exception e) {
+                    Log.e(TAG, "💥 WS parse error", e);
+                }
+            });
+        }
+    }
+
+    /** Helper to map ID → real file name */
+    private String findImageFilename(long id) {
+        // Try common folders (both backend users)
+        String[] dirs = {"/home/ages2023/uploads/", "/home/kkeck/uploads/"};
+        for (String d : dirs) {
+            // We don't know the exact file type — guess JPG
+            return "image_" + id + ".jpg";
+        }
+        return "image_" + id + ".jpg";
+    }
+
     private void promptUserAdd() {
         AutoCompleteTextView input = new AutoCompleteTextView(this);
         input.setHint("Enter username to add");
@@ -389,8 +510,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     private void modifyGroupMember(String username, boolean add) {
         String endpoint = add ? "add" : "remove";
         String url = BASE_URL + "/messages/" + convoId + "/" + endpoint + "/" + username;
-        Log.d(TAG, (add ? "➕ Adding" : "➖ Removing") + " user: " + username + " → " + url);
-
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.PUT, url, null,
                 res -> {
                     Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
@@ -402,6 +521,7 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 });
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
+
     private void socketSend(String payload) {
         try {
             if (socket != null) socket.send(payload);
@@ -440,105 +560,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 },
                 err -> Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
         VolleySingleton.getInstance(this).addToRequestQueue(req);
-    }
-
-    private final class WsListener extends WebSocketListener {
-        @Override
-        public void onMessage(WebSocket ws, String t) {
-            runOnUiThread(() -> {
-                try {
-                    Log.d(TAG, "🧩 WS RAW MESSAGE: " + t);
-
-                    // ✅ Handle reaction updates like "66:like:1"
-                    if (!t.startsWith("#") && t.split(":").length == 3) {
-                        String[] p = t.split(":");
-                        long id = Long.parseLong(p[0]);
-                        String emoji = p[1];
-                        int count = Integer.parseInt(p[2]);
-                        for (MessageItem mi : messages) {
-                            if (mi.getId() == id) {
-                                mi.getReactions().put(emoji, count);
-                                break;
-                            }
-                        }
-                        adapter.notifyDataSetChanged();
-                        Log.d(TAG, "🟡 Reaction update applied → " + t);
-                        return;
-                    }
-
-                    // ✅ Handle replies like "107-Test reply"
-                    if (t.contains("-") && !t.contains(": ")) {
-                        int idx = t.indexOf("-");
-                        long parentId = Long.parseLong(t.substring(0, idx));
-                        String replyText = t.substring(idx + 1).trim();
-
-                        Log.d(TAG, "🟢 Detected REPLY pattern → parentId=" + parentId + ", replyText=" + replyText);
-
-                        // Determine who sent it (since backend reply() doesn’t include sender)
-                        String sender;
-                        if (replyText.startsWith(currentUser + ":")) {
-                            sender = currentUser;
-                            replyText = replyText.replaceFirst(currentUser + ":", "").trim();
-                        } else {
-                            sender = chatName; // other user in direct convo
-                        }
-
-                        // 🧩 Find parent message text (for display)
-                        String parentPreview = null;
-                        for (MessageItem m : messages) {
-                            if (m.getId() == parentId) {
-                                parentPreview = m.getContent();
-                                break;
-                            }
-                        }
-                        if (parentPreview == null) parentPreview = "(original message)";
-
-                        // Add reply message to list
-                        MessageItem replyItem = new MessageItem(
-                                0,
-                                sender,
-                                highlightMentions(replyText).toString(),
-                                now(),
-                                parentId
-                        );
-                        messages.add(replyItem);
-                        adapter.notifyItemInserted(messages.size() - 1);
-                        recycler.scrollToPosition(messages.size() - 1);
-
-                        Log.d(TAG, "💬 Displayed reply from " + sender + " → replying to \"" + parentPreview + "\"");
-                        return;
-                    }
-
-                    // ✅ Normal message "sender: message"
-                    int i = t.indexOf(": ");
-                    String sender = i > 0 ? t.substring(0, i) : "unknown";
-                    String body = i > 0 ? t.substring(i + 2) : t;
-
-                    Log.d(TAG, "💬 Parsed sender=" + sender + " body=" + body);
-
-                    // Avoid echoing back own message
-                    if (sender.equals(currentUser)) {
-                        Log.d(TAG, "Skipping self-message echo");
-                        return;
-                    }
-
-                    // Handle image messages
-                    if (body.startsWith("#image:")) {
-                        long imageId = Long.parseLong(body.replace("#image:", "").trim());
-                        String fileName = "image_" + imageId + ".jpg";
-                        String imgUrl = BASE_URL + "/uploads/" + fileName;
-                        messages.add(new MessageItem(0, sender, "", now(), null, imageId, imgUrl));
-                    } else {
-                        messages.add(new MessageItem(0, sender, highlightMentions(body).toString(), now(), null));
-                    }
-
-                    adapter.notifyItemInserted(messages.size() - 1);
-                    recycler.scrollToPosition(messages.size() - 1);
-                } catch (Exception e) {
-                    Log.e(TAG, "💥 WS parse error", e);
-                }
-            });
-        }
     }
 
     private void setupMentionWatcher() {
