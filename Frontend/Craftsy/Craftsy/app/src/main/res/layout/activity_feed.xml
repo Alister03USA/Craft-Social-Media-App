@@ -1,41 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/blue_background">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/feedToolbar"
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/button_blue"
-        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
-        app:title="Craftsy Feed"
-        app:titleCentered="true"
-        app:titleTextColor="@color/text_white"
-        app:menu="@menu/feed_toolbar_menu"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Craftsy Feed"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="@color/button_blue"
+            android:textColor="@color/text_white" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewFeed"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:scrollbars="vertical" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewFeed"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp"
-        android:scrollbars="vertical" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnAddPost"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="16dp"
+            android:contentDescription="Add Post"
+            android:src="@drawable/ic_add"
+            app:backgroundTint="@color/button_blue" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:menu="@menu/bottom_nav_menu"
+            android:background="@color/blue_background"
+            app:itemIconTint="@color/button_blue"
+            app:itemTextColor="@color/button_blue" />
+    </LinearLayout>
+
+    <!-- 🟦 Floating Message Button (Top Right Corner) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnAddPost"
+        android:id="@+id/btnMessages"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="top|end"
         android:layout_margin="16dp"
-        android:contentDescription="Add Post"
-        android:src="@drawable/ic_add"
+        android:contentDescription="Open Messages"
+        android:src="@drawable/ic_message"
         app:backgroundTint="@color/button_blue" />
+
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
@@ -44,4 +70,7 @@
         app:menu="@menu/bottom_nav_menu"
         android:background="@color/blue_background"
          />
-</LinearLayout>
+
+
+</FrameLayout>
+

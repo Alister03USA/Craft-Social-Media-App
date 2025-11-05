@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Craftsy" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/blue_primary</item>
+        <item name="colorOnPrimary">@color/blue_on_primary</item>
+        <item name="colorSecondary">@color/blue_secondary</item>
+        <item name="colorOnSecondary">@color/blue_on_secondary</item>
+        <item name="android:colorBackground">@color/login_bg</item>
+        <item name="colorOnBackground">@color/blue_on_background</item>
+        <item name="android:statusBarColor">@color/blue_primary</item>
+        <item name="android:navigationBarColor">@color/login_bg</item>
+
+        <!-- FIXED: use built-in Android font -->
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+</resources>

@@ -13,16 +13,17 @@
 
     <item
         android:id="@+id/myFeed"
-        android:title="My Feed"
+        android:title="Feed"
         android:icon="@drawable/ic_c" />
 
     <item
         android:id="@+id/nav_search"
         android:icon="@drawable/ic_spy"
         android:title="Search" />
-    <item
-        android:id="@+id/nav_profile"
-        android:icon="@drawable/ic_user_profile"
-        android:title="Profile"/>
-</menu>
 
+
+    <item
+        android:id="@+id/nav_my_profile"
+        android:title="My Profile"
+        android:icon="@drawable/ic_person_outline" />
+</menu>

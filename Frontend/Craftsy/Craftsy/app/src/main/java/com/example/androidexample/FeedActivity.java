@@ -4,15 +4,20 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
+
 import com.google.android.material.appbar.MaterialToolbar;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +29,7 @@ public class FeedActivity extends BaseActivity {
 
     private static final String TAG = "FeedActivity";
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/feed";
-    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/"; //  where images are served
+    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/";
 
     private String loggedInUsername;
 
@@ -54,9 +59,17 @@ public class FeedActivity extends BaseActivity {
             loggedInUsername = "Fuji"; // This needs to change
         }
 
+        // ✅ Add Post Button
         findViewById(R.id.btnAddPost).setOnClickListener(v -> {
             Intent intent = new Intent(this, FeedCRUDActivity.class);
             intent.putExtra("mode", "add");
+            intent.putExtra("username", loggedInUsername);
+            startActivity(intent);
+        });
+
+        // ✅ New Messages Button
+        findViewById(R.id.btnMessages).setOnClickListener(v -> {
+            Intent intent = new Intent(this, MessagingHomeActivity.class);
             intent.putExtra("username", loggedInUsername);
             startActivity(intent);
         });
@@ -115,7 +128,6 @@ public class FeedActivity extends BaseActivity {
                     JSONObject imgObj = imagesArr.getJSONObject(0);
                     String filePath = imgObj.optString("filePath", "");
                     if (filePath != null && !filePath.isEmpty()) {
-                        // Convert backend file path to accessible URL
                         imageUrl = IMAGE_BASE_URL + filePath.substring(filePath.lastIndexOf("/") + 1);
                     }
                 }

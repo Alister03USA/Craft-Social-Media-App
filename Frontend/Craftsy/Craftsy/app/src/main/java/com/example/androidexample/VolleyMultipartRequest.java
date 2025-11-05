@@ -13,13 +13,15 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * ✅ Corrected VolleyMultipartRequest
- * Proper multipart/form-data format for Spring Boot backend @RequestParam("image")
+ * ✅ Unified VolleyMultipartRequest
+ * Works for Craftsy uploads (images, videos, tutorials)
+ * Compatible with Spring Boot @RequestParam("file") and text params.
  */
 public class VolleyMultipartRequest extends Request<NetworkResponse> {
 
     private static final String LINE_FEED = "\r\n";
-    private final String boundary = "----AndroidBoundary" + UUID.randomUUID().toString();
+    private static final String TWO_HYPHENS = "--";
+    private final String boundary = "----CraftsyBoundary" + UUID.randomUUID();
 
     private final Response.Listener<NetworkResponse> mListener;
     private final Response.ErrorListener mErrorListener;
@@ -51,10 +53,10 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
     public byte[] getBody() throws AuthFailureError {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            // Text fields
+            // 🧾 Text fields
             if (textParams != null && !textParams.isEmpty()) {
                 for (Map.Entry<String, String> entry : textParams.entrySet()) {
-                    bos.write(("--" + boundary + LINE_FEED).getBytes());
+                    bos.write((TWO_HYPHENS + boundary + LINE_FEED).getBytes());
                     bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"" + LINE_FEED).getBytes());
                     bos.write(("Content-Type: text/plain; charset=UTF-8" + LINE_FEED).getBytes());
                     bos.write(LINE_FEED.getBytes());
@@ -63,11 +65,11 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
                 }
             }
 
-            // File fields
+            // 📦 File fields
             if (fileParams != null && !fileParams.isEmpty()) {
                 for (Map.Entry<String, DataPart> entry : fileParams.entrySet()) {
                     DataPart dp = entry.getValue();
-                    bos.write(("--" + boundary + LINE_FEED).getBytes());
+                    bos.write((TWO_HYPHENS + boundary + LINE_FEED).getBytes());
                     bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey()
                             + "\"; filename=\"" + dp.getFileName() + "\"" + LINE_FEED).getBytes());
                     bos.write(("Content-Type: " + dp.getType() + LINE_FEED).getBytes());
@@ -77,9 +79,8 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
                 }
             }
 
-            // End boundary
-            bos.write(("--" + boundary + "--" + LINE_FEED).getBytes());
-
+            // 🧩 End boundary
+            bos.write((TWO_HYPHENS + boundary + TWO_HYPHENS + LINE_FEED).getBytes());
         } catch (IOException e) {
             throw new AuthFailureError("Multipart body build error: " + e.getMessage());
         }
@@ -101,7 +102,7 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         mErrorListener.onErrorResponse(error);
     }
 
-    /** Binary file holder */
+    /** 🧠 Binary data holder for files */
     public static class DataPart {
         private final String fileName;
         private final byte[] content;

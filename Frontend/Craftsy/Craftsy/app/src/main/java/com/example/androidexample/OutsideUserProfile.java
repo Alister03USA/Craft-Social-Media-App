@@ -36,7 +36,7 @@ public class OutsideUserProfile extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_outside_user_profile);
-        setupBottomNavigation(R.id.nav_search);
+
 
         // UI refs
         followButton = findViewById(R.id.btn_follow);

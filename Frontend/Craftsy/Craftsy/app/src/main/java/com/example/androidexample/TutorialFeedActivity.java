@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.button.MaterialButton;
@@ -34,6 +35,8 @@ public class TutorialFeedActivity extends AppCompatActivity {
     private static final String TAG = "TutorialFeed";
     private static final String BASE_URL =
             "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/search?query=";
+    private static final String USER_URL =
+            "http://coms-3090-028.class.las.iastate.edu:8080/users/"; // ✅ adjust if different
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
@@ -55,19 +58,21 @@ public class TutorialFeedActivity extends AppCompatActivity {
         searchButton = findViewById(R.id.searchButton);
         addTutorialButton = findViewById(R.id.addTutorialButton);
 
+        // Adapter handles opening of detail view
         adapter = new TutorialAdapter(this, tutorialList, item -> {
             Intent intent = new Intent(this, TutorialDetailActivity.class);
             intent.putExtra("id", item.getId());
             intent.putExtra("title", item.getTitle());
             intent.putExtra("description", item.getDescription());
             intent.putExtra("category", item.getCategory());
-            intent.putExtra("fileUrl", item.getFileURL());   // ✅ correct key
+            intent.putExtra("fileUrl", item.getFileURL());
             intent.putExtra("filePath", item.getFilePath());
             intent.putExtra("username", item.getUsername());
 
             Log.d(TAG, "Opening detail for: " + item.getTitle()
                     + " | id=" + item.getId()
-                    + " | fileURL=" + item.getFileURL());
+                    + " | fileURL=" + item.getFileURL()
+                    + " | username=" + item.getUsername());
 
             startActivity(intent);
         });
@@ -89,11 +94,13 @@ public class TutorialFeedActivity extends AppCompatActivity {
     /** Fetch tutorials from backend */
     private void fetchTutorials(String query) {
         progressBar.setVisibility(View.VISIBLE);
+        Log.d(TAG, "DEBUG: Starting fetchTutorials() with query=" + query);
         String url = BASE_URL + query;
         Log.d(TAG, "Fetching tutorials from: " + url);
 
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
+                    Log.d(TAG, "DEBUG: Received tutorial array, length=" + response.length());
                     tutorialList.clear();
                     parseResponse(response);
                 },
@@ -117,13 +124,27 @@ public class TutorialFeedActivity extends AppCompatActivity {
                 String title = obj.optString("title", "Untitled");
                 String description = obj.optString("description", "No description");
                 String category = obj.optString("category", "Uncategorized");
-                String fileUrl = obj.optString("fileURL", null); // ✅ match backend key
-                String username = obj.optString("username", "Unknown");
+                String fileUrl = obj.optString("fileURL", null);
+                long userId = obj.optLong("user_id", -1);
+
+                // Debug: log user_id and username field
+                Log.d(TAG, "DEBUG: Tutorial raw user_id=" + userId + ", checking for username field: " + obj.has("username"));
+
+                // Temporarily set username as "Unknown" until fetched
+                String username = "Unknown";
 
                 tutorialList.add(new TutorialItem(id, title, description,
                         category, fileUrl, null, username));
 
-                Log.d(TAG, "Added: " + title + " | id=" + id + " | fileURL=" + fileUrl);
+                // Fetch actual username using user_id
+                if (userId > 0) {
+                    fetchUsername(userId, i);
+                }
+
+                Log.d(TAG, "Added tutorial: " + title
+                        + " | id=" + id
+                        + " | user_id=" + userId
+                        + " | fileURL=" + fileUrl);
             }
 
             adapter.notifyDataSetChanged();
@@ -132,5 +153,31 @@ public class TutorialFeedActivity extends AppCompatActivity {
         } finally {
             progressBar.setVisibility(View.GONE);
         }
+    }
+
+    /** Fetch username using user_id asynchronously */
+    private void fetchUsername(long userId, int index) {
+        String url = USER_URL + userId;
+        Log.d(TAG, "DEBUG: Sending username request for user_id=" + userId);
+        Log.d(TAG, "Fetching username for user_id=" + userId + " from " + url);
+
+        JsonObjectRequest userRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        Log.d(TAG, "DEBUG: Response from user_id=" + userId + " => " + response.toString());
+                        String username = response.optString("username", "Unknown");
+                        if (index >= 0 && index < tutorialList.size()) {
+                            tutorialList.get(index).setUsername(username);
+                            adapter.notifyItemChanged(index);
+                            Log.d(TAG, "Fetched username: " + username + " for user_id=" + userId);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing username for user_id=" + userId, e);
+                    }
+                },
+                error -> Log.e(TAG, "ERROR: Failed to fetch username for user_id=" + userId + ", details=" + error.toString())
+        );
+
+        Volley.newRequestQueue(this).add(userRequest);
     }
 }

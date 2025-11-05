@@ -56,8 +56,8 @@ public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.ViewHo
             intent.putExtra("title", item.getTitle());
             intent.putExtra("description", item.getDescription());
             intent.putExtra("category", item.getCategory());
-            intent.putExtra("fileUrl", item.getFileURL());  // ✅ now matches backend JSON "fileURL"
-            intent.putExtra("username", item.getUsername());
+            intent.putExtra("fileUrl", item.getFileURL());  // ✅ correct backend key
+            intent.putExtra("username", item.getUsername()); // ✅ ensure username passes through
             context.startActivity(intent);
         });
     }
@@ -78,7 +78,6 @@ public class TutorialAdapter extends RecyclerView.Adapter<TutorialAdapter.ViewHo
             category = itemView.findViewById(R.id.tutorialCategory);
             username = itemView.findViewById(R.id.tutorialUsername);
             description = itemView.findViewById(R.id.tutorialDescription);
-            thumbnail = itemView.findViewById(R.id.tutorialThumbnail);
         }
     }
 }
