@@ -126,25 +126,7 @@ public class ChatSocket {
         broadcast(username + ": " + text);
 
 
-        // ----------------- Send Notifications -----------------
-        for (Users member : convo.getMembers()) {
-            if (!member.getUsername().equals(username)) {  // exclude sender
-                Notification notif = new Notification();
-                notif.setUser(member);
-                notif.setTitle(convo instanceof GroupConversation ? "New Group Message" : "New Direct Message");
-                notif.setMessage(username + " sent a message" + (convo instanceof GroupConversation ? " in " + ((GroupConversation) convo).getGroupName() : ""));
-                notif.setCreatedAt(new Date());
-                notif.setIsRead(false);
-                notificationRepository.save(notif);
 
-                // Push via WebSocket if connected
-                Session recipientSession = usernameSessionMap.get(member.getUsername());
-                if (recipientSession != null && recipientSession.isOpen()) {
-                    recipientSession.getBasicRemote().sendText("NOTIF:" + notif.getMessage());
-                }
-
-            }
-        }
     }
 
     /**

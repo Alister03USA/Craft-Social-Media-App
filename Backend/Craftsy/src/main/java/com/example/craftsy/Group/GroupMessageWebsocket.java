@@ -9,7 +9,6 @@ import com.example.craftsy.Notification.NotificationWebSocket;
 import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
@@ -154,25 +153,9 @@ public class GroupMessageWebsocket {
         groupMessageRepository.save(groupMessage);
 
 
-
-        // Construct JSON for broadcasting to frontend
-        Map<String, Object> broadcast = new HashMap<>();
-        broadcast.put("sender", Map.of("username", sender.getUsername()));
-        broadcast.put("comment", actualMessage);
-        if (replyToMessageId != null) {
-            broadcast.put("replyToMessageId", replyToMessageId);
-            broadcast.put("replyToUsername", groupMessage.getReplyToUsername());
-        }
-
-        String broadcastJson;
-        try {
-            broadcastJson = new ObjectMapper().writeValueAsString(broadcast);
-        } catch (Exception e) {
-            logger.error("Error converting broadcast message to JSON", e);
-            return;
-        }
-
-        broadcastToGroup(groupId, username, broadcastJson);
+        // Broadcast message with reply info
+        String broadcastMessage = formatBroadcastMessage(username, actualMessage, groupMessage.getReplyToUsername());
+        broadcastToGroup(groupId, username, broadcastMessage);
 
 
         // create notifications for all members except sender
