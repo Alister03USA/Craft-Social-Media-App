@@ -45,41 +45,44 @@ public class NotificationCenterActivity extends BaseActivity {
 
 
     private void fetchNotifications() {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/"+SessionManager.getInstance().getLoggedInUsername(); // replace with your backend
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/"
+                + SessionManager.getInstance().getLoggedInUsername();
 
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
                 Request.Method.GET,
                 url,
                 null,
-                new Response.Listener<JSONArray>() {
-                    @Override
-                    public void onResponse(JSONArray response) {
-                        notificationList.clear();
-                        for (int i = 0; i < response.length(); i++) {
-                            try {
-                                JSONObject obj = response.getJSONObject(i);
+                response -> {
+                    notificationList.clear();
+                    for (int i = 0; i < response.length(); i++) {
+                        try {
+                            JSONObject obj = response.getJSONObject(i);
+                            int id = obj.getInt("id");
+                            String title = obj.getString("title");
+                            String message = obj.getString("message");
 
-                                int id = obj.getInt("id");          // get ID from JSON
-                                String title = obj.getString("title");
-                                String message = obj.getString("message");
+                            // Get sender username if present
+                            JSONObject senderObj = obj.optJSONObject("sender");
+                            String senderUsername = senderObj != null ? senderObj.getString("username") : null;
 
-                                notificationList.add(new NotificationItem(id, title, message));
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                            // Automatically detect follow requests
+                            String type = "general";
+                            if ((title != null && title.toLowerCase().contains("follow"))
+                                    || (message != null && message.toLowerCase().contains("follow"))) {
+                                type = "follow_request";
                             }
+
+                            notificationList.add(new NotificationItem(id, title, message, type, senderUsername));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                        adapter.notifyDataSetChanged();
                     }
+                    adapter.notifyDataSetChanged();
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(NotificationCenterActivity.this, "Error loading notifications", Toast.LENGTH_SHORT).show();
-                    }
-                }
+                error -> Toast.makeText(NotificationCenterActivity.this, "Error loading notifications", Toast.LENGTH_SHORT).show()
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(jsonArrayRequest);
     }
+
 }

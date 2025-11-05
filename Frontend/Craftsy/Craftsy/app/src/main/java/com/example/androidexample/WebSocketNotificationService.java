@@ -82,7 +82,7 @@ public class WebSocketNotificationService extends Service {
                             intent.putExtra("message", body);
                             sendBroadcast(intent);
                         } else {
-                            // Only show Android system notification
+                            // Show Android system notification
                             showNotification(title, body, id);
                         }
 
@@ -94,7 +94,6 @@ public class WebSocketNotificationService extends Service {
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
                     Log.d(TAG, "WebSocket Closed: " + reason);
-                    // Optionally: reconnect here
                 }
 
                 @Override
@@ -128,10 +127,11 @@ public class WebSocketNotificationService extends Service {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(Notification.DEFAULT_ALL) // vibrate + sound
+                .setFullScreenIntent(pendingIntent, true) // heads-up / top notification
                 .build();
 
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
         int finalId = (notificationId != -1) ? notificationId : (int) System.currentTimeMillis();
         manager.notify(finalId, notification);
     }
