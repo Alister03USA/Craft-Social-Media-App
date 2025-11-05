@@ -18,16 +18,16 @@
             android:layout_height="wrap_content">
 
             <Button
-                android:id="@+id/backToFeedButton"
+                android:id="@+id/backToGroupButton"
                 style="@style/CraftsyButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="← Back to Feed"
+                android:text="← Back to Group"
                 android:backgroundTint="@color/blue_secondary"
                 android:textSize="16sp" />
 
             <TextView
-                android:text="Create Pattern"
+                android:text="Create Post"
                 android:textColor="@color/text_black"
                 android:textStyle="bold"
                 android:textSize="22sp"
@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <!-- Image Upload -->
+        <!-- Image Preview -->
         <ImageView
             android:id="@+id/imagePreview"
             android:layout_width="match_parent"
@@ -44,66 +44,42 @@
             android:layout_marginTop="24dp"
             android:scaleType="centerCrop"
             android:background="@drawable/craftsy_image_placeholder"
-            android:contentDescription="Pattern Image" />
+            android:contentDescription="Post Image Preview" />
 
+        <!-- Select Image Button -->
         <Button
             android:id="@+id/selectImageButton"
             style="@style/CraftsyButton"
             android:text="Select Image"
-            android:backgroundTint="@color/button_blue" />
+            android:backgroundTint="@color/button_blue"
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-        <!-- Text Inputs -->
+        <!-- Post Text -->
         <EditText
-            android:id="@+id/patternTitleInput"
-            android:hint="Pattern Title"
+            android:id="@+id/postTextInput"
+            android:hint="Write something..."
             android:textColor="@color/text_black"
             android:background="@drawable/craftsy_card_bg"
             android:padding="12dp"
             android:textSize="16sp"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:minHeight="140dp"
             android:layout_marginTop="24dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <EditText
-            android:id="@+id/patternDescInput"
-            android:hint="Pattern Description"
-            android:inputType="textMultiLine"
-            android:gravity="top"
-            android:minHeight="120dp"
-            android:textColor="@color/text_black"
-            android:background="@drawable/craftsy_card_bg"
-            android:padding="12dp"
-            android:textSize="16sp"
-            android:layout_marginTop="16dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <!-- Pattern Type Input -->
-        <EditText
-            android:id="@+id/patternTypeInput"
-            android:hint="Pattern Type (e.g., Knitting)"
-            android:textColor="@color/text_black"
-            android:background="@drawable/craftsy_card_bg"
-            android:padding="12dp"
-            android:textSize="16sp"
-            android:layout_marginTop="16dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <!-- Difficulty Spinner -->
-        <Spinner
-            android:id="@+id/difficultySpinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/craftsy_card_bg"/>
-
-
-        <!-- Submit -->
+        <!-- Submit Button -->
         <Button
-            android:id="@+id/uploadPatternButton"
+            android:id="@+id/postButton"
             style="@style/CraftsyButton"
-            android:text="Post Pattern"
+            android:text="Post"
             android:backgroundTint="@color/button_blue"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="24dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
 </ScrollView>

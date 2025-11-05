@@ -1,18 +1,23 @@
 package com.example.androidexample;
 
 public class NotificationItem {
-    private int id;           // Add this
+
+    private int id;
     private String title;
     private String message;
 
-    // Update constructor to include id
-    public NotificationItem(int id, String title, String message) {
+    // NEW FIELDS
+    private String type; // "follow_request", "info", etc.
+    private String senderUsername;
+
+    public NotificationItem(int id, String title, String message, String type, String senderUsername) {
         this.id = id;
         this.title = title;
         this.message = message;
+        this.type = type;
+        this.senderUsername = senderUsername;
     }
 
-    // Getter for id
     public int getId() {
         return id;
     }
@@ -23,5 +28,13 @@ public class NotificationItem {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getSenderUsername() {
+        return senderUsername;
     }
 }

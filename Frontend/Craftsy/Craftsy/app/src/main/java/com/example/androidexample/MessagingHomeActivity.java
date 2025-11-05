@@ -6,6 +6,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -42,6 +43,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
     private ImageButton newChatBtn;
     private ProgressBar progressBar;
     private String currentUsername;
+    private Button MHbckButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +55,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
         searchBar = findViewById(R.id.searchBar);
         newChatBtn = findViewById(R.id.newChatBtn);
         progressBar = findViewById(R.id.progressBar);
+        MHbckButton = findViewById(R.id.MHbckButton);
 
         rvDirect.setLayoutManager(new LinearLayoutManager(this));
         rvGroups.setLayoutManager(new LinearLayoutManager(this));
@@ -81,6 +84,8 @@ public class MessagingHomeActivity extends AppCompatActivity {
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) { filter(s.toString()); }
             @Override public void afterTextChanged(Editable s) {}
         });
+        MHbckButton.setOnClickListener(v -> finish());
+
 
         fetchConversations();
     }

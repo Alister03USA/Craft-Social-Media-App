@@ -101,6 +101,17 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
     public void deliverError(VolleyError error) {
         mErrorListener.onErrorResponse(error);
     }
+    private void writeDataPart(ByteArrayOutputStream bos, DataPart dataFile, String inputName) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(TWO_HYPHENS).append(boundary).append(LINE_FEED);
+        sb.append("Content-Disposition: form-data; name=\"").append(inputName)
+                .append("\"; filename=\"").append(dataFile.getFileName()).append("\"").append(LINE_FEED);
+        sb.append("Content-Type: ").append(dataFile.getType()).append(LINE_FEED);
+        sb.append(LINE_FEED);
+        bos.write(sb.toString().getBytes("UTF-8"));
+        bos.write(dataFile.getContent());
+        bos.write(LINE_FEED.getBytes("UTF-8"));
+    }
 
     /** 🧠 Binary data holder for files */
     public static class DataPart {
