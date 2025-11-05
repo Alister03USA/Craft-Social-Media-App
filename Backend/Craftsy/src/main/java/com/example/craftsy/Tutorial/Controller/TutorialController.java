@@ -1,5 +1,10 @@
 package com.example.craftsy.Tutorial.Controller;
 
+import com.example.craftsy.FollowingFollowers.Entity.Follow;
+import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+import com.example.craftsy.Notification.Entity.Notification;
+import com.example.craftsy.Notification.NotificationWebSocket;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
@@ -28,6 +33,12 @@ public class TutorialController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
 
 
@@ -80,6 +91,27 @@ public class TutorialController {
 
             tutorialRepository.save(tutorial);
 
+
+            // ===== Notify followers =====
+
+            List<Follow> followList = followRepository.findByFollowing(user);
+            List<Users> followers = followList.stream()
+                    .map(Follow::getFollower)
+                    .toList();
+
+            for (Users follower : followers) {
+                Notification notif = new Notification();
+                notif.setUser(follower);
+                notif.setTitle("New Tutorial Uploaded");
+                notif.setMessage(user.getUsername() + " uploaded a new tutorial: " + tutorial.getTitle());
+                notif.setCreatedAt(new Date());
+                notif.setIsRead(false);
+                notificationRepository.save(notif);
+
+                // Push notification via WebSocket
+                NotificationWebSocket.pushNotification(follower.getUsername(), notif);
+            }
+
             return ResponseEntity.ok("Tutorial uploaded successfully!");
 
         } catch (IOException e) {
@@ -120,42 +152,52 @@ public class TutorialController {
 
 
     /**
-     * GET "/tutorials/{id}"
-     * Fetch the file of the Videos
-     */
-    @GetMapping("/{id}")
+     * GET "/tutorial/{id}/file"
+     * * Fetch the file of the Videos - Optimized for direct streaming
+    */
+    @GetMapping("/{id}/file")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
-        if (tutorialOpt.isEmpty()){
+        if (tutorialOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         Tutorial tutorial = tutorialOpt.get();
 
-        // External URL
-        if (tutorial.getFileUrl() != null) {
-            return ResponseEntity.ok(Map.of("fileUrl", tutorial.getFileUrl()));
+        // External URL - Redirect to the external source
+        if (tutorial.getFileUrl() != null && !tutorial.getFileUrl().isEmpty()) {
+            // Return a redirect response so the client fetches from the external URL directly
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                    .location(java.net.URI.create(tutorial.getFileUrl()))
+                    .build();
         }
 
-        // Local file
-        if (tutorial.getFilePath() != null) {
+        // Local file - Stream directly
+        if (tutorial.getFilePath() != null && !tutorial.getFilePath().isEmpty()) {
             Path path = Paths.get(tutorial.getFilePath());
             if (!Files.exists(path)) {
                 return ResponseEntity.notFound().build();
             }
 
-            Resource resource = new FileSystemResource(path); // Data is read by chunk
-            String contentType;
             try {
-                contentType = Files.probeContentType(path); // build-in system to detect file type
-            } catch (IOException e) {
-                contentType = "application/octet-stream";
-            }
-            if (contentType == null) contentType = "application/octet-stream"; // For unknown binary file
+                Resource resource = new FileSystemResource(path);
 
-            return ResponseEntity.ok() // Resource will be streamed in the response body
-                    .contentType(MediaType.parseMediaType(contentType)) // sent the type of file
-                    .body(resource);
+                // Detect content type
+                String contentType = Files.probeContentType(path);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+
+                // Return the file with proper headers for streaming
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .header("Content-Disposition", "inline; filename=\"" + path.getFileName() + "\"")
+                        .body(resource);
+
+            } catch (IOException e) {
+                return ResponseEntity.status(500)
+                        .body("Error reading file: " + e.getMessage());
+            }
         }
 
         return ResponseEntity.noContent().build();
@@ -178,6 +220,7 @@ public class TutorialController {
         for (Tutorial t : tutorials) {
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getId());
+            map.put("Username", t.getUser().getUsername());
             map.put("title", t.getTitle());
             map.put("description", t.getDescription());
             map.put("category", t.getCategory());
@@ -219,7 +262,7 @@ public class TutorialController {
             map.put("category", t.getCategory());
             map.put("username", t.getUser().getUsername());
 
-            // ✅ Handle both local and external URLs
+            // Handle both local and external URLs
             String fileUrl = (t.getFileUrl() != null)
                     ? t.getFileUrl()
                     : "/tutorial/" + t.getId(); // local file endpoint

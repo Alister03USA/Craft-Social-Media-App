@@ -39,67 +39,101 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".PatternActivity"
-            android:exported="true" />
-        <!-- 👤 User Management -->
-        <activity android:name=".SignupActivity"
+
+        <!-- User Profile -->
+        <activity
+            android:name=".UserProfile"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
-        <activity android:name=".DeleteActivity"
+        <!-- Search Activity -->
+        <activity
+            android:name=".SearchActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
-        <activity android:name=".UserProfile"
+        <!-- Feed -->
+        <activity
+            android:name=".FeedActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
-        <activity android:name=".OutsideUserProfile"
+        <activity
+            android:name=".FeedCRUDActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".FeedDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <!-- Delete Account -->
+        <activity
+            android:name=".DeleteActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- 📰 Feed -->
-        <activity android:name=".FeedActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Craftsy" />
-        <activity android:name=".FeedCRUDActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Craftsy" />
-        <activity android:name=".FeedDetailActivity"
+        <!-- Signup -->
+        <activity
+            android:name=".SignupActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- 🔍 Search -->
-        <activity android:name=".SearchActivity"
+        <!-- Notification Center -->
+        <activity
+            android:name=".NotificationCenterActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- 🔔 Notifications -->
-        <activity android:name=".NotificationCenterActivity"
+        <!-- Other User Profile -->
+        <activity
+            android:name=".OutsideUserProfile"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <!-- 🎥 Tutorials -->
-        <activity android:name=".TutorialFeedActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Craftsy" />
         <activity android:name=".TutorialDetailActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".TutorialUploadActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <!--  Messaging -->
-        <activity android:name=".MessagingHomeActivity"
-            android:exported="true"
+        <!-- Notification Center Activity  -->
+        <activity android:name=".TutorialUploadActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy">
+        </activity>
+
+        <!-- User Profile Activity -->
+        <activity
+            android:name=".OutsideUserProfile"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" >
+
+
+
+
+        </activity>
+        <activity
+            android:name=".PatternDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" >
+        </activity>
+        <activity
+            android:name=".CreateReviewActivity"
+            android:exported="false"
             android:theme="@style/Theme.Craftsy" />
-        <activity android:name=".DirectMessagingActivity"
+        <activity
+            android:name=".CreatePatternActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
 
-        <activity android:name=".NewChatActivity"
+        <!-- Patterns Activity -->
+        <activity
+            android:name=".PatternActivity"
             android:exported="false"
-            android:theme="@style/Theme.Craftsy" />
+            android:theme="@style/Theme.Craftsy" >
 
-        <activity android:name=".SelectUserActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Craftsy" />
+
+        </activity>
+
+
+
     </application>
+
 </manifest>

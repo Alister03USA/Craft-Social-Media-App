@@ -18,7 +18,7 @@ public class PatternsComments {
 
     @ManyToOne
     @JoinColumn(
-            name = "patternName", //name of the foreign key column in the 'patternsComments' table
+            name = "patternId", //name of the foreign key column in the 'patternsComments' table
             nullable = false, //must have username column
             referencedColumnName = "patternName" //column name in the 'patterns' table to reference
     )
