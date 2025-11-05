@@ -49,6 +49,9 @@ public class LoginEditUserController {
         if(update.getCraftSpecialties() != null){
             user.setCraftSpecialties(update.getCraftSpecialties());
         }
+        if(update.getImage() != null){
+            user.setImage(update.getImage());
+        }
         loginEditUserRepository.save(user);
         return user;
     }

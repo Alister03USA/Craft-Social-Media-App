@@ -1,5 +1,6 @@
 package com.example.craftsy.loginEditUser;
 
+import com.example.craftsy.images.Image;
 import jakarta.persistence.*;
 
 @Entity
@@ -19,6 +20,10 @@ public class LoginEditUser {
     private Integer following;
     private String email;
     private String password;
+
+    @ManyToOne
+    @JoinColumn(name = "image_id")
+    private Image image;
 
     public LoginEditUser() {
     }
@@ -86,4 +91,11 @@ public class LoginEditUser {
         this.password = password;
     }
 
+    public Image getImage() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
 }
