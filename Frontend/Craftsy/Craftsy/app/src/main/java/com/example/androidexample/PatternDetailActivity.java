@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -74,7 +75,6 @@ public class PatternDetailActivity extends AppCompatActivity {
 
     private void fetchPatternDetails() {
 
-        // ✅ FIXED: Correct endpoint order
         String url = BASE_URL + "/patterns/" + username + "/" + patternTitle;
 
         final ReviewsAdapter[] adapterWrapper = new ReviewsAdapter[1];
@@ -97,7 +97,21 @@ public class PatternDetailActivity extends AppCompatActivity {
                         if (!imgUrl.isEmpty()) Glide.with(this).load(imgUrl).into(detailImage);
                         else detailImage.setImageResource(R.drawable.craftsy_image_placeholder);
 
-                        // Reviews
+                        Button editPatternButton = findViewById(R.id.editPatternButton);
+                        String owner = response.optJSONObject("user").optString("username");
+
+                        if (owner.equals(username)) {
+                            editPatternButton.setVisibility(View.VISIBLE);
+                            editPatternButton.setOnClickListener(v -> {
+                                Intent intent = new Intent(PatternDetailActivity.this, EditPatternsActivity.class);
+                                intent.putExtra("patternName", patternTitle);
+                                startActivity(intent);
+                            });
+                        } else {
+                            editPatternButton.setVisibility(View.GONE);
+                        }
+
+                        // ✅ Reviews parsing
                         JSONArray commentsArray = response.optJSONArray("comments");
                         List<Review> reviews = new ArrayList<>();
                         if (commentsArray != null) {
@@ -113,26 +127,18 @@ public class PatternDetailActivity extends AppCompatActivity {
                             }
                         }
 
-                        adapterWrapper[0] = new ReviewsAdapter(
-                                this,
-                                reviews,
-                                review -> {
-                                    // ✅ FIXED: Correct like endpoint order
-                                    String likeUrl = BASE_URL + "/patterns/" +
-                                            username + "/" + patternTitle + "/" + review.id + "/like";
-
-                                    JsonObjectRequest likeReq = new JsonObjectRequest(
-                                            Request.Method.PUT, likeUrl, null,
-                                            r -> {
-                                                review.likes++;
-                                                adapterWrapper[0].notifyDataSetChanged();
-                                            },
-                                            err -> Toast.makeText(this, "Failed to like review", Toast.LENGTH_SHORT).show()
-                                    );
-
-                                    VolleySingleton.getInstance(this).addToRequestQueue(likeReq);
-                                }
-                        );
+                        adapterWrapper[0] = new ReviewsAdapter(this, reviews, review -> {
+                            String likeUrl = BASE_URL + "/patterns/" + username + "/" + patternTitle + "/" + review.id + "/like";
+                            JsonObjectRequest likeReq = new JsonObjectRequest(
+                                    Request.Method.PUT, likeUrl, null,
+                                    r -> {
+                                        review.likes++;
+                                        adapterWrapper[0].notifyDataSetChanged();
+                                    },
+                                    err -> Toast.makeText(this, "Failed to like review", Toast.LENGTH_SHORT).show()
+                            );
+                            VolleySingleton.getInstance(this).addToRequestQueue(likeReq);
+                        });
 
                         reviewsList.setAdapter(adapterWrapper[0]);
 
@@ -143,8 +149,11 @@ public class PatternDetailActivity extends AppCompatActivity {
                 error -> Toast.makeText(this, "Could not load pattern", Toast.LENGTH_LONG).show()
         );
 
+        // ✅ MUST include this!
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
+
 
 
     private String getFirstImagePath(JSONArray images) {

@@ -155,7 +155,7 @@ public class GroupDetailsActivity extends AppCompatActivity {
         }
     }
     private void joinGroup() {
-        String url = BASE_URL + "/" + currentUsername + "/" + groupId + "/join";
+        String url = BASE_URL + "/" + currentUsername +  "/join/" + groupId ;
 
         StringRequest req = new StringRequest(Request.Method.POST, url,
                 response -> {

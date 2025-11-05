@@ -52,6 +52,17 @@
                 android:background="@drawable/craftsy_image_placeholder"
                 android:contentDescription="Pattern Image"
                 android:clipToOutline="true"/>
+            <Button
+                android:id="@+id/editPatternButton"
+                style="@style/CraftsyButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit Pattern"
+                android:backgroundTint="@color/button_blue"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp"
+                android:visibility="gone"/> <!-- HIDDEN BY DEFAULT -->
+
 
             <!-- Pattern Info Card -->
             <LinearLayout

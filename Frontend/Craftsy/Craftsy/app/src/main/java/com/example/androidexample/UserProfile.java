@@ -31,6 +31,7 @@ public class UserProfile extends BaseActivity {
 
     private EditText displayName, username, bio, email, password, craftSpecialties;
 
+
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
     @Override
@@ -115,7 +116,14 @@ public class UserProfile extends BaseActivity {
         loadUserPosts(usernameValue);
 
         Button editButton = findViewById(R.id.editProfile);
+        Button notifButton = findViewById(R.id.notifButton);
+        notifButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, NotificationCenterActivity.class);
+            startActivity(intent);
+        });
+
         editButton.setOnClickListener(v -> showEditProfile());
+
     }
 
     /** ------------------- LOAD USER POSTS ------------------- **/

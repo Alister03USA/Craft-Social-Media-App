@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,17 +55,22 @@ public class GroupPostAdapter extends RecyclerView.Adapter<GroupPostAdapter.Post
         } else {
             holder.image.setVisibility(View.GONE); // no placeholder, just hide
         }
+        holder.viewComments.setOnClickListener(v -> {
+            Intent intent = new Intent(holder.itemView.getContext(), CommentsActivity.class);
+            intent.putExtra("messageId", post.getMessageId());
+            holder.itemView.getContext().startActivity(intent);
+        });
+
     }
 
 
 
-    @Override
-    public int getItemCount() {
-        return posts.size();
-    }
+
+
+
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView username, text;
+        TextView username, text, viewComments;
         ImageView image;
 
         public PostViewHolder(@NonNull View itemView) {
@@ -72,6 +78,12 @@ public class GroupPostAdapter extends RecyclerView.Adapter<GroupPostAdapter.Post
             username = itemView.findViewById(R.id.groupPostUsername);
             text = itemView.findViewById(R.id.groupPostText);
             image = itemView.findViewById(R.id.groupPostImage);
+            viewComments = itemView.findViewById(R.id.groupPostViewComments);
         }
     }
+    @Override
+    public int getItemCount() {
+        return posts != null ? posts.size() : 0;
+    }
+
 }
