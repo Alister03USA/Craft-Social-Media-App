@@ -9,6 +9,7 @@ import com.example.craftsy.Notification.NotificationWebSocket;
 import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
@@ -111,20 +112,68 @@ public class GroupMessageWebsocket {
         Users sender =  userRepository.findByUsername(username).orElse(null);
         Group group = groupRepository.findByIdWithMembers(groupId).orElse(null);
 
-        if(sender == null ||  group == null) {
-            logger.error("[onMessage] Sender or Group not found: ");
+        if (sender == null || group == null) {
+            logger.error("[onMessage] Sender or Group not found");
+            return;
         }
 
-        // Save messages in groupMessage table
+        // Parse message format: "REPLY:messageId:actualMessage" or just "actualMessage"
+        Long replyToMessageId = null;
+        String actualMessage = message;
+
+        if (message.startsWith("REPLY:")) {
+            String[] parts = message.split(":", 3);
+            if (parts.length == 3) {
+                try {
+                    replyToMessageId = Long.parseLong(parts[1]);
+                    actualMessage = parts[2];
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid reply format: " + message);
+                }
+            }
+
+        }
+
+            // Save messages in groupMessage table
         GroupMessage groupMessage = new GroupMessage();
         groupMessage.setSender(sender);
         groupMessage.setGroup(group);
-        groupMessage.setMessage(message);
+        groupMessage.setMessage(actualMessage);
         groupMessage.setCreatedAt(new Date());
+
+        // Handle reply
+        if (replyToMessageId != null) {
+            GroupMessage replyToMsg = groupMessageRepository.findById(replyToMessageId).orElse(null);
+            if (replyToMsg != null) {
+                groupMessage.setReplyToMessage(replyToMsg);
+                groupMessage.setReplyToUsername(replyToMsg.getSender().getUsername());
+            }
+        }
+
+
         groupMessageRepository.save(groupMessage);
 
-        // Broadcast message to all active users
-        broadcastToGroup(groupId, username, message);
+
+
+        // Construct JSON for broadcasting to frontend
+        Map<String, Object> broadcast = new HashMap<>();
+        broadcast.put("sender", Map.of("username", sender.getUsername()));
+        broadcast.put("comment", actualMessage);
+        if (replyToMessageId != null) {
+            broadcast.put("replyToMessageId", replyToMessageId);
+            broadcast.put("replyToUsername", groupMessage.getReplyToUsername());
+        }
+
+        String broadcastJson;
+        try {
+            broadcastJson = new ObjectMapper().writeValueAsString(broadcast);
+        } catch (Exception e) {
+            logger.error("Error converting broadcast message to JSON", e);
+            return;
+        }
+
+        broadcastToGroup(groupId, username, broadcastJson);
+
 
         // create notifications for all members except sender
         createNotificationsForMembers(group, sender, "sent a message", groupMessage.getId());
@@ -209,6 +258,12 @@ public class GroupMessageWebsocket {
         }
     }
 
+    private String formatBroadcastMessage(String sender, String message, String replyToUsername) {
+        if (replyToUsername != null) {
+            return message + " [replying to @" + replyToUsername + "]";
+        }
+        return message;
+    }
 
 
     private void createNotificationsForMembers(Group group, Users sender, String action, Long referenceID) {
