@@ -39,6 +39,12 @@ public class NotificationWebSocket {
         NotificationWebSocket.notificationRepository = repo;
     }
 
+    public static void setDependencies(NotificationRepository notifRepo, UserRepository userRepo) {
+        notificationRepository = notifRepo;
+        userRepository = userRepo;
+    }
+
+
     @Autowired
     public void setUserRepository(UserRepository repo) {
         NotificationWebSocket.userRepository = repo;

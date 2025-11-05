@@ -146,6 +146,29 @@ public class GroupController {
 
 
     /**
+     * GET /groupId/{groupName}
+     * Retrieve the group ID by its name.
+     */
+    @GetMapping("/groupId/{groupName}")
+    public ResponseEntity<?> getGroupIdByName(@PathVariable String groupName) {
+        // Decode in case the name has spaces or special characters in the URL
+        String decodedName = URLDecoder.decode(groupName, StandardCharsets.UTF_8);
+
+        Optional<Group> groupOpt = groupRepository.findByGroupName(decodedName);
+        if (groupOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Group not found"));
+        }
+
+        Group group = groupOpt.get();
+        return ResponseEntity.ok(Map.of(
+                "groupId", group.getId(),
+                "groupName", group.getGroupName()
+        ));
+    }
+
+
+
+    /**
      * POST  /{username}/join/{groupId}
      * Public Group - Join directly
      * Private Group - Sent request (only can be accepted/Declined by Admin)

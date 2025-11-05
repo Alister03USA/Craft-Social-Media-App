@@ -220,6 +220,7 @@ public class TutorialController {
         for (Tutorial t : tutorials) {
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getId());
+            map.put("Username", t.getUser().getUsername());
             map.put("title", t.getTitle());
             map.put("description", t.getDescription());
             map.put("category", t.getCategory());
