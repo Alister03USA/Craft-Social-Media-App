@@ -74,7 +74,7 @@ public class UserProfile extends BaseActivity {
     /** ------------------- VIEW MODE ------------------- **/
     private void showProfileView() {
         setContentView(R.layout.activity_user_profile);
-        setupBottomNavigation(R.id.nav_profile);
+        setupBottomNavigation(R.id.nav_my_profile);
 
         TextView usernameTv = findViewById(R.id.username);
         TextView displayNameTv = findViewById(R.id.displayName);

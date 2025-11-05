@@ -93,7 +93,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, GroupFeedActivity.class);
                 startActivity(intent);
             }
-            else if (id == R.id.nav_profile) {
+            else if (id == R.id.nav_my_profile) {
                 // Open logged-in user’s profile
                 Intent intent = new Intent(this, UserProfile.class);
                 startActivity(intent);

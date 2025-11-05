@@ -121,6 +121,16 @@
         <activity android:name=".TutorialUploadActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".MessagingHomeActivity"
+            android:exported="true"
+            android:theme = "@style/Theme.Craftsy"/>
+        <activity android:name=".DirectMessagingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy"/>
+        <activity android:name=".NewChatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy"/>
+
 
 
         <activity
