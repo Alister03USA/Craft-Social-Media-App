@@ -29,7 +29,7 @@ public class NotificationCenterActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification_center);
         // Setup bottom navigation
-        setupBottomNavigation(R.id.nav_notif);
+        //setupBottomNavigation(R.id.nav_notif);
 
         recyclerView = findViewById(R.id.recyclerViewNotifications);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
