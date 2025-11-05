@@ -1,5 +1,6 @@
 package com.example.craftsy.SignUpDelete.Entity;
 
+import com.example.craftsy.images.Image;
 import com.example.craftsy.messages.conversations.DirectConversation;
 import com.example.craftsy.messages.conversations.GroupConversation;
 import jakarta.persistence.*;
@@ -48,6 +49,10 @@ public class Users {
     // Hashed password
     @Column(nullable = false)
     private String password;
+
+    @ManyToOne
+    @JoinColumn(name = "image_id")
+    private Image image;
 
     // Default constructor
     public Users() {}
@@ -145,5 +150,13 @@ public class Users {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Image getImage() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
     }
 }

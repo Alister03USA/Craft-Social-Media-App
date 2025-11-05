@@ -93,6 +93,16 @@ public class FeedController {
         return userFeed;
     }
 
+    @GetMapping("/feed/{username}/{projectName}")
+    Feed getProject(@PathVariable String username, @PathVariable String projectName){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed project = feedRepository.findByUserAndProjectName(user, projectName)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        return project;
+    }
+
     /**
      * Deletes the given project for given user
      * @param username user that has posted project
