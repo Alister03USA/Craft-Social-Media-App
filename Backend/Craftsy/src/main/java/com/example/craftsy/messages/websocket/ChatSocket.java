@@ -1,6 +1,8 @@
 package com.example.craftsy.messages.websocket;
 
 
+import com.example.craftsy.Notification.Entity.Notification;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.messages.Message;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +35,7 @@ public class ChatSocket {
     private MessageRepository msgRepo;
     private GroupConversationRepository groupConvoRepo;
     private DirectConversationRepository directConvoRepo;
+    private NotificationRepository notificationRepository;
 
     private static Map<Session, Conversation> sessionConvoMap = new Hashtable<>();
     private static Map<Session, String> sessionConvoTypeMap = new Hashtable<>();
@@ -46,7 +50,12 @@ public class ChatSocket {
     public void setUserRepo(UserRepository repo) { this.userRepo = repo; }
     public void setMessageService(MessageService service) { this.messageService = service; }
 
-
+    /**
+     * opens server to convo
+     * @param session
+     * @param convoId
+     * @param username
+     */
     @OnOpen
     public void onOpen(Session session,@PathParam("convoId") String convoId, @PathParam("username") String username){
         sessionUsernameMap.put(session, username);
@@ -77,7 +86,12 @@ public class ChatSocket {
     }
 
 
-
+    /**
+     * when message is sent
+     * @param session
+     * @param text
+     * @throws IOException
+     */
     @OnMessage
     public void onMessage(Session session, String text) throws IOException {
         // Handle new messages
@@ -87,28 +101,57 @@ public class ChatSocket {
         String convoType = sessionConvoTypeMap.get(session);
         String convoId = sessionConvoMap.get(session).getId();
 
+        //call if message is reaction
         if (text.startsWith("#react:")) {
             broadcast(messageService.react(text));
             return;
         }
 
+        //call if message is a reply
         if(text.startsWith("#reply:")){
             broadcast(messageService.reply(text, username, convoId));
             return;
         }
 
+        //call if message is removing a reaction
         if(text.startsWith("#!react:")){
             broadcast(messageService.removeReaction(text));
             return;
         }
 
+        //broadcasts and saves standard message
         Message message = new Message(username, text, convo);
         messageService.saveMessageAndUpdateConversation(convo.getId(), message);
 
         broadcast(username + ": " + text);
+
+
+        // ----------------- Send Notifications -----------------
+        for (Users member : convo.getMembers()) {
+            if (!member.getUsername().equals(username)) {  // exclude sender
+                Notification notif = new Notification();
+                notif.setUser(member);
+                notif.setTitle(convo instanceof GroupConversation ? "New Group Message" : "New Direct Message");
+                notif.setMessage(username + " sent a message" + (convo instanceof GroupConversation ? " in " + ((GroupConversation) convo).getGroupName() : ""));
+                notif.setCreatedAt(new Date());
+                notif.setIsRead(false);
+                notificationRepository.save(notif);
+
+                // Push via WebSocket if connected
+                Session recipientSession = usernameSessionMap.get(member.getUsername());
+                if (recipientSession != null && recipientSession.isOpen()) {
+                    recipientSession.getBasicRemote().sendText("NOTIF:" + notif.getMessage());
+                }
+
+            }
+        }
     }
 
-
+    /**
+     * when server is closed
+     * @param session
+     * @throws IOException
+     */
     @OnClose
     public void onClose(Session session) throws IOException {
         logger.info("Entered into Close");
@@ -120,6 +163,11 @@ public class ChatSocket {
     }
 
 
+    /**
+     * when error is thrown
+     * @param session
+     * @param throwable
+     */
     @OnError
     public void onError(Session session, Throwable throwable) {
         // Do error handling here
@@ -129,6 +177,11 @@ public class ChatSocket {
     }
 
 
+    /**
+     * private method that send message to one user
+     * @param username
+     * @param message
+     */
     private void sendMessageToParticularUser(String username, String message) {
         try {
             usernameSessionMap.get(username).getBasicRemote().sendText(message);
@@ -139,7 +192,10 @@ public class ChatSocket {
         }
     }
 
-
+    /**
+     * private method that broadcasts message to all users
+     * @param message
+     */
     private void broadcast(String message) {
         sessionUsernameMap.forEach((session, username) -> {
             try {
@@ -154,6 +210,10 @@ public class ChatSocket {
 
     }
 
+    /**
+     * gets the complete history of the chat
+     * @return
+     */
     private String getChatHistory() {
         List<Message> messages = msgRepo.findAll();
 

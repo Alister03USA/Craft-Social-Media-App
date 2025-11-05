@@ -57,6 +57,13 @@ public class PatternsController {
         return postPattern;
     }
 
+    /**
+     * updates the description of a pattern
+     * @param username
+     * @param patternName
+     * @param description
+     * @return
+     */
     @PutMapping("/patterns/{username}/{patternName}")
     Patterns updatePatternDescription(@PathVariable String username, @PathVariable String patternName, @RequestBody String description){
         Users user = userRepository.findByUsername(username)
@@ -140,7 +147,12 @@ public class PatternsController {
         return patterns;
     }
 
-
+    /**
+     * private method that adds a rating to a pattern and updates the total rating
+     * @param pattern
+     * @param rating
+     * @return
+     */
     private float addRating(Patterns pattern, float rating){
         if(pattern.getRating() == 0){
             pattern.setRating(rating);
@@ -241,6 +253,14 @@ public class PatternsController {
         return pattern;
     }
 
+    /**
+     * updates a comment
+     * @param username
+     * @param patternName
+     * @param id
+     * @param updatedComment
+     * @return
+     */
     @PutMapping("patterns/{username}/{patternName}/{id}")
     Patterns updateComment(@PathVariable String username, @PathVariable String patternName,
                            @PathVariable Long id, @RequestBody String updatedComment){

@@ -21,6 +21,11 @@ public class ImageController {
     @Autowired
     private ImageRepository imageRepository;
 
+    /**
+     * gets an images id and path
+     * @param id
+     * @return
+     */
     @GetMapping("/images/{id}")
     public ResponseEntity<Image> getImageById(@PathVariable Long id) {
         return imageRepository.findById(id)
@@ -28,6 +33,11 @@ public class ImageController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * posts an image
+     * @param imageFile
+     * @return the image id and path
+     */
     @PostMapping("/images")
     public ResponseEntity<Image> handleFileUpload(@RequestParam("image") MultipartFile imageFile) {
         try {
@@ -51,6 +61,11 @@ public class ImageController {
         }
     }
 
+    /**
+     * deletes an image
+     * @param id
+     * @return
+     */
     @DeleteMapping("/images/{id}")
     public ResponseEntity<String> deleteImage(@PathVariable Long id) {
         Optional<Image> optionalImage = imageRepository.findById(id);
