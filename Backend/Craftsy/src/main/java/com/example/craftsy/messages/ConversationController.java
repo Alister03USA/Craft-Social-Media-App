@@ -31,6 +31,11 @@ public class ConversationController {
     @Autowired
     MessageRepository msgRepo;
 
+    /**
+     * creates a group conversation among users
+     * @param usernames
+     * @return
+     */
     @PostMapping("/messages/group")
     GroupConversation createGroupConvo(@RequestBody List<String> usernames){
         List<Users> users = new ArrayList<>();
@@ -45,6 +50,12 @@ public class ConversationController {
         return savedConvo;
     }
 
+    /**
+     * creates a direct convo between the two users
+     * @param sender
+     * @param receiver
+     * @return
+     */
     @PostMapping("/messages/create/{sender}/{receiver}")
     DirectConversation createDirectConvo(@PathVariable String sender, @PathVariable String receiver){
         List<Users> users = new ArrayList<>();
@@ -62,6 +73,11 @@ public class ConversationController {
         return savedConvo;
     }
 
+    /**
+     * gets all conversations that a user is a member of
+     * @param username
+     * @return
+     */
     @GetMapping("/messages/convos/{username}")
     List<Conversation> getConvosUser(@PathVariable String username){
         Users user = userRepository.findByUsername(username)
@@ -84,6 +100,11 @@ public class ConversationController {
         return convos;
     }
 
+    /**
+     * gets a conversation
+     * @param convoId
+     * @return
+     */
     @GetMapping("/messages/{convoId}")
     Conversation getConversation(@PathVariable String convoId){
         Conversation convo;
@@ -101,6 +122,11 @@ public class ConversationController {
         return convo;
     }
 
+    /**
+     * deletes a conversation
+     * @param convoId
+     * @return
+     */
     @DeleteMapping("/messages/convo/{convoId}")
     String deleteConversation(@PathVariable String convoId){
 
@@ -120,6 +146,12 @@ public class ConversationController {
         return "Conversation deleted";
     }
 
+    /**
+     * sets the group pic
+     * @param groupId
+     * @param image
+     * @return
+     */
     @PutMapping("/messages/{groupId}/pic")
     GroupConversation updateGroupPic(@PathVariable String groupId, @RequestBody Image image){
         GroupConversation convo = groupConvoRepo.findById(groupId)
@@ -128,6 +160,12 @@ public class ConversationController {
         return groupConvoRepo.save(convo);
     }
 
+    /**
+     * add a user to a group
+     * @param groupId
+     * @param username
+     * @return
+     */
     @PutMapping("/messages/{groupId}/add/{username}")
     GroupConversation addUser(@PathVariable String groupId, @PathVariable String username){
         GroupConversation convo = groupConvoRepo.findById(groupId)
@@ -138,6 +176,12 @@ public class ConversationController {
         return groupConvoRepo.save(convo);
     }
 
+    /**
+     * remove a user from a group
+     * @param groupId
+     * @param username
+     * @return
+     */
     @PutMapping("/messages/{groupId}/remove/{username}")
     GroupConversation removeUser(@PathVariable String groupId, @PathVariable String username){
         GroupConversation convo = groupConvoRepo.findById(groupId)
@@ -148,6 +192,11 @@ public class ConversationController {
         return groupConvoRepo.save(convo);
     }
 
+    /**
+     * deletes a message
+     * @param messageId
+     * @return
+     */
     @DeleteMapping("/messages/{messageId}")
     String deleteMessage(@PathVariable Long messageId){
         Message message = msgRepo.findById(messageId)

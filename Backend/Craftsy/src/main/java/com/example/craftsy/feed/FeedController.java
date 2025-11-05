@@ -81,6 +81,11 @@ public class FeedController {
         return userFeed;
     }
 
+    /**
+     * gets all projects posted by one user
+     * @param username
+     * @return
+     */
     @GetMapping("/feed/home/{username}")
     List<Feed> getUserProjects(@PathVariable String username){
         List<Feed> userFeed = new ArrayList<Feed>();
@@ -93,6 +98,12 @@ public class FeedController {
         return userFeed;
     }
 
+    /**
+     * gets one project post
+     * @param username
+     * @param projectName
+     * @return
+     */
     @GetMapping("/feed/{username}/{projectName}")
     Feed getProject(@PathVariable String username, @PathVariable String projectName){
         Users user = userRepository.findByUsername(username)
@@ -231,6 +242,13 @@ public class FeedController {
         return feed;
     }
 
+    /**
+     * unlikes a comment
+     * @param username
+     * @param projectName
+     * @param id
+     * @return
+     */
     @PutMapping("/feed/{username}/{projectName}/{id}/unlike")
     Feed unlikeComment(@PathVariable String username, @PathVariable String projectName,
                        @PathVariable Long id){
