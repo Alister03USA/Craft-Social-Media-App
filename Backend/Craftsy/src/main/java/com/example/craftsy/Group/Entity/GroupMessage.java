@@ -15,10 +15,12 @@ public class GroupMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    // Many messages to a group
     @ManyToOne
     @JoinColumn
     private Group group;
 
+    // Many messages to a user
     @ManyToOne
     @JoinColumn
     private Users sender;

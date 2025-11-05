@@ -20,11 +20,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+/**
+ * WebSocket endpoint for real-time group messaging.
+ * Each open websocket connection belongs to a user and a specific group.
+ */
 @Component
 @ServerEndpoint("/ws/groupMessage/{groupId}/{username}")
 public class GroupMessageWebsocket {
 
+    // Map a session to a user
     private static Map<Session, String> sessionUsernameMap = new ConcurrentHashMap<>();
+    // Map a user to a session
     private static Map<String, Session> usernameSessionMap = new ConcurrentHashMap<>();
 
     // Maps group ID to session - track users in each group
@@ -49,6 +56,7 @@ public class GroupMessageWebsocket {
 
 
 
+    // Called when a new WebSocket connection is established.
     @OnOpen
     public void onOpen(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username) {
         logger.info("[onOpen] Connection attempt - User: " + username + ", Group: " + groupId);
@@ -79,9 +87,11 @@ public class GroupMessageWebsocket {
             return;
         }
 
-        // User is authorized - register the connection (ONLY ONCE!)
+        // User is authorized - register the connection
         sessionUsernameMap.put(session, username);
         usernameSessionMap.put(username, session);
+
+        // Register this session in the group session list
         groupSessionsMap.computeIfAbsent(groupId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
         logger.info("[onOpen] " + username + " successfully joined group " + groupId);
@@ -92,7 +102,7 @@ public class GroupMessageWebsocket {
 
 
 
-
+    // Called when a message is received from a connected client.
     @OnMessage
     public void onMessage(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username, String message) {
 
@@ -122,7 +132,7 @@ public class GroupMessageWebsocket {
     }
 
 
-
+    // Call when websocket has an error
     @OnError
     public void onError(Session session, Throwable error) {
         String username = sessionUsernameMap.get(session);
