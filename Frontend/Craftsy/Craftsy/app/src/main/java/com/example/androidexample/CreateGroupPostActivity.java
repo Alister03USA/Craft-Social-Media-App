@@ -95,19 +95,24 @@ public class CreateGroupPostActivity extends AppCompatActivity {
                         try {
                             JSONObject json = new JSONObject(response);
                             long messageId = json.optLong("messageId", -1);
-                            String imageGetUrl = messageId != -1
-                                    ? BASE_URL + "/groupMessage/image/" + messageId
-                                    : json.optString("filePath", "");
 
-                            // ✅ Send text if it exists
+                            // Construct a combined message: text + image reference
+                            String combinedMessage = "";
                             if (!content.isEmpty()) {
-                                WebSocketManager ws = WebSocketManager.getInstance();
-                                ws.sendMessage(content);
+                                combinedMessage += content;
                             }
+                            if (messageId != -1) {
+                                // append image reference in the same message
+                                combinedMessage += " [image:" + messageId + "]";
+                            }
+
+                            // Send combined message via WebSocket
+                            WebSocketManager ws = WebSocketManager.getInstance();
+                            ws.sendMessage(combinedMessage);
 
                             Toast.makeText(this, "Posted!", Toast.LENGTH_SHORT).show();
                             finish();
-                        } catch (JSONException e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                             Toast.makeText(this, "Upload parse error", Toast.LENGTH_SHORT).show();
                         }
@@ -129,6 +134,7 @@ public class CreateGroupPostActivity extends AppCompatActivity {
             finish();
         }
     }
+
 
     private String getFileNameFromUri(Uri uri) {
         String name = null;

@@ -13,7 +13,6 @@ import android.app.ActivityManager;
 import java.util.List;
 import android.content.Context;
 
-
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
@@ -25,7 +24,6 @@ import java.net.URI;
 
 public class WebSocketNotificationService extends Service {
 
-
     private static final String TAG = "WebSocketService";
     private static final String CHANNEL_ID = "WebSocketNotifications";
     private WebSocketClient webSocketClient;
@@ -34,9 +32,9 @@ public class WebSocketNotificationService extends Service {
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
-        startForeground(1, buildNotification("Notification Service Running..."));
         connectWebSocket();
     }
+
     private boolean isAppInForeground() {
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> processes = am.getRunningAppProcesses();
@@ -58,7 +56,6 @@ public class WebSocketNotificationService extends Service {
             }
 
             String serverUrl = "ws://coms-3090-028.class.las.iastate.edu:8080/ws/notifications/" + username;
-
             URI uri = new URI(serverUrl);
 
             webSocketClient = new WebSocketClient(uri) {
@@ -73,29 +70,26 @@ public class WebSocketNotificationService extends Service {
                     try {
                         JSONObject json = new JSONObject(message);
 
-                        int id = json.optInt("id", -1);  // ✅ Get ID
+                        int id = json.optInt("id", -1);
                         String title = json.optString("title", "Notification");
                         String body = json.optString("message", "");
 
-                        if (!isAppInForeground()) {
+                        if (isAppInForeground()) {
+                            // Only notify the app UI
+                            Intent intent = new Intent("NEW_NOTIFICATION");
+                            intent.putExtra("id", id);
+                            intent.putExtra("title", title);
+                            intent.putExtra("message", body);
+                            sendBroadcast(intent);
+                        } else {
+                            // Only show Android system notification
                             showNotification(title, body, id);
-
                         }
-
-                        // ✅ Send broadcast including ID
-                        Intent intent = new Intent("NEW_NOTIFICATION");
-                        intent.putExtra("id", id);
-                        intent.putExtra("title", title);
-                        intent.putExtra("message", body);
-                        sendBroadcast(intent);
 
                     } catch (Exception e) {
                         Log.e(TAG, "Error parsing notification JSON", e);
                     }
                 }
-
-
-
 
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
@@ -117,7 +111,6 @@ public class WebSocketNotificationService extends Service {
     }
 
     private void showNotification(String title, String message, int notificationId) {
-
         Intent intent = new Intent(this, NotificationCenterActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -137,25 +130,10 @@ public class WebSocketNotificationService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build();
 
-        NotificationManager manager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-        // Use backend ID or fallback to random ID
-        int finalId = (notificationId != -1)
-                ? notificationId
-                : (int) System.currentTimeMillis();
-
+        int finalId = (notificationId != -1) ? notificationId : (int) System.currentTimeMillis();
         manager.notify(finalId, notification);
-    }
-
-
-
-    private Notification buildNotification(String content) {
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Notification Service")
-                .setContentText(content)
-                .setSmallIcon(R.drawable.ic_message)
-                .build();
     }
 
     private void createNotificationChannel() {

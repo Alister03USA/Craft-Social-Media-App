@@ -120,21 +120,32 @@ public class GroupActivity extends AppCompatActivity {
                             String mediaUrl = null;
                             Long messageId = null;
 
-                            // Handle image messages with messageId broadcast
-                            if (content.startsWith("uploaded an image:")) {
-                                // Expecting format: "uploaded an image:{messageId}:{filename}"
-                                String[] parts = content.substring("uploaded an image:".length()).split(":", 2);
-                                if (parts.length == 2) {
-                                    messageId = Long.parseLong(parts[0].trim());
-                                    String fileName = parts[1].trim();
+                            // Check for image placeholder(s)
+                            while (content.contains("[image:")) {
+                                int start = content.indexOf("[image:") + 7;
+                                int end = content.indexOf("]", start);
+                                if (end > start) {
+                                    String idStr = content.substring(start, end);
+                                    messageId = Long.parseLong(idStr);
                                     mediaUrl = BASE_URL + "/groupMessage/image/" + messageId;
-                                    content = null; // no text to display
+
+                                    // Remove the image placeholder from content
+                                    content = content.replace("[image:" + messageId + "]", "").trim();
+                                } else {
+                                    break; // malformed
                                 }
                             }
 
-                            posts.add(new GroupPostModel(sender, content, messageId, mediaUrl));
+                            // ❌ Skip system messages that are just "uploaded an image" without user text or image placeholder
+                            if ((content.isEmpty() || content.matches(".*uploaded an image.*")) && mediaUrl == null) {
+                                return; // ignore this post
+                            }
+
+                            // ✅ Add the post
+                            posts.add(new GroupPostModel(sender, content.isEmpty() ? null : content, messageId, mediaUrl));
                             postAdapter.notifyItemInserted(posts.size() - 1);
                             groupRecyclerView.scrollToPosition(posts.size() - 1);
+
                         } else {
                             Log.w("WebSocketParse", "Unexpected format: " + message);
                         }
@@ -143,6 +154,7 @@ public class GroupActivity extends AppCompatActivity {
                     }
                 });
             }
+
 
             @Override
             public void onOpen() {
@@ -162,22 +174,59 @@ public class GroupActivity extends AppCompatActivity {
     }
 
 
+
+
+
+
     private void loadPosts() {
         String url = BASE_URL + "/groupMessage/" + username + "/" + groupId + "/history";
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
                     posts.clear();
+
                     for (int i = 0; i < response.length(); i++) {
                         try {
                             JSONObject obj = response.getJSONObject(i);
                             JSONObject senderObj = obj.getJSONObject("sender");
                             String sender = senderObj.getString("username");
 
-                            String content = obj.optString("message", null);
-                            Long messageId = obj.has("id") ? obj.getLong("id") : null;
-                            String mediaUrl = obj.optString("mediaUrl", null);
+                            String content = obj.optString("message", "");
+                            Long messageId = null;
+                            String mediaUrl = null;
 
-                            posts.add(new GroupPostModel(sender, content, messageId, mediaUrl));
+                            // Extract all image placeholders
+                            while (content.contains("[image:")) {
+                                int start = content.indexOf("[image:") + 7;
+                                int end = content.indexOf("]", start);
+                                if (end > start) {
+                                    String idStr = content.substring(start, end);
+                                    messageId = Long.parseLong(idStr);
+                                    mediaUrl = BASE_URL + "/groupMessage/image/" + messageId;
+
+                                    // Remove placeholder from text
+                                    content = content.replace("[image:" + messageId + "]", "").trim();
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            // Ignore system-only messages if not attached to an image
+                            if ((content.toLowerCase().contains("image sent") ||
+                                    content.toLowerCase().contains("uploaded an image")) &&
+                                    mediaUrl == null) {
+                                continue; // skip this post entirely
+                            }
+
+                            // Skip posts with no text and no media
+                            if ((content == null || content.isEmpty()) && mediaUrl == null) {
+                                continue;
+                            }
+
+                            // Add post (text, image, or both)
+                            posts.add(new GroupPostModel(sender,
+                                    content.isEmpty() ? null : content,
+                                    messageId,
+                                    mediaUrl));
 
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -193,6 +242,9 @@ public class GroupActivity extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
