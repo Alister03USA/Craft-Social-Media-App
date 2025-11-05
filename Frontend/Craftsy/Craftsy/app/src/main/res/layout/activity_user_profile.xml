@@ -17,17 +17,16 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal">
 
-
             <Button
-                android:layout_gravity="right"
                 android:id="@+id/editProfile"
                 android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="10dp"
                 android:background="#4586EF"
                 android:text="Edit User"
                 android:textSize="10sp"
-                android:textColor="#ffffff"/>
+                android:textColor="#ffffff" />
 
             <ImageView
                 android:id="@+id/profileImage"
@@ -35,7 +34,6 @@
                 android:layout_height="120dp"
                 android:src="@drawable/profile"
                 android:scaleType="centerCrop"
-                android:background="@drawable/profile"
                 android:contentDescription="Profile picture" />
 
             <TextView
@@ -85,51 +83,26 @@
                     android:layout_height="wrap_content"
                     android:text="123 Followers"
                     android:textStyle="bold"
-                    android:layout_marginEnd="24dp"/>
+                    android:layout_marginEnd="24dp" />
 
                 <TextView
                     android:id="@+id/followingCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="200 Following"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- ✅ Dynamic Grid of Posts -->
             <GridLayout
                 android:id="@+id/postsGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:columnCount="3"
-                android:layout_marginTop="24dp">
-
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:src="@drawable/ic_post_placeholder"
-                    android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"
-                    android:background="@drawable/post_border"
-                    android:padding="1dp"/>
-
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:src="@drawable/ic_post_placeholder"
-                    android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"
-                    android:background="@drawable/post_border"
-                    android:padding="1dp"/>
-
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:src="@drawable/ic_post_placeholder"
-                    android:layout_columnWeight="1"
-                    android:scaleType="centerCrop"
-                    android:background="@drawable/post_border"
-                    android:padding="1dp"/>
-            </GridLayout>
-
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:useDefaultMargins="true"
+                android:alignmentMode="alignMargins" />
         </LinearLayout>
     </ScrollView>
 
@@ -140,6 +113,5 @@
         android:layout_height="wrap_content"
         android:background="?android:attr/windowBackground"
         app:menu="@menu/bottom_nav_menu" />
-
 
 </LinearLayout>

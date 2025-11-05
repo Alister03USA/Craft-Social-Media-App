@@ -64,7 +64,7 @@ public class FeedActivity extends BaseActivity {
         feedAdapter = new FeedAdapter(this, feedList, "feed", loggedInUsername);
         recyclerViewFeed.setAdapter(feedAdapter);
 
-        setupBottomNavigation(R.id.bottom_navigation);
+        setupBottomNavigation(R.id.myFeed);
 
         Log.d(TAG, "FeedActivity created for: " + loggedInUsername);
         loadFeed(loggedInUsername);
