@@ -15,15 +15,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 
-public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
+public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
-    private ArrayList<NotificationItem> notificationList;
     private Context context;
+    private ArrayList<NotificationItem> notificationList;
 
     public NotificationAdapter(Context context, ArrayList<NotificationItem> notificationList) {
         this.context = context;
@@ -32,32 +29,29 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.notification_item, parent, false);
-        return new ViewHolder(view);
+    public NotificationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.notification_item, parent, false);
+        return new NotificationViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
         NotificationItem item = notificationList.get(position);
-
         holder.title.setText(item.getTitle());
         holder.message.setText(item.getMessage());
 
-        // Show buttons only for follower notifications
-        if (item.getTitle().equalsIgnoreCase("New Follower")) {
-            holder.buttonLayout.setVisibility(View.VISIBLE);
+        if ("follow_request".equals(item.getType())) {
+            holder.buttonsLayout.setVisibility(View.VISIBLE);
 
-            holder.acceptButton.setOnClickListener(v -> {
-                sendFollowerResponse(item.getId(), true, holder, position, item.getTitle());
-            });
+            holder.btnAccept.setOnClickListener(v ->
+                    respondToFollowRequest(item.getId(), true, holder.getAdapterPosition())
+            );
 
-            holder.declineButton.setOnClickListener(v -> {
-                sendFollowerResponse(item.getId(), false, holder, position, null);
-            });
+            holder.btnDecline.setOnClickListener(v ->
+                    respondToFollowRequest(item.getId(), false, holder.getAdapterPosition())
+            );
         } else {
-            holder.buttonLayout.setVisibility(View.GONE);
+            holder.buttonsLayout.setVisibility(View.GONE);
         }
     }
 
@@ -66,55 +60,44 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return notificationList.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView title, message;
-        public LinearLayout buttonLayout;
-        public Button acceptButton, declineButton;
+    public static class NotificationViewHolder extends RecyclerView.ViewHolder {
+        TextView title, message;
+        LinearLayout buttonsLayout;
+        Button btnAccept, btnDecline;
 
-        public ViewHolder(View itemView) {
+        public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.notificationTitle);
             message = itemView.findViewById(R.id.notificationMessage);
-            buttonLayout = itemView.findViewById(R.id.followerButtonsLayout);
-            acceptButton = itemView.findViewById(R.id.btnAccept);
-            declineButton = itemView.findViewById(R.id.btnDecline);
+            buttonsLayout = itemView.findViewById(R.id.followerButtonsLayout);
+            btnAccept = itemView.findViewById(R.id.btnAccept);
+            btnDecline = itemView.findViewById(R.id.btnDecline);
         }
     }
 
-    private void sendFollowerResponse(int notificationId, boolean accepted, ViewHolder holder, int position, String followerName) {
-        // Build URL dynamically with accepted/declined state
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/respond/"
-                + notificationId + "/" + accepted;
+    private void respondToFollowRequest(int notificationId, boolean accepted, int position) {
+        String url =
+                "http://coms-3090-028.class.las.iastate.edu:8080/notifications/respond/"
+                        + notificationId + "/" + accepted;
 
-        // Create PUT request with no body
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.PUT,
                 url,
-                null, // no request body
+                null,
                 response -> {
-                    Toast.makeText(context, "Response sent", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context,
+                            accepted ? "Follow request accepted" : "Follow request declined",
+                            Toast.LENGTH_SHORT).show();
 
-                    // Update UI after success
-                    if (accepted) {
-                        holder.buttonLayout.setVisibility(View.GONE);
-                        if (followerName != null) {
-                            holder.message.setText(followerName + " followed you");
-                        }
-                    } else {
-                        notificationList.remove(position);
-                        notifyItemRemoved(position);
-                    }
+                    notificationList.remove(position);
+                    notifyItemRemoved(position);
                 },
                 error -> {
-                    String errorMsg = "Failed to send response";
-                    if (error.networkResponse != null && error.networkResponse.data != null) {
-                        errorMsg += ": " + new String(error.networkResponse.data);
-                    }
-                    Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show();
+                    error.printStackTrace();
+                    Toast.makeText(context, "Failed to update follow request", Toast.LENGTH_SHORT).show();
                 }
         );
 
-        // Add request to queue
         VolleySingleton.getInstance(context).addToRequestQueue(request);
     }
 }

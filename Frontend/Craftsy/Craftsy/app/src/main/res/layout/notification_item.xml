@@ -1,32 +1,48 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="12dp"
     android:background="?android:attr/selectableItemBackground">
 
-    <TextView
-        android:id="@+id/notificationTitle"
-        android:layout_width="wrap_content"
+    <!-- Left side: Notification text -->
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Notification Title"
-        android:textStyle="bold"
-        android:textSize="16sp" />
+        android:orientation="vertical"
+        android:layout_weight="1">
 
-    <TextView
-        android:id="@+id/notificationMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Notification message content"
-        android:textSize="14sp"
-        android:paddingTop="4dp"/>
+        <!-- Notification Title -->
+        <TextView
+            android:id="@+id/notificationTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Notification Title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:ellipsize="end"
+            android:singleLine="true" />
 
+        <!-- Notification Message -->
+        <TextView
+            android:id="@+id/notificationMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Notification message content"
+            android:textSize="14sp"
+            android:paddingTop="4dp"
+            android:ellipsize="end"
+            android:singleLine="false" />
+    </LinearLayout>
+
+    <!-- Right side: Accept/Decline buttons -->
     <LinearLayout
         android:id="@+id/followerButtonsLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:visibility="gone">
 
         <Button
             android:id="@+id/btnAccept"
@@ -39,7 +55,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Decline"
-            android:layout_marginStart="8dp"/>
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
 </LinearLayout>

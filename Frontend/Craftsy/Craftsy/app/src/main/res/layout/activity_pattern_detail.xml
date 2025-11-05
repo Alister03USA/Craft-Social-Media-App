@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:background="@color/blue_background"
-    android:padding="16dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -31,11 +30,12 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <ScrollView
+    <!-- Scrollable Content -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="12dp"
-        android:scrollbars="none">
+        android:fillViewport="true">
 
         <LinearLayout
             android:orientation="vertical"
@@ -51,9 +51,9 @@
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/craftsy_image_placeholder"
                 android:contentDescription="Pattern Image"
-                android:clipToOutline="true" />
+                android:clipToOutline="true"/>
 
-            <!-- Card: Pattern Info -->
+            <!-- Pattern Info Card -->
             <LinearLayout
                 android:orientation="vertical"
                 android:background="@drawable/craftsy_card_bg"
@@ -65,8 +65,8 @@
                 <TextView
                     android:id="@+id/detailName"
                     android:text="Pattern Name"
-                    android:layout_width= "wrap_content"
-                    android:layout_height ="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:textSize="24sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_black"
@@ -74,8 +74,8 @@
 
                 <TextView
                     android:id="@+id/detailTypeDifficulty"
-                    android:layout_width= "wrap_content"
-                    android:layout_height ="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="Type • Difficulty"
                     android:textColor="@color/text_gray"
                     android:textSize="18sp"
@@ -94,12 +94,12 @@
                         android:stepSize="0.1"
                         android:isIndicator="true"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"/>
 
                     <TextView
                         android:id="@+id/averageRatingText"
-                        android:layout_width= "wrap_content"
-                        android:layout_height ="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="4.2 avg"
                         android:textColor="@color/text_gray"
                         android:textSize="16sp"
@@ -108,15 +108,15 @@
 
                 <TextView
                     android:id="@+id/detailDescription"
-                    android:layout_width= "wrap_content"
-                    android:layout_height ="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="A cozy pattern perfect for any crafter."
                     android:textSize="18sp"
                     android:textColor="@color/text_black"
                     android:layout_marginTop="8dp"/>
             </LinearLayout>
 
-            <!-- Card: Reviews -->
+            <!-- Reviews Card -->
             <LinearLayout
                 android:orientation="vertical"
                 android:background="@drawable/craftsy_card_bg"
@@ -151,15 +151,13 @@
                         android:layout_gravity="end"/>
                 </LinearLayout>
 
-
-                <ListView
+                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/reviewsList"
-                    android:divider="@color/blue_secondary"
-                    android:dividerHeight="1dp"
                     android:layout_marginTop="12dp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>

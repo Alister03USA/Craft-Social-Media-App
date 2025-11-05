@@ -38,7 +38,7 @@ public class PatternActivity extends BaseActivity {
         // Setup bottom navigation
         setupBottomNavigation(R.id.pattern);
 
-        // ✅ Toolbar setup for top-right "Create" button
+        //  Toolbar setup for top-right "Create" button
         Toolbar toolbar = findViewById(R.id.patternsToolbar);
         setSupportActionBar(toolbar);
         setTitle("Patterns");
@@ -53,14 +53,14 @@ public class PatternActivity extends BaseActivity {
         fetchPatterns();
     }
 
-    // ✅ Inflate the top-right "Create Pattern" menu
+    //  Inflate the top-right "Create Pattern" menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.pattern_feed_menu, menu);
         return true;
     }
 
-    // ✅ Handle the "Create Pattern" button click
+    //  Handle the "Create Pattern" button click
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_create_pattern) {
@@ -79,7 +79,7 @@ public class PatternActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // ✅ Fetch patterns from backend using SessionManager username
+    //  Fetch patterns from backend using SessionManager username
     private void fetchPatterns() {
         SessionManager session = SessionManager.getInstance();
         String username = session.getLoggedInUsername();
@@ -87,6 +87,7 @@ public class PatternActivity extends BaseActivity {
             username = "testUser"; // fallback if not logged in
             Log.w(TAG, "No logged-in username found. Using fallback: testUser");
         }
+
 
         String url = BASE_URL + "/" + username;
         Log.d(TAG, "Fetching patterns from: " + url);
@@ -101,21 +102,13 @@ public class PatternActivity extends BaseActivity {
                         try {
                             JSONObject obj = response.getJSONObject(i);
 
-                            // 🔹 Extract image if present (backend uses images list)
-                            String imageUrl = "";
-                            JSONArray imagesArray = obj.optJSONArray("images");
-                            if (imagesArray != null && imagesArray.length() > 0) {
-                                JSONObject firstImage = imagesArray.getJSONObject(0);
-                                imageUrl = firstImage.optString("imageUrl", "");
-                            }
-
                             Pattern pattern = new Pattern(
-                                    obj.getInt("id"),
+                                    i, // temporary ID
                                     obj.optString("patternName", "Untitled"),
                                     obj.getJSONObject("user").optString("username", "Unknown"),
                                     obj.optString("patternType", "N/A"),
-                                    (float) obj.optDouble("rating", 0.0),
-                                    imageUrl,
+                                    (float) obj.optDouble("rating", 0.0f),
+                                    getFirstImagePath(obj.optJSONArray("images")),
                                     obj.optString("patternLink", ""),
                                     obj.optString("difficulty", "N/A"),
                                     obj.optString("description", ""),
@@ -126,6 +119,7 @@ public class PatternActivity extends BaseActivity {
                             patterns.add(pattern);
                         } catch (JSONException e) {
                             Log.e(TAG, "JSON parsing error", e);
+                            Log.d(TAG, "Raw response: " + response.toString());
                         }
                     }
                     adapter.notifyDataSetChanged();
@@ -148,6 +142,24 @@ public class PatternActivity extends BaseActivity {
                 }
         );
 
+
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+    private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/";
+
+    private String getFirstImagePath(JSONArray images) {
+        if (images != null && images.length() > 0) {
+            JSONObject img = images.optJSONObject(0);
+            if (img != null) {
+                String path = img.optString("filePath", "");
+                if (!path.isEmpty()) {
+                    return IMAGE_BASE_URL + path.substring(path.lastIndexOf("/") + 1);
+                }
+            }
+        }
+        return "";
+    }
+
+
 }
+

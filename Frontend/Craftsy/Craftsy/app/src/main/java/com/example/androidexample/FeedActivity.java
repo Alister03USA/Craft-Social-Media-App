@@ -34,6 +34,7 @@ public class FeedActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
+        setupBottomNavigation(R.id.myFeed);
 
         recyclerViewFeed = findViewById(R.id.recyclerViewFeed);
         recyclerViewFeed.setLayoutManager(new LinearLayoutManager(this));
@@ -61,7 +62,7 @@ public class FeedActivity extends BaseActivity {
         feedAdapter = new FeedAdapter(this, feedList, "feed", loggedInUsername);
         recyclerViewFeed.setAdapter(feedAdapter);
 
-        setupBottomNavigation(R.id.bottom_navigation);
+
 
         Log.d(TAG, "FeedActivity created for: " + loggedInUsername);
         loadFeed(loggedInUsername);
