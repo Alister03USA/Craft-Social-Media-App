@@ -70,7 +70,6 @@ public class Login extends AppCompatActivity {
                         session.setEmail(email);
                         session.setCraftSpecialties(craftSpecialties);
                         session.setPassword(password);
-                        session.settargetUser("alister_gan");
 
                         Toast.makeText(this, "Welcome " + displayName + "!", Toast.LENGTH_SHORT).show();
 

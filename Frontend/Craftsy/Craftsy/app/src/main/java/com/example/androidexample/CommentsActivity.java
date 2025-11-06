@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
+import androidx.appcompat.widget.Toolbar;
 
 public class CommentsActivity extends AppCompatActivity {
 
@@ -36,6 +37,14 @@ public class CommentsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comments);
+
+        Toolbar toolbar = findViewById(R.id.commentsToolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Handle toolbar back button click
+        toolbar.setNavigationOnClickListener(v -> finish());
+
 
         messageId = getIntent().getLongExtra("messageId", -1);
         groupId = getIntent().getLongExtra("groupId", -1);
