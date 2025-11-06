@@ -360,6 +360,7 @@ public class UserProfile extends BaseActivity {
                     "image/jpeg",
                     newProfileImageData,
                     response -> {
+                        Log.d("UPLOAD_RESPONSE", response);
                         try {
                             if (!response.trim().startsWith("{")) {
                                 Toast.makeText(this, "Unexpected response from server", Toast.LENGTH_SHORT).show();
