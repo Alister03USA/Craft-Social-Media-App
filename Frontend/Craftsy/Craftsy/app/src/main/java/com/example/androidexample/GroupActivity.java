@@ -111,6 +111,9 @@ public class GroupActivity extends AppCompatActivity {
             public void onMessage(String message) {
                 runOnUiThread(() -> {
                     try {
+                        // Ignore replies/comments for main feed
+                        if (message.startsWith("REPLY:")) return;
+
                         int separatorIndex = message.indexOf(": ");
                         if (separatorIndex > 0) {
                             String sender = message.substring(0, separatorIndex).trim();
@@ -130,10 +133,11 @@ public class GroupActivity extends AppCompatActivity {
                                 } else break;
                             }
 
-                            if ((content.isEmpty() || content.matches(".*uploaded an image.*")) && mediaUrl == null)
+                            if (content == null || content.isEmpty() || content.matches(".*uploaded an image.*") || content.matches(".*Image sent.*"))
                                 return;
 
-                            posts.add(new GroupPostModel(sender, content.isEmpty() ? null : content, messageId, mediaUrl,groupId));
+
+                            posts.add(new GroupPostModel(sender, content.isEmpty() ? null : content, messageId, mediaUrl, groupId));
                             postAdapter.notifyItemInserted(posts.size() - 1);
                             groupRecyclerView.scrollToPosition(posts.size() - 1);
                         }
@@ -142,6 +146,7 @@ public class GroupActivity extends AppCompatActivity {
                     }
                 });
             }
+
 
             @Override
             public void onOpen() {
@@ -165,19 +170,18 @@ public class GroupActivity extends AppCompatActivity {
 
 
 
-        private void loadPosts() {
+    private void loadPosts() {
         String url = BASE_URL + "/groupMessage/" + username + "/" + groupId + "/history";
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
                     posts.clear();
-
                     for (int i = 0; i < response.length(); i++) {
                         try {
                             JSONObject obj = response.getJSONObject(i);
 
-                            // ❌ Skip replies/comments
-                            long parentId = obj.optLong("parentId", -1); // -1 = top-level post
-                            if (parentId != -1) continue;
+                            // Skip replies/comments
+                            JSONObject replyTo = obj.optJSONObject("replyToMessage");
+                            if (replyTo != null) continue;
 
                             JSONObject senderObj = obj.getJSONObject("sender");
                             String sender = senderObj.getString("username");
@@ -200,7 +204,10 @@ public class GroupActivity extends AppCompatActivity {
                             }
 
                             // Skip posts with no content or images
+                            // Skip posts with no content or images, or system text without image
                             if ((content == null || content.isEmpty()) && mediaUrl == null) continue;
+                            if (mediaUrl == null && (content.matches(".*Image sent.*") || content.matches(".*uploaded an image.*"))) continue;
+
 
                             posts.add(new GroupPostModel(
                                     sender,
@@ -224,6 +231,7 @@ public class GroupActivity extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
 
 
 

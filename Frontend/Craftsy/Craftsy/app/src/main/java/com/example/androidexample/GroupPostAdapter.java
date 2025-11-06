@@ -51,12 +51,15 @@ public class GroupPostAdapter extends RecyclerView.Adapter<GroupPostAdapter.Post
                     .into(holder.image);
         } else holder.image.setVisibility(View.GONE);
 
+        // --- CLICK TO OPEN COMMENTS ACTIVITY ---
         holder.viewComments.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), CommentsActivity.class);
             intent.putExtra("messageId", post.getMessageId());
-            intent.putExtra("groupId", post.getGroupId()); // <-- pass groupId here
+            intent.putExtra("groupId", post.getGroupId());
             holder.itemView.getContext().startActivity(intent);
         });
+
+
     }
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
