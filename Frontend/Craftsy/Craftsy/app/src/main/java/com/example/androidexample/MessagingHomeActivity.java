@@ -149,24 +149,40 @@ public class MessagingHomeActivity extends AppCompatActivity {
                 JSONObject o = arr.getJSONObject(i);
                 String id = o.optString("id", "");
                 String name = o.optString("groupName", "");
-                if (name.isEmpty()) {
+
+                //  If groupName is missing, build it from member names
+                if (name == null || name.isEmpty() || name.equals("null")) {
                     JSONArray members = o.optJSONArray("members");
-                    if (members != null) {
+                    if (members != null && members.length() > 0) {
+                        StringBuilder namesBuilder = new StringBuilder();
                         for (int m = 0; m < members.length(); m++) {
-                            String u = members.getJSONObject(m).optString("username");
-                            if (!currentUsername.equals(u)) { name = u; break; }
+                            JSONObject member = members.getJSONObject(m);
+                            String uname = member.optString("displayName", member.optString("username", ""));
+                            if (!currentUsername.equalsIgnoreCase(uname)) {
+                                if (namesBuilder.length() > 0) namesBuilder.append(", ");
+                                namesBuilder.append(uname);
+                            }
                         }
+                        name = namesBuilder.toString().trim();
                     }
                 }
+
+                // Get last message preview
                 String last = "";
                 JSONArray msgs = o.optJSONArray("messages");
                 if (msgs != null && msgs.length() > 0)
                     last = msgs.getJSONObject(msgs.length() - 1).optString("text", "");
+
+                // Create item and categorize
                 ConversationItem item = new ConversationItem(id, name, last, "");
                 all.add(item);
                 if (item.isGroup()) groups.add(item); else direct.add(item);
-            } catch (JSONException e) { Log.e(TAG, "⚠️ Parse error", e); }
+
+            } catch (JSONException e) {
+                Log.e(TAG, "⚠️ Parse error", e);
+            }
         }
+
         directAdapter.notifyDataSetChanged();
         groupAdapter.notifyDataSetChanged();
     }

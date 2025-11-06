@@ -69,8 +69,13 @@ public class SignupActivity extends AppCompatActivity {
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST, SIGNUP_URL, body,
-                response -> Toast.makeText(this, "Signup successful!", Toast.LENGTH_SHORT).show(),
-                error -> {
+                response ->{
+                    Toast.makeText(this, "Signup successful!", Toast.LENGTH_SHORT).show();
+                    // Open UserProfile after successful signup
+                    Intent intent = new Intent(SignupActivity.this, Login.class);
+                    startActivity(intent);
+                    finish();
+                },error -> {
                     if (error.networkResponse != null) {
                         int statusCode = error.networkResponse.statusCode;
                         String message = new String(error.networkResponse.data);

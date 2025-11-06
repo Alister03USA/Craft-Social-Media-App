@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
+import androidx.appcompat.widget.Toolbar;
 
 public class CommentsActivity extends AppCompatActivity {
 
@@ -21,7 +22,7 @@ public class CommentsActivity extends AppCompatActivity {
     private EditText commentInput;
     private ImageButton sendBtn;
     private CommentAdapter adapter;
-    private List<CommentModel> comments = new ArrayList<>();
+    private final List<CommentModel> comments = new ArrayList<>();
 
     private long messageId;
     private long groupId;
@@ -36,6 +37,14 @@ public class CommentsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comments);
+
+        Toolbar toolbar = findViewById(R.id.commentsToolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Handle toolbar back button click
+        toolbar.setNavigationOnClickListener(v -> finish());
+
 
         messageId = getIntent().getLongExtra("messageId", -1);
         groupId = getIntent().getLongExtra("groupId", -1);
@@ -62,6 +71,7 @@ public class CommentsActivity extends AppCompatActivity {
         sendBtn.setOnClickListener(v -> addComment());
     }
 
+    /** Load comments from backend */
     private void loadComments() {
         String url = BASE_URL + "/groupMessage/" + messageId + "/comments";
 
@@ -88,6 +98,7 @@ public class CommentsActivity extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
+    /** Initialize WebSocket for live comment updates */
     private void initWebSocket() {
         String wsUrl = "ws://coms-3090-028.class.las.iastate.edu:8080/ws/groupMessage/"
                 + groupId + "/" + username;
@@ -100,27 +111,29 @@ public class CommentsActivity extends AppCompatActivity {
             public void onMessage(String message) {
                 runOnUiThread(() -> {
                     try {
+                        // Handle replies from frontend: "REPLY:messageId:username:text"
+                        if (message.startsWith("REPLY:")) {
+                            String[] parts = message.split(":", 4);
+                            if (parts.length == 4) {
+                                long replyToId = Long.parseLong(parts[1]);
+                                String senderName = parts[2];
+                                String replyText = parts[3];
+
+                                if (replyToId == messageId) {
+                                    comments.add(new CommentModel(senderName, replyText));
+                                    adapter.notifyItemInserted(comments.size() - 1);
+                                    commentRecycler.scrollToPosition(comments.size() - 1);
+                                }
+                            }
+                            return;
+                        }
+
+                        // Optional: handle image uploads or other group messages
                         int separatorIndex = message.indexOf(": ");
                         if (separatorIndex > 0) {
                             String sender = message.substring(0, separatorIndex).trim();
                             String content = message.substring(separatorIndex + 2).trim();
-
-                            if (message.contains("[replying to @")) {
-                                // Optional: extract the username being replied to
-                                int start = message.indexOf("[replying to @");
-                                int end = message.indexOf("]", start);
-                                String replyToUsername = message.substring(start + 13, end); // just the username
-                                String contentOnly = message.substring(0, start).trim();
-
-                                // add as comment if replying to the current messageId
-                                // unfortunately backend doesn’t include the ID, so you may need to match by sender+content
-                                comments.add(new CommentModel(sender, contentOnly));
-                                adapter.notifyItemInserted(comments.size() - 1);
-                                commentRecycler.scrollToPosition(comments.size() - 1);
-                            }
-
-                        } else {
-                            Log.w("WebSocketParse", "Unexpected format: " + message);
+                            // Can add other handling if needed
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -129,35 +142,42 @@ public class CommentsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onOpen() { Log.d("WebSocket", "Connected to comments WS"); }
+            public void onOpen() {
+                Log.d("WebSocket", "Connected to comments WS");
+            }
 
             @Override
-            public void onClose(String reason) { Log.d("WebSocket", "Comments WS closed: " + reason); }
+            public void onClose(String reason) {
+                Log.d("WebSocket", "Comments WS closed: " + reason);
+            }
 
             @Override
-            public void onError(Exception ex) { Log.e("WebSocket", "Comments WS error", ex); }
+            public void onError(Exception ex) {
+                Log.e("WebSocket", "Comments WS error", ex);
+            }
         });
 
         wsInitialized = true;
     }
 
+    /** Send a comment / reply */
     private void addComment() {
         String text = commentInput.getText().toString().trim();
         if (text.isEmpty()) return;
 
-        String url = BASE_URL + "/comment/" + username + "/" + messageId + "/create";
-        JSONObject body = new JSONObject();
-        try { body.put("comment", text); } catch (JSONException ignored) {}
+        // Clear input immediately
+        commentInput.setText("");
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, body,
-                response -> commentInput.setText(""),
-                error -> Log.e("CommentsActivity", "Failed to add comment", error)
-        );
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+        // Send via WebSocket (backend saves it)
+        if (wsManager != null)
+            wsManager.sendMessage("REPLY:" + messageId + ":" + username + ":" + text);
 
-        if (wsManager != null) wsManager.sendMessage("REPLY:" + messageId + ":" + text);
-
+        // Optimistically update UI
+        comments.add(new CommentModel(username, text));
+        adapter.notifyItemInserted(comments.size() - 1);
+        commentRecycler.scrollToPosition(comments.size() - 1);
     }
+
 
     @Override
     protected void onDestroy() {

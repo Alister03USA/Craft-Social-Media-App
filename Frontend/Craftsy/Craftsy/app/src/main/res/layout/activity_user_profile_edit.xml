@@ -13,6 +13,25 @@
 
 
         <!-- Display Name -->
+        <!-- Profile Picture -->
+        <ImageView
+            android:id="@+id/editProfileImage"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/profile"
+            android:scaleType="centerCrop"
+            android:contentDescription="Profile picture"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btn_change_profile_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Change Picture"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
