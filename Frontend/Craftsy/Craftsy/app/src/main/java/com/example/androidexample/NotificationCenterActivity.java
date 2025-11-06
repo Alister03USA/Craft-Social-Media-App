@@ -3,16 +3,12 @@ package com.example.androidexample;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,8 +24,7 @@ public class NotificationCenterActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification_center);
-        // Setup bottom navigation
-
+        setupBottomNavigation(R.id.nav_my_profile);
 
         recyclerView = findViewById(R.id.recyclerViewNotifications);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -39,10 +34,7 @@ public class NotificationCenterActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
 
         fetchNotifications();
-
-
     }
-
 
     private void fetchNotifications() {
         String url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/"
@@ -61,18 +53,23 @@ public class NotificationCenterActivity extends BaseActivity {
                             String title = obj.getString("title");
                             String message = obj.getString("message");
 
-                            // Get sender username if present
+                            // Sender username if present
                             JSONObject senderObj = obj.optJSONObject("sender");
                             String senderUsername = senderObj != null ? senderObj.getString("username") : null;
 
-                            // Automatically detect follow requests
+                            // Reference ID (join request ID or same as notification)
+                            int referenceId = obj.optInt("referenceId", id);
+
+                            // Detect type
                             String type = "general";
                             if ((title != null && title.toLowerCase().contains("follow"))
                                     || (message != null && message.toLowerCase().contains("follow"))) {
                                 type = "follow_request";
+                            } else if (title != null && title.toLowerCase().contains("join request")) {
+                                type = "join_request";
                             }
 
-                            notificationList.add(new NotificationItem(id, title, message, type, senderUsername));
+                            notificationList.add(new NotificationItem(id, title, message, type, senderUsername, referenceId));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -84,5 +81,4 @@ public class NotificationCenterActivity extends BaseActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(jsonArrayRequest);
     }
-
 }

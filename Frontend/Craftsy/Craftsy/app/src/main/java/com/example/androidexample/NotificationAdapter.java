@@ -19,8 +19,8 @@ import java.util.ArrayList;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
-    private Context context;
-    private ArrayList<NotificationItem> notificationList;
+    private final Context context;
+    private final ArrayList<NotificationItem> notificationList;
 
     public NotificationAdapter(Context context, ArrayList<NotificationItem> notificationList) {
         this.context = context;
@@ -40,15 +40,16 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.title.setText(item.getTitle());
         holder.message.setText(item.getMessage());
 
-        if ("follow_request".equals(item.getType())) {
+        // Show buttons only for follow or join requests
+        if ("follow_request".equals(item.getType()) || "join_request".equals(item.getType())) {
             holder.buttonsLayout.setVisibility(View.VISIBLE);
 
             holder.btnAccept.setOnClickListener(v ->
-                    respondToFollowRequest(item.getId(), true, holder.getAdapterPosition())
+                    respondToRequest(item, true, holder.getAdapterPosition())
             );
 
             holder.btnDecline.setOnClickListener(v ->
-                    respondToFollowRequest(item.getId(), false, holder.getAdapterPosition())
+                    respondToRequest(item, false, holder.getAdapterPosition())
             );
         } else {
             holder.buttonsLayout.setVisibility(View.GONE);
@@ -75,10 +76,21 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
     }
 
-    private void respondToFollowRequest(int notificationId, boolean accepted, int position) {
-        String url =
-                "http://coms-3090-028.class.las.iastate.edu:8080/notifications/respond/"
-                        + notificationId + "/" + accepted;
+    private void respondToRequest(NotificationItem item, boolean accepted, int position) {
+        String url;
+
+        if ("follow_request".equals(item.getType())) {
+            // Follow request endpoint uses notification ID
+            url = "http://coms-3090-028.class.las.iastate.edu:8080/notifications/respond/"
+                    + item.getId() + "/" + accepted;
+        } else if ("join_request".equals(item.getType())) {
+            // Join request endpoint uses reference ID
+            url = "http://coms-3090-028.class.las.iastate.edu:8080/joinRequest/"
+                    + item.getReferenceId() + "/" + accepted;
+        } else {
+            Toast.makeText(context, "Invalid request type", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.PUT,
@@ -86,7 +98,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 null,
                 response -> {
                     Toast.makeText(context,
-                            accepted ? "Follow request accepted" : "Follow request declined",
+                            accepted ? "Request accepted" : "Request declined",
                             Toast.LENGTH_SHORT).show();
 
                     notificationList.remove(position);
@@ -94,7 +106,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 },
                 error -> {
                     error.printStackTrace();
-                    Toast.makeText(context, "Failed to update follow request", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Failed to update request", Toast.LENGTH_SHORT).show();
                 }
         );
 

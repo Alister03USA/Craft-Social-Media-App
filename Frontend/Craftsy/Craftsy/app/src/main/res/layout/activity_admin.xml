@@ -46,6 +46,20 @@
             android:layout_height="wrap_content"
             android:text="Add member"
             android:layout_marginTop="8dp" />
+        <!-- Pending join requests header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pending Join Requests:"
+            android:layout_marginTop="16dp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/adminRequestsRv"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:layout_marginTop="8dp" />
+
 
         <!-- Members list -->
         <TextView

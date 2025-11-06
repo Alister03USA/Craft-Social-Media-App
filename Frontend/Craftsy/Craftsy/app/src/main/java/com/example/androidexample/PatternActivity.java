@@ -50,6 +50,7 @@ public class PatternActivity extends BaseActivity {
         adapter = new PatternAdapter(this, patterns);
         recyclerView.setAdapter(adapter);
 
+
         fetchPatterns();
     }
 

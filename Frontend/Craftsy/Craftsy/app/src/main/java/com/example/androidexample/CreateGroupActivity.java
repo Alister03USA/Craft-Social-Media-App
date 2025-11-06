@@ -19,6 +19,8 @@ public class CreateGroupActivity extends AppCompatActivity {
     private EditText groupNameInput, groupDescriptionInput, groupCraftInput;
     private Switch privateSwitch;
     private Button createButton;
+    private String username;
+
 
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
@@ -29,6 +31,9 @@ public class CreateGroupActivity extends AppCompatActivity {
 
         Button backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
+
+        SessionManager session = SessionManager.getInstance();
+        username = session.getLoggedInUsername();
 
         groupNameInput = findViewById(R.id.groupNameInput);
         groupDescriptionInput = findViewById(R.id.groupDescriptionInput);
@@ -42,46 +47,45 @@ public class CreateGroupActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please enter a group name", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            String username = SessionManager.getInstance().getLoggedInUsername();
             if (username == null || username.isEmpty()) {
                 Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            createGroup(username);
+            // build JSON body and send
+            JSONObject groupObj = new JSONObject();
+            try {
+                groupObj.put("groupName", groupName);
+                groupObj.put("description", groupDescriptionInput.getText().toString().trim());
+                groupObj.put("craft", groupCraftInput.getText().toString().trim());
+                // IMPORTANT: backend expects the field "private" (not isPrivate)
+                groupObj.put("private", privateSwitch.isChecked());
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Failed to build request", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String url = BASE_URL + "/" + username + "/create";
+
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    groupObj,
+                    response -> {
+                        Toast.makeText(this, "Group created!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    },
+                    error -> {
+                        Toast.makeText(this, "Group creation failed", Toast.LENGTH_LONG).show();
+                        error.printStackTrace();
+                    }
+            );
+
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
         });
+
     }
 
-    private void createGroup(String username) {
-        JSONObject jsonBody = new JSONObject();
-        try {
-            jsonBody.put("groupName", groupNameInput.getText().toString().trim());
-            jsonBody.put("description", groupDescriptionInput.getText().toString().trim());
-            jsonBody.put("craft", groupCraftInput.getText().toString().trim());
-            jsonBody.put("isPrivate", privateSwitch.isChecked());
-        } catch (JSONException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Failed to build request", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
-        String url = BASE_URL  + "/"+ username + "/create";
-
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonBody,
-                response -> {
-                    Toast.makeText(this, "Group created!", Toast.LENGTH_SHORT).show();
-                    finish();
-                },
-                error -> {
-                    Toast.makeText(this, "Group creation failed", Toast.LENGTH_LONG).show();
-                    error.printStackTrace();
-                }
-        );
-
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
-    }
 }

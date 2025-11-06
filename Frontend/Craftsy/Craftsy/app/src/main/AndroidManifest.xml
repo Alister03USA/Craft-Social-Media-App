@@ -137,6 +137,10 @@
         <activity android:name=".NewChatActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
+        <activity android:name=".CommentsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy"/>
+
 
 
 

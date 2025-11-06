@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import org.json.JSONException;
@@ -31,6 +32,10 @@ public class AdminActivity extends AppCompatActivity {
     private MemberAdapter memberAdapter;
     private final List<MemberModel> members = new ArrayList<>();
 
+    private RecyclerView requestsRv;
+    private PendingRequestAdapter pendingAdapter;
+    private final List<PendingRequestModel> pendingRequests = new ArrayList<>();
+
     private EditText transferAdminInput;
     private Button transferAdminBtn;
 
@@ -40,18 +45,19 @@ public class AdminActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_admin); // create layout below
+        setContentView(R.layout.activity_admin); // your layout file
 
         groupId = getIntent().getLongExtra("groupId", -1);
         groupName = getIntent().getStringExtra("groupName");
         SessionManager session = SessionManager.getInstance();
         adminUsername = session.getLoggedInUsername();
 
-
-
         addMemberInput = findViewById(R.id.adminAddMemberInput);
         addMemberBtn = findViewById(R.id.adminAddMemberBtn);
         membersRv = findViewById(R.id.adminMembersRv);
+
+        // NEW: pending requests RecyclerView (make sure you add this RecyclerView to activity_admin.xml)
+        requestsRv = findViewById(R.id.adminRequestsRv);
 
         transferAdminInput = findViewById(R.id.adminTransferInput);
         transferAdminBtn = findViewById(R.id.adminTransferBtn);
@@ -65,10 +71,27 @@ public class AdminActivity extends AppCompatActivity {
         membersRv.setLayoutManager(new LinearLayoutManager(this));
         memberAdapter = new MemberAdapter(members, usernameToRemove -> confirmRemoveMember(usernameToRemove));
         membersRv.setAdapter(memberAdapter);
+
+        // setup pending requests RecyclerView & adapter
+        requestsRv.setLayoutManager(new LinearLayoutManager(this));
+        pendingAdapter = new PendingRequestAdapter(
+                pendingRequests,
+                new PendingRequestAdapter.OnAction() {
+                    @Override
+                    public void onApprove(long requestId, String username) {
+                        confirmHandleRequest(requestId, username, true);
+                    }
+
+                    @Override
+                    public void onDecline(long requestId, String username) {
+                        confirmHandleRequest(requestId, username, false);
+                    }
+                }
+        );
+        requestsRv.setAdapter(pendingAdapter);
+
         ImageButton backBtn = findViewById(R.id.adminBackBtn);
         backBtn.setOnClickListener(v -> finish());
-
-
 
         addMemberBtn.setOnClickListener(v -> {
             String usernameToAdd = addMemberInput.getText().toString().trim();
@@ -97,7 +120,70 @@ public class AdminActivity extends AppCompatActivity {
 
         deleteGroupBtn.setOnClickListener(v -> confirmDeleteGroup());
 
+        // initial load
         fetchMembers();
+        fetchPendingRequests();
+    }
+
+    private void fetchPendingRequests() {
+        String url = BASE_URL + "/" + groupId + "/pending-requests";
+
+        JsonArrayRequest req = new JsonArrayRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        pendingRequests.clear();
+                        for (int i = 0; i < response.length(); i++) {
+                            JSONObject obj = response.getJSONObject(i);
+                            long requestId = obj.optLong("id");
+                            String username = obj.optString("username", "Unknown");
+                            String requestedAt = obj.optString("requestedAt", "N/A");
+
+                            pendingRequests.add(new PendingRequestModel(requestId, username, requestedAt));
+                        }
+                        pendingAdapter.notifyDataSetChanged();
+                        requestsRv.setVisibility(pendingRequests.isEmpty() ? View.GONE : View.VISIBLE);
+                    } catch (Exception e) {
+                        Log.e("AdminActivity", "Failed parsing pending requests", e);
+                    }
+                },
+                error -> {
+                    Log.e("AdminActivity", "Failed fetching pending requests", error);
+                    Toast.makeText(this, "Could not load pending requests", Toast.LENGTH_SHORT).show();
+                });
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+
+
+    private void confirmHandleRequest(long requestId, String username, boolean approve) {
+        String title = approve ? "Approve request" : "Decline request";
+        String msg = (approve ? "Approve " : "Decline ") + username + "'s request?";
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(msg)
+                .setPositiveButton(approve ? "Approve" : "Decline", (d, w) -> handleJoinRequest(requestId, approve))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void handleJoinRequest(long requestId, boolean accepted) {
+        // Uses your existing endpoint: PUT /joinRequest/{requestId}/{accepted}
+        String url = BASE_URL + "/joinRequest/" + requestId + "/" + accepted;
+
+        StringRequest req = new StringRequest(Request.Method.PUT, url,
+                response -> {
+                    Toast.makeText(this, accepted ? "Request approved" : "Request declined", Toast.LENGTH_SHORT).show();
+                    // refresh lists
+                    fetchPendingRequests();
+                    fetchMembers();
+                },
+                error -> {
+                    Log.e("Admin.handleReq", "Error", error);
+                    Toast.makeText(this, "Failed to update request", Toast.LENGTH_SHORT).show();
+                });
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
     private void fetchMembers() {
@@ -120,7 +206,6 @@ public class AdminActivity extends AppCompatActivity {
                     Log.e("Admin.fetchMembers", "Error", error);
                     Toast.makeText(this, "Failed to update group", Toast.LENGTH_SHORT).show();
                 });
-
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
@@ -211,7 +296,5 @@ public class AdminActivity extends AppCompatActivity {
                 });
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
-
-
 
 }

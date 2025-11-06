@@ -1,11 +1,13 @@
 package com.example.androidexample;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,7 +34,7 @@ public class PatternDetailActivity extends AppCompatActivity {
     private RecyclerView reviewsList;
     private Button backButton, createReviewButton;
 
-    private String username;
+    private String ownerUsername;
     private String patternTitle;
 
     @Override
@@ -53,29 +55,25 @@ public class PatternDetailActivity extends AppCompatActivity {
         reviewsList.setNestedScrollingEnabled(false);
         createReviewButton = findViewById(R.id.createReviewButton);
 
-        // Get pattern name from Intent and username from Session
+        // Get pattern title and owner username from Intent
         Intent intent = getIntent();
         patternTitle = intent.getStringExtra("patternName");
-        SessionManager session = SessionManager.getInstance();
-        username = session.getLoggedInUsername();
-
-
+        ownerUsername = intent.getStringExtra("ownerUsername");
 
         // Buttons
         backButton.setOnClickListener(v -> finish());
         createReviewButton.setOnClickListener(v -> {
             Intent addReviewIntent = new Intent(this, CreateReviewActivity.class);
             addReviewIntent.putExtra("patternName", patternTitle);
+            addReviewIntent.putExtra("ownerUsername", ownerUsername);
             startActivity(addReviewIntent);
         });
 
-        fetchPatternDetails();
+        fetchPatternDetails(ownerUsername);
     }
 
-
-    private void fetchPatternDetails() {
-
-        String url = BASE_URL + "/patterns/" + username + "/" + patternTitle;
+    private void fetchPatternDetails(String ownerUsername) {
+        String url = BASE_URL + "/patterns/" + ownerUsername + "/" + patternTitle;
 
         final ReviewsAdapter[] adapterWrapper = new ReviewsAdapter[1];
 
@@ -94,24 +92,29 @@ public class PatternDetailActivity extends AppCompatActivity {
                         averageRatingText.setText(String.format("%.1f avg", rating));
 
                         String imgUrl = getFirstImagePath(response.optJSONArray("images"));
-                        if (!imgUrl.isEmpty()) Glide.with(this).load(imgUrl).into(detailImage);
-                        else detailImage.setImageResource(R.drawable.craftsy_image_placeholder);
+                        if (!imgUrl.isEmpty()) {
+                            Glide.with(this).load(imgUrl).into(detailImage);
+                        } else {
+                            detailImage.setImageResource(R.drawable.craftsy_image_placeholder);
+                        }
 
+                        // Show edit button only if logged-in user is the owner
+                        String loggedInUser = SessionManager.getInstance().getLoggedInUsername();
                         Button editPatternButton = findViewById(R.id.editPatternButton);
-                        String owner = response.optJSONObject("user").optString("username");
+                        String patternOwner = response.optJSONObject("user").optString("username");
 
-                        if (owner.equals(username)) {
-                            editPatternButton.setVisibility(View.VISIBLE);
+                        if (patternOwner.equals(loggedInUser)) {
+                            editPatternButton.setVisibility(Button.VISIBLE);
                             editPatternButton.setOnClickListener(v -> {
                                 Intent intent = new Intent(PatternDetailActivity.this, EditPatternsActivity.class);
                                 intent.putExtra("patternName", patternTitle);
                                 startActivity(intent);
                             });
                         } else {
-                            editPatternButton.setVisibility(View.GONE);
+                            editPatternButton.setVisibility(Button.GONE);
                         }
 
-                        // ✅ Reviews parsing
+                        // Reviews parsing
                         JSONArray commentsArray = response.optJSONArray("comments");
                         List<Review> reviews = new ArrayList<>();
                         if (commentsArray != null) {
@@ -128,7 +131,7 @@ public class PatternDetailActivity extends AppCompatActivity {
                         }
 
                         adapterWrapper[0] = new ReviewsAdapter(this, reviews, review -> {
-                            String likeUrl = BASE_URL + "/patterns/" + username + "/" + patternTitle + "/" + review.id + "/like";
+                            String likeUrl = BASE_URL + "/patterns/" + ownerUsername + "/" + patternTitle + "/" + review.id + "/like";
                             JsonObjectRequest likeReq = new JsonObjectRequest(
                                     Request.Method.PUT, likeUrl, null,
                                     r -> {
@@ -149,12 +152,8 @@ public class PatternDetailActivity extends AppCompatActivity {
                 error -> Toast.makeText(this, "Could not load pattern", Toast.LENGTH_LONG).show()
         );
 
-        // ✅ MUST include this!
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
-
-
-
 
     private String getFirstImagePath(JSONArray images) {
         if (images != null && images.length() > 0) {
