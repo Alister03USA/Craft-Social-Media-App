@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface GroupMessageRepository extends JpaRepository<GroupMessage, Long> {
     List<GroupMessage> findByGroupOrderByCreatedAtAsc(Group group);
+
+    List<GroupMessage> findByReplyToMessageId(Long messageId);
 }

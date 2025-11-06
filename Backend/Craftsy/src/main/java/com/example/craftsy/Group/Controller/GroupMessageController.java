@@ -168,6 +168,18 @@ public class GroupMessageController {
         }
     }
 
+    // Get message for reply
+    @GetMapping("/{messageId}/comments")
+    public ResponseEntity<List<Map<String, Object>>> getComments(@PathVariable Long messageId) {
+        List<GroupMessage> comments = groupMessageRepository.findByReplyToMessageId(messageId);
+        List<Map<String, Object>> response = comments.stream().map(c -> Map.of(
+                "sender", Map.of("username", c.getSender().getUsername()),
+                "comment", c.getMessage()
+        )).toList();
+        return ResponseEntity.ok(response);
+    }
+
+
     /**
      * Check if a user is a member of a group
      */

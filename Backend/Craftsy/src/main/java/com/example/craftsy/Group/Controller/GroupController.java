@@ -231,7 +231,9 @@ public class GroupController {
             notificationRepository.save(notif);
             NotificationWebSocket.pushNotification(group.getGroupAdmin().getUsername(), notif);
 
-            return ResponseEntity.ok(Map.of("message", "Join request sent"));
+            return ResponseEntity.ok(Map.of(
+                    "message", "Join request sent",
+                    "requestId", request.getId().toString() ));
         }
     }
 
@@ -530,7 +532,7 @@ public class GroupController {
 
 
     /**
-     * DELETE /{groupId}/{admin}/remove-member/{username}
+     * DELETE /{groupId}/{admin}/removeMember/{username}
      * Remove a user from a group. Only admins can do this.
      */
     @DeleteMapping("/{groupId}/{admin}/removeMember/{username}")
@@ -541,18 +543,19 @@ public class GroupController {
 
         Optional<Group> groupOpt = groupRepository.findById(groupId);
         Optional<Users> userOpt = userRepository.findByUsername(username);
+        Optional<Users> adminOpt = userRepository.findByUsername(admin);
 
-        if (groupOpt.isEmpty() || userOpt.isEmpty()) {
+        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {  // ✅ Check admin exists
             return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
         }
 
         Group group = groupOpt.get();
         Users user = userOpt.get();
+        Users adminUser = adminOpt.get();
 
-        // Check admin
-        if (!group.getGroupAdmin().equals(admin)) {
+        // Check admin - compare Users to Users
+        if (!group.getGroupAdmin().equals(adminUser)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Only the group admin can remove members"));
-
         }
 
         // Check if the user is actually in the group
@@ -567,11 +570,15 @@ public class GroupController {
 
         // Remove the user and save the group
         group.getMembers().remove(user);
+        group.setMemberCount();
         groupRepository.save(group);
+
+        // Create notification
         Notification notif = new Notification();
         notif.setUser(user);
         notif.setTitle("Removed from Group");
         notif.setMessage("You have been removed from " + group.getGroupName());
+        notif.setReferenceId(groupId);  // Add reference to group
         notif.setCreatedAt(new Date());
         notif.setIsRead(false);
 

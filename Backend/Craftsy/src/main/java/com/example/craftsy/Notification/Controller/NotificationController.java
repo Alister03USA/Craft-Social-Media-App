@@ -57,7 +57,6 @@ public class NotificationController {
 
         Notification notification = new Notification();
         notification.setUser(receiver);
-        notification.setSender(sender);
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setReferenceId(referenceId);

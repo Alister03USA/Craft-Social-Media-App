@@ -37,6 +37,7 @@ public class WebSocketConfig {
     @PostConstruct
     public void initWebSocketDependencies() {
 
+        // passing Spring-managed beans into WebSocket-managed classes via static setters, so they can use repositories.
         // Initialize GroupMessageWebsocket
         GroupMessageWebsocket.setDependencies(
                 groupRepository,
@@ -51,6 +52,5 @@ public class WebSocketConfig {
                 userRepository
         );
 
-        System.out.println("========================================");
     }
 }

@@ -33,11 +33,7 @@ public class NotificationWebSocket {
 
     private static ObjectMapper mapper = new ObjectMapper();
 
-    // Inject repositories via setter so they populate the static fields
-    @Autowired
-    public void setNotificationRepository(NotificationRepository repo) {
-        NotificationWebSocket.notificationRepository = repo;
-    }
+
 
     public static void setDependencies(NotificationRepository notifRepo, UserRepository userRepo) {
         notificationRepository = notifRepo;

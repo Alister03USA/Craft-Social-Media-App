@@ -20,11 +20,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+/**
+ * WebSocket endpoint for real-time group messaging.
+ * Each open websocket connection belongs to a user and a specific group.
+ */
 @Component
 @ServerEndpoint("/ws/groupMessage/{groupId}/{username}")
 public class GroupMessageWebsocket {
 
+    // Map a session to a user
     private static Map<Session, String> sessionUsernameMap = new ConcurrentHashMap<>();
+    // Map a user to a session
     private static Map<String, Session> usernameSessionMap = new ConcurrentHashMap<>();
 
     // Maps group ID to session - track users in each group
@@ -49,6 +56,7 @@ public class GroupMessageWebsocket {
 
 
 
+    // Called when a new WebSocket connection is established.
     @OnOpen
     public void onOpen(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username) {
         logger.info("[onOpen] Connection attempt - User: " + username + ", Group: " + groupId);
@@ -79,9 +87,11 @@ public class GroupMessageWebsocket {
             return;
         }
 
-        // User is authorized - register the connection (ONLY ONCE!)
+        // User is authorized - register the connection
         sessionUsernameMap.put(session, username);
         usernameSessionMap.put(username, session);
+
+        // Register this session in the group session list
         groupSessionsMap.computeIfAbsent(groupId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
         logger.info("[onOpen] " + username + " successfully joined group " + groupId);
@@ -92,7 +102,7 @@ public class GroupMessageWebsocket {
 
 
 
-
+    // Called when a message is received from a connected client.
     @OnMessage
     public void onMessage(Session session, @PathParam("groupId") Long groupId, @PathParam("username") String username, String message) {
 
@@ -101,20 +111,52 @@ public class GroupMessageWebsocket {
         Users sender =  userRepository.findByUsername(username).orElse(null);
         Group group = groupRepository.findByIdWithMembers(groupId).orElse(null);
 
-        if(sender == null ||  group == null) {
-            logger.error("[onMessage] Sender or Group not found: ");
+        if (sender == null || group == null) {
+            logger.error("[onMessage] Sender or Group not found");
+            return;
         }
 
-        // Save messages in groupMessage table
+        // Parse message format: "REPLY:messageId:actualMessage" or just "actualMessage"
+        Long replyToMessageId = null;
+        String actualMessage = message;
+
+        if (message.startsWith("REPLY:")) {
+            String[] parts = message.split(":", 3);
+            if (parts.length == 3) {
+                try {
+                    replyToMessageId = Long.parseLong(parts[1]);
+                    actualMessage = parts[2];
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid reply format: " + message);
+                }
+            }
+
+        }
+
+            // Save messages in groupMessage table
         GroupMessage groupMessage = new GroupMessage();
         groupMessage.setSender(sender);
         groupMessage.setGroup(group);
-        groupMessage.setMessage(message);
+        groupMessage.setMessage(actualMessage);
         groupMessage.setCreatedAt(new Date());
+
+        // Handle reply
+        if (replyToMessageId != null) {
+            GroupMessage replyToMsg = groupMessageRepository.findById(replyToMessageId).orElse(null);
+            if (replyToMsg != null) {
+                groupMessage.setReplyToMessage(replyToMsg);
+                groupMessage.setReplyToUsername(replyToMsg.getSender().getUsername());
+            }
+        }
+
+
         groupMessageRepository.save(groupMessage);
 
-        // Broadcast message to all active users
-        broadcastToGroup(groupId, username, message);
+
+        // Broadcast message with reply info
+        String broadcastMessage = formatBroadcastMessage(username, actualMessage, groupMessage.getReplyToUsername());
+        broadcastToGroup(groupId, username, broadcastMessage);
+
 
         // create notifications for all members except sender
         createNotificationsForMembers(group, sender, "sent a message", groupMessage.getId());
@@ -122,7 +164,7 @@ public class GroupMessageWebsocket {
     }
 
 
-
+    // Call when websocket has an error
     @OnError
     public void onError(Session session, Throwable error) {
         String username = sessionUsernameMap.get(session);
@@ -199,6 +241,12 @@ public class GroupMessageWebsocket {
         }
     }
 
+    private String formatBroadcastMessage(String sender, String message, String replyToUsername) {
+        if (replyToUsername != null) {
+            return message + " [replying to @" + replyToUsername + "]";
+        }
+        return message;
+    }
 
 
     private void createNotificationsForMembers(Group group, Users sender, String action, Long referenceID) {
