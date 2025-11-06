@@ -147,7 +147,7 @@ public class ChatSocket {
 
             // Send notification to all members EXCEPT sender
             convo.getMembers().stream()
-                    .filter(member -> !member.getId().equals(sender.getId()))  // ✅ Exclude sender
+                    .filter(member -> !member.getId().equals(sender.getId()))
                     .forEach(member -> {
                         try {
                             // Create notification

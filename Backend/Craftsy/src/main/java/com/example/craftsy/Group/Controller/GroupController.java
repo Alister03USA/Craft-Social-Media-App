@@ -541,7 +541,7 @@ public class GroupController {
 
         Optional<Group> groupOpt = groupRepository.findById(groupId);
         Optional<Users> userOpt = userRepository.findByUsername(username);
-        Optional<Users> adminOpt = userRepository.findByUsername(admin);  // ✅ Add this
+        Optional<Users> adminOpt = userRepository.findByUsername(admin);
 
         if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {  // ✅ Check admin exists
             return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
@@ -568,7 +568,7 @@ public class GroupController {
 
         // Remove the user and save the group
         group.getMembers().remove(user);
-        group.setMemberCount();  // Update member count if you have this method
+        group.setMemberCount();
         groupRepository.save(group);
 
         // Create notification
