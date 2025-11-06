@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -160,20 +161,26 @@ public class UserProfile extends BaseActivity {
                         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                         imageView.setBackgroundColor(getResources().getColor(R.color.blue_background));
                         postsGrid.addView(imageView);
+                        String projectName = post.optString("projectName", null);
+
+
 
                         // Load image
                         loadImageIntoView(imageView, imageId);
 
                         // Click listener
                         imageView.setOnClickListener(v -> {
-                            long postId = post.optLong("id", -1);
-                            if (postId != -1) {
+
+
+
+                                // Inside imageView.setOnClickListener(...)
                                 Intent intent = new Intent(UserProfile.this, UserPostsDetailActivity.class);
-                                intent.putExtra("postId", postId);
+                                intent.putExtra("projectName", projectName);
+                                intent.putExtra("username", username); // keep this!
+
                                 startActivity(intent);
-                            } else {
-                                Toast.makeText(UserProfile.this, "Post not found", Toast.LENGTH_SHORT).show();
-                            }
+
+
                         });
                     }
 

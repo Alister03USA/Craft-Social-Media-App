@@ -1,6 +1,7 @@
 package com.example.androidexample;
 
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -8,6 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 
@@ -19,7 +21,7 @@ public class UserPostsDetailActivity extends AppCompatActivity {
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
     private ImageView postImage;
-    private TextView projectName, likesCount, commentsCount, postDescription;
+    private TextView projectNamed, likesCount, commentsCount, postDescription;
     private long postId;
 
     @Override
@@ -27,54 +29,61 @@ public class UserPostsDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_posts_details);
 
+        //  Initialize views
         postImage = findViewById(R.id.postImage);
-        projectName = findViewById(R.id.projectName);
+        projectNamed = findViewById(R.id.projectName);
         likesCount = findViewById(R.id.likesCount);
         commentsCount = findViewById(R.id.commentsCount);
         postDescription = findViewById(R.id.postDescription);
+        Button backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> finish());
 
-        postId = getIntent().getLongExtra("postId", -1);
-        if (postId != -1) {
-            fetchPostDetails(postId);
+
+        // Get data passed from previous screen
+        String username = getIntent().getStringExtra("username");
+        String projectNameStr = getIntent().getStringExtra("projectName");
+
+        //  Validate incoming data
+        if (username != null && projectNameStr != null) {
+            fetchPostDetails(username, projectNameStr);
         } else {
-            Toast.makeText(this, "No post selected", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Post information missing!", Toast.LENGTH_SHORT).show();
             finish();
         }
     }
 
-    private void fetchPostDetails(long postId) {
-        String url = BASE_URL + "/posts/" + postId; // assuming endpoint for single post
+
+    private void fetchPostDetails(String username, String projectName) {
+        String url = BASE_URL + "/feed/" + username + "/" + projectName;
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
                 url,
                 null,
                 response -> {
-                    projectName.setText(response.optString("projectName", "Untitled"));
-                    likesCount.setText(response.optInt("likesCount", 0) + " Likes");
+                    projectNamed.setText(response.optString("projectName", "Untitled"));
+                    postDescription.setText(response.optString("projectDesc", ""));
+
+                    // likesCount & commentsCount aren't part of Feed model in backend yet
+                    likesCount.setText("0 Likes");
 
                     JSONArray comments = response.optJSONArray("comments");
                     commentsCount.setText((comments != null ? comments.length() : 0) + " Comments");
 
-                    postDescription.setText(response.optString("description", ""));
-
-                    // Load first image if exists
                     JSONArray images = response.optJSONArray("images");
                     if (images != null && images.length() > 0) {
                         JSONObject img = images.optJSONObject(0);
-                        if (img != null) {
-                            long imageId = img.optLong("id", -1);
-                            if (imageId > 0) {
-                                loadImageIntoView(postImage, imageId);
-                            }
-                        }
+                        long imageId = img.optLong("id", -1);
+                        if (imageId > 0) loadImageIntoView(postImage, imageId);
                     }
                 },
-                error -> Toast.makeText(this, "Failed to load post", Toast.LENGTH_SHORT).show()
+                error -> Toast.makeText(this, "Error loading post", Toast.LENGTH_SHORT).show()
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
+
 
     private void loadImageIntoView(ImageView imageView, long imageId) {
         String url = BASE_URL + "/images/" + imageId;

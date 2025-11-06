@@ -9,12 +9,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- Back Button -->
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← Back"
+            android:layout_marginBottom="16dp"/>
+
         <ImageView
             android:id="@+id/postImage"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_post_placeholder"/>
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:src="@drawable/ic_post_placeholder"/>
 
         <TextView
             android:id="@+id/projectName"
