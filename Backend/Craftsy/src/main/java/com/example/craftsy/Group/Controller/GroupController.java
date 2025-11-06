@@ -231,7 +231,9 @@ public class GroupController {
             notificationRepository.save(notif);
             NotificationWebSocket.pushNotification(group.getGroupAdmin().getUsername(), notif);
 
-            return ResponseEntity.ok(Map.of("message", "Join request sent"));
+            return ResponseEntity.ok(Map.of(
+                    "message", "Join request sent",
+                    "requestId", request.getId().toString() ));
         }
     }
 
