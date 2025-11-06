@@ -87,7 +87,8 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
             intent.putExtra("description", pattern.getDescription());
             intent.putExtra("supplies", pattern.getSupplies());
             intent.putExtra("link", pattern.getPatternLink());
-            intent.putExtra("username", pattern.getUsername()); // 🔹 passes backend username
+            intent.putExtra("ownerUsername", pattern.getUsername());
+            // 🔹 passes backend username
             context.startActivity(intent);
         });
     }

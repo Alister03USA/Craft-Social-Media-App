@@ -92,6 +92,10 @@
             android:name=".DeleteActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".EditPatternsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
         <!-- Signup -->
         <activity
@@ -121,6 +125,9 @@
         <activity android:name=".TutorialUploadActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".EditTutorialActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy"/>
         <activity android:name=".MessagingHomeActivity"
             android:exported="true"
             android:theme = "@style/Theme.Craftsy"/>
@@ -130,6 +137,10 @@
         <activity android:name=".NewChatActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
+        <activity android:name=".CommentsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy"/>
+
 
 
 

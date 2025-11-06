@@ -152,66 +152,133 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     }
 
     private void uploadImageToBackend(Uri uri) {
+
         try {
+
             final byte[] fileData = readBytesFromUri(uri);
+
             final String fileName = getFileName(uri);
+
+
+
+            // ✅ detect MIME
+
             String tempType = getContentResolver().getType(uri);
-            if (tempType == null)
+
+            if (tempType == null) {
+
                 tempType = MimeTypeMap.getSingleton()
+
                         .getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()));
-            final String mimeType = tempType;
+
+            }
+
+            final String mimeType = tempType != null ? tempType : "image/jpeg";
+
+
 
             String url = BASE_URL + "/images";
+
             Log.d(TAG, "📤 Uploading image to: " + url + " (" + fileName + ")");
 
+
+
+            // ✅ Build params for Craftsy version of VolleyMultipartRequest
+
+            Map<String, String> textParams = new java.util.HashMap<>();
+
+            Map<String, VolleyMultipartRequest.DataPart> fileParams = new java.util.HashMap<>();
+
+            fileParams.put("image", new VolleyMultipartRequest.DataPart(fileName, fileData, mimeType));
+
+
+
             VolleyMultipartRequest request = new VolleyMultipartRequest(
+
                     Request.Method.POST,
+
                     url,
+
                     response -> {
+
                         try {
+
                             String result = new String(response.data);
+
                             Log.d(TAG, "✅ Upload success: " + result);
+
                             JSONObject res = new JSONObject(result);
+
                             long imageId = res.optLong("id", -1);
+
                             String filePath = res.optString("filePath", "");
 
+
+
                             if (imageId != -1 && !TextUtils.isEmpty(filePath)) {
+
                                 String uploadedFileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+
                                 String imageUrl = BASE_URL + "/uploads/" + uploadedFileName;
 
+
+
+                                // Display locally immediately
+
                                 messages.add(new MessageItem(0, currentUser, "", now(), null, imageId, imageUrl));
+
                                 adapter.notifyItemInserted(messages.size() - 1);
+
                                 recycler.scrollToPosition(messages.size() - 1);
 
+
+
+                                // Notify backend socket
+
                                 socketSend("#image:" + imageId);
+
                                 Toast.makeText(this, "Image uploaded & displayed", Toast.LENGTH_SHORT).show();
+
                             } else {
-                                Toast.makeText(this, "Image uploaded but no valid response", Toast.LENGTH_SHORT).show();
+
+                                Toast.makeText(this, "Image uploaded but missing server response", Toast.LENGTH_SHORT).show();
+
                             }
+
                         } catch (Exception e) {
+
                             Log.e(TAG, "⚠️ Parse error", e);
+
                         }
+
                     },
+
                     error -> {
+
                         Log.e(TAG, "❌ Upload failed", error);
+
                         Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
+
                     },
-                    new java.util.HashMap<>(),   // headers
-                    new java.util.HashMap<>()    // byte data (will be overridden)
-            )
-            {
-                protected Map<String, VolleyMultipartRequest.DataPart> getByteData() throws AuthFailureError {
-                    Map<String, VolleyMultipartRequest.DataPart> params = new java.util.HashMap<>();
-                    params.put("image", new VolleyMultipartRequest.DataPart(fileName, fileData, mimeType));
-                    return params;
-                }
-            };
+
+                    textParams,
+
+                    fileParams
+
+            );
+
+
 
             VolleySingleton.getInstance(this).addToRequestQueue(request);
 
+
+
         } catch (Exception e) {
+
             Log.e(TAG, "💥 File upload error", e);
+
         }
+
     }
 
     /* ==================== MESSAGE LOGIC ==================== */

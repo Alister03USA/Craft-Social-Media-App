@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,6 +50,7 @@ public class PatternActivity extends BaseActivity {
 
         adapter = new PatternAdapter(this, patterns);
         recyclerView.setAdapter(adapter);
+
 
         fetchPatterns();
     }

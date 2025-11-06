@@ -1,5 +1,6 @@
 package com.example.androidexample;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,10 +32,8 @@ public class GroupPostAdapter extends RecyclerView.Adapter<GroupPostAdapter.Post
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
         GroupPostModel post = posts.get(position);
 
-        // Set username
         holder.username.setText(post.getUsername());
 
-        // Set text content: hide TextView if empty
         String content = post.getContent();
         if (content != null && !content.trim().isEmpty()) {
             holder.text.setVisibility(View.VISIBLE);
@@ -43,28 +42,25 @@ public class GroupPostAdapter extends RecyclerView.Adapter<GroupPostAdapter.Post
             holder.text.setVisibility(View.GONE);
         }
 
-        // Handle image: only show if mediaUrl exists
         String mediaUrl = post.getMediaUrl();
         if (mediaUrl != null && !mediaUrl.trim().isEmpty()) {
             holder.image.setVisibility(View.VISIBLE);
             Glide.with(holder.itemView.getContext())
                     .load(mediaUrl.startsWith("http") ? mediaUrl :
                             BASE_URL + "/groupMessage/image/" + post.getMessageId())
-                    .into(holder.image); // no .error() — if load fails, just leaves image blank
-        } else {
-            holder.image.setVisibility(View.GONE); // no placeholder, just hide
-        }
-    }
+                    .into(holder.image);
+        } else holder.image.setVisibility(View.GONE);
 
-
-
-    @Override
-    public int getItemCount() {
-        return posts.size();
+        holder.viewComments.setOnClickListener(v -> {
+            Intent intent = new Intent(holder.itemView.getContext(), CommentsActivity.class);
+            intent.putExtra("messageId", post.getMessageId());
+            intent.putExtra("groupId", post.getGroupId()); // <-- pass groupId here
+            holder.itemView.getContext().startActivity(intent);
+        });
     }
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView username, text;
+        TextView username, text, viewComments;
         ImageView image;
 
         public PostViewHolder(@NonNull View itemView) {
@@ -72,6 +68,12 @@ public class GroupPostAdapter extends RecyclerView.Adapter<GroupPostAdapter.Post
             username = itemView.findViewById(R.id.groupPostUsername);
             text = itemView.findViewById(R.id.groupPostText);
             image = itemView.findViewById(R.id.groupPostImage);
+            viewComments = itemView.findViewById(R.id.groupPostViewComments);
         }
+    }
+
+    @Override
+    public int getItemCount() {
+        return posts != null ? posts.size() : 0;
     }
 }

@@ -91,9 +91,19 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
 
                 case "groups":
                 case "group": {
-                    // Future support
+                    if (clickListener != null) {
+                        clickListener.onItemClick(item);
+                    } else {
+                        Intent intent = new Intent(context, GroupDetailsActivity.class);
+                        intent.putExtra("groupId", Long.parseLong(item.getUsername()));
+                        intent.putExtra("groupName", item.getTitle());
+                        intent.putExtra("groupDescription", item.getDescription());
+                        context.startActivity(intent);
+                    }
                     break;
                 }
+
+
 
                 case "tutorials":
                 case "tutorial": {

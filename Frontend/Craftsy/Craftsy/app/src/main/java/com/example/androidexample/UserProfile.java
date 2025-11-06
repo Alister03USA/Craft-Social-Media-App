@@ -31,6 +31,7 @@ public class UserProfile extends BaseActivity {
 
     private EditText displayName, username, bio, email, password, craftSpecialties;
 
+
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
     @Override
@@ -115,7 +116,14 @@ public class UserProfile extends BaseActivity {
         loadUserPosts(usernameValue);
 
         Button editButton = findViewById(R.id.editProfile);
+        Button notifButton = findViewById(R.id.notifButton);
+        notifButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, NotificationCenterActivity.class);
+            startActivity(intent);
+        });
+
         editButton.setOnClickListener(v -> showEditProfile());
+
     }
 
     /** ------------------- LOAD USER POSTS ------------------- **/
@@ -123,7 +131,8 @@ public class UserProfile extends BaseActivity {
         GridLayout postsGrid = findViewById(R.id.postsGrid);
         postsGrid.removeAllViews();
 
-        String url = BASE_URL + "/feed/" + username;
+        String url = BASE_URL + "/feed/home/" + username; // only user's posts
+
         JsonArrayRequest req = new JsonArrayRequest(
                 Request.Method.GET, url, null,
                 response -> {
@@ -131,6 +140,18 @@ public class UserProfile extends BaseActivity {
                         JSONObject post = response.optJSONObject(i);
                         if (post == null) continue;
 
+                        JSONArray images = post.optJSONArray("images");
+                        if (images == null || images.length() == 0) {
+                            // Skip posts with no images to avoid blank spaces
+                            continue;
+                        }
+
+                        JSONObject img = images.optJSONObject(0);
+                        if (img == null) continue;
+                        long imageId = img.optLong("id", -1);
+                        if (imageId <= 0) continue;
+
+                        // Create ImageView only if there is an image
                         ImageView imageView = new ImageView(this);
                         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
                         params.width = getResources().getDisplayMetrics().widthPixels / 3;
@@ -140,37 +161,38 @@ public class UserProfile extends BaseActivity {
                         imageView.setBackgroundColor(getResources().getColor(R.color.blue_background));
                         postsGrid.addView(imageView);
 
-                        JSONArray images = post.optJSONArray("images");
-                        if (images != null && images.length() > 0) {
-                            JSONObject img = images.optJSONObject(0);
-                            if (img != null) {
-                                long imageId = img.optLong("id", -1);
-                                if (imageId > 0) {
-                                    loadImageIntoView(imageView, imageId);
-                                }
-                            }
-                        }
+                        // Load image
+                        loadImageIntoView(imageView, imageId);
 
-                        String projectName = post.optString("projectName", "");
-
-                        // 🔹 Updated click listener to open UserPostsDetailActivity
+                        // Click listener
                         imageView.setOnClickListener(v -> {
-                            long postId = post.optLong("id", -1); // get the post's ID
+                            long postId = post.optLong("id", -1);
                             if (postId != -1) {
                                 Intent intent = new Intent(UserProfile.this, UserPostsDetailActivity.class);
-                                intent.putExtra("postId", postId); // pass the post ID
+                                intent.putExtra("postId", postId);
                                 startActivity(intent);
                             } else {
                                 Toast.makeText(UserProfile.this, "Post not found", Toast.LENGTH_SHORT).show();
                             }
                         });
-
                     }
+
+                    // If no posts were added, show a placeholder or message
+                    if (postsGrid.getChildCount() == 0) {
+                        TextView emptyMsg = new TextView(this);
+                        emptyMsg.setText("No posts yet.");
+                        emptyMsg.setTextSize(16f);
+                        emptyMsg.setPadding(0, 24, 0, 24);
+                        postsGrid.addView(emptyMsg);
+                    }
+
                 },
                 error -> Toast.makeText(this, "Failed to load posts", Toast.LENGTH_SHORT).show()
         );
+
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
+
 
 
     private void loadImageIntoView(ImageView imageView, long imageId) {
