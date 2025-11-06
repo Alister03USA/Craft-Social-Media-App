@@ -1,5 +1,6 @@
 package com.example.craftsy.messages.websocket;
 
+import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.messages.MessageRepository;
 import com.example.craftsy.messages.conversations.DirectConversationRepository;
@@ -19,6 +20,8 @@ public class SpringConfigurator extends ServerEndpointConfig.Configurator {
             socket.setMsgRepo(SpringContext.getBean(MessageRepository.class));
             socket.setUserRepo(SpringContext.getBean(UserRepository.class));
             socket.setMessageService(SpringContext.getBean(MessageService.class));
+            socket.setNotificationRepository(SpringContext.getBean(NotificationRepository.class));
+
 
             return (T) socket;
         }
