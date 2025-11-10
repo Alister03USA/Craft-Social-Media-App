@@ -34,6 +34,12 @@ public class NotificationController {
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
         notification.setIsRead(true);
         notificationRepository.save(notification);
+
+        NotificationWebSocket.pushRemoveNotification(
+                notification.getUser().getUsername(),
+                notification.getId()
+        );
+        
         return ResponseEntity.ok("Notification marked as read");
     }
 

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -111,4 +112,20 @@ public class NotificationWebSocket {
             }
         }
     }
+
+
+    public static void pushRemoveNotification(String username, Long notificationId) {
+        Session session = usernameSessionMap.get(username);
+        if (session != null) {
+            try {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("removeId", notificationId);
+                String json = mapper.writeValueAsString(payload);
+                session.getBasicRemote().sendText(json);
+            } catch (IOException e) {
+                logger.error("Error sending remove event to user: {}", username, e);
+            }
+        }
+    }
+
 }

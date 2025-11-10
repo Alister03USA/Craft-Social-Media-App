@@ -286,7 +286,7 @@ public class TutorialController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) MultipartFile file // 9nterface that handle file uploads
+            @RequestParam(required = false) MultipartFile file // interface that handle file uploads
             ) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
         if (tutorialOpt.isEmpty()) {
