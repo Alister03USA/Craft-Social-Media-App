@@ -39,7 +39,7 @@ public class NotificationController {
                 notification.getUser().getUsername(),
                 notification.getId()
         );
-        
+
         return ResponseEntity.ok("Notification marked as read");
     }
 
