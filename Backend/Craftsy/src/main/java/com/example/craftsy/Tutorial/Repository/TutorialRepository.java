@@ -13,4 +13,7 @@ public interface TutorialRepository extends JpaRepository<Tutorial, Long> {
 
     List<Tutorial> findByUser(Users user);
 
+    List<Tutorial>findByIs_PrivateFalse();
+    List<Tutorial> findByIs_PrivateTrue();
+
 }

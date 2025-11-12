@@ -29,7 +29,7 @@ public class PointsService {
 
     private static final int POINTS_POST = 25;
     private static final int POINTS_TUTORIAL = 25;
-    private static final int POINTS_COMMENT = 5;
+    private static final int POINTS_COMMENT = 10;
 
 
     /**
