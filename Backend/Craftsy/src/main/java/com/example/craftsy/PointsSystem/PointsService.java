@@ -29,7 +29,7 @@ public class PointsService {
 
     private static final int POINTS_POST = 25;
     private static final int POINTS_TUTORIAL = 25;
-    private static final int POINTS_COMMENT = 5;
+    private static final int POINTS_COMMENT = 10;
 
 
     /**
@@ -38,7 +38,7 @@ public class PointsService {
     @Transactional
     public void awardPointsForPost(Users user, Long postId) {
         awardPoints(user, POINTS_POST, "POST_CREATED", postId
-              );
+        );
     }
 
     /**
@@ -47,7 +47,7 @@ public class PointsService {
     @Transactional
     public void awardPointsForTutorial(Users user, Long tutorialId) {
         awardPoints(user, POINTS_TUTORIAL, "TUTORIAL_POSTED", tutorialId
-               );
+        );
 
         UserPoints userPoints = getUserPoints(user);
         userPoints.setTutorialsCount(userPoints.getTutorialsCount() + 1);
@@ -60,7 +60,7 @@ public class PointsService {
     @Transactional
     public void awardPointsForComment(Users user, Long commentId) {
         awardPoints(user, POINTS_COMMENT, "COMMENT_ADDED", commentId
-                );
+        );
 
         UserPoints userPoints = getUserPoints(user);
         userPoints.setCommentsCount(userPoints.getCommentsCount() + 1);
