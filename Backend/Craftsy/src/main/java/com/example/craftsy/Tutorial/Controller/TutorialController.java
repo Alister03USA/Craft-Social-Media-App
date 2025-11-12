@@ -73,6 +73,15 @@ public class TutorialController {
 
             Users user = userOpt.get();
 
+            // Get user tier
+            String userTier = pointsService.getUserPoints(user).getCurrentTier();
+
+            // Only allow EXPERT or CHAMPION users to upload
+            if (!(userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+                return ResponseEntity.status(403).body("You must be EXPERT level or higher to upload tutorials.");
+
+            }
+
             //  Create folder if not exist
             String uploadDir = "uploads/tutorials";
             Files.createDirectories(Paths.get(uploadDir)); //Converts string path into a path object
@@ -145,6 +154,15 @@ public class TutorialController {
         }
 
         Users user = userOpt.get();
+
+        // Get user tier
+        String userTier = pointsService.getUserPoints(user).getCurrentTier();
+
+        // Only allow EXPERT or CHAMPION users to upload
+        if (!(userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+            return ResponseEntity.status(403).body("You must be EXPERT level or higher to upload tutorials.");
+
+        }
 
         Tutorial tutorial = new Tutorial();
         tutorial.setTitle(title);

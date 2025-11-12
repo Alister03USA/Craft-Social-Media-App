@@ -65,14 +65,14 @@ public class UserPoints {
     // Auto-update tier based on points
     private void updateTier() {
         if (totalPoints >= 300) {
-            currentTier = "Champion";
+            currentTier = "CHAMPION";
         }
         else if (totalPoints >= 200) {
-            currentTier = "Expert";
+            currentTier = "EXPERT";
         } else if (totalPoints >= 100) {
-            currentTier = "Intermediate";
+            currentTier = "INTERMEDIATE";
         } else {
-            currentTier = "Beginner";
+            currentTier = "BEGINNER";
         }
     }
 

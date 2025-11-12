@@ -27,8 +27,8 @@ public class PointsService {
     @Autowired
     private NotificationRepository notificationRepository;
 
-    private static final int POINTS_POST = 25;
-    private static final int POINTS_TUTORIAL = 25;
+    private static final int POINTS_POST = 20;
+    private static final int POINTS_TUTORIAL = 20;
     private static final int POINTS_COMMENT = 10;
 
 
