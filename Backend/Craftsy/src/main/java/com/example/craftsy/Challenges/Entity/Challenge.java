@@ -2,6 +2,8 @@ package com.example.craftsy.Challenges.Entity;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
+import org.antlr.v4.runtime.misc.IntSet;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +19,12 @@ public class Challenge {
     private String type; // daily, weekly, seasonal
     private String category;
 
+
+    private String description;
+
     private LocalDate startDate;
     private LocalDate endDate;
 
-    private int rewardPoints = 10; // default reward points
 
     private boolean isActive = true;
 
@@ -61,7 +65,37 @@ public class Challenge {
     }
 
 
+    public void setCreatedBy(Users createdBy) {
+        this.createdBy = createdBy;
+    }
 
+    public Users getCreatedBy() {
+        return createdBy;
+    }
+
+    public boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void setParticipants(List<Users> participants) {
+        this.participants = participants;
+    }
+
+    public List<Users> getParticipants() {
+        return participants;
+    }
+
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    public String getDescription() {
+        return description;
+    }
 
     public void setType(String type) {
         this.type = type;
@@ -95,14 +129,10 @@ public class Challenge {
         return endDate;
     }
 
-    public void setRewardPoints(int rewardPoints) {
-        this.rewardPoints = rewardPoints;
+
+
+
+    public List<Users> getCompletedUsers() {
+        return completedUsers;
     }
-
-    public int getRewardPoints() {
-        return rewardPoints;
-    }
-
-
-
 }
