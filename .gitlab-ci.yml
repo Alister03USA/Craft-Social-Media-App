@@ -1,28 +1,25 @@
-maven-build:
+maven-build:            
   stage: mavenbuild
   tags:
-    - springboot_tag
+    - alister_tag      # <-- change to your runner's tag
   script:
-    - cd Backend/Craftsy
-    - mvn clean package -DskipTests   # skip tests for now
-  artifacts:
-    paths:
-      - Backend/Craftsy/target/*.jar
+    - cd Backend/Craftsy       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
+    - mvn package
   only:
     refs:
-      - main
+      - alister_CICD
     changes:
       - Backend/**/*
 
-maven-test:
+maven-test:             
   stage: maventest
   tags:
-    - springboot_tag
+    - alister_tag     # <-- change to your runner's tag
   script:
-    - cd Backend/Craftsy
-    - mvn test -DskipTests || echo "Skipping tests for now"
+    - cd Backend/Craftsy       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
+    - mvn test
   only:
     refs:
-      - main
+      - alister_CICD
     changes:
       - Backend/**/*
