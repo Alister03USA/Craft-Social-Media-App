@@ -1,3 +1,8 @@
+stages:
+  - mavenbuild
+  - maventest
+
+
 maven-build:            
   stage: mavenbuild
   tags:
