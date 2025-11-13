@@ -30,6 +30,12 @@ public class EventComment {
     @Column(nullable = false)
     private LocalDateTime date;
 
+    public EventComment(String text, Event event, LocalDateTime date) {
+        this.text = text;
+        this.event = event;
+        this.date = date;
+    }
+
     public EventComment() {
     }
 
@@ -71,5 +77,15 @@ public class EventComment {
 
     public void setDate(LocalDateTime date) {
         this.date = date;
+    }
+
+    public void addLike(){
+        this.likes++;
+    }
+
+    public void removeLike(){
+        if(this.likes > 0){
+            this.likes -= 1;
+        }
     }
 }
