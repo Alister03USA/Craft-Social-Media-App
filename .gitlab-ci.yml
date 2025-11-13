@@ -5,13 +5,13 @@ stages:
 maven-build:            
   stage: mavenbuild
   tags:
-    - yourname_tag      # <-- change to your runner's tag
+    - alister_tag      # <-- change to your runner's tag
   script:
-    - cd Backend        # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
+    - cd Backend/Craftsy       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
     - mvn package
   only:
     refs:
-      - YOURNAME_CICD
+      - alister_CICD
     changes:
       - Backend/**/*
 
@@ -19,12 +19,12 @@ maven-build:
 maven-test:             
   stage: maventest
   tags:
-    - yourname_tag     # <-- change to your runner's tag
+    - alister_tag     # <-- change to your runner's tag
   script:
-    - cd Backend       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
+    - cd Backend/Craftsy       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
     - mvn test
   only:
     refs:
-      - YOURNAME_CICD
+      - alister_CICD
     changes:
       - Backend/**/*
