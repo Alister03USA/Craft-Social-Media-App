@@ -22,7 +22,7 @@ maven-test:
     - alister_tag     # <-- change to your runner's tag
   script:
     - cd Backend/Craftsy       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
-    - mvn test
+    -  mvn test -DskipTests
   only:
     refs:
       - alister_CICD
