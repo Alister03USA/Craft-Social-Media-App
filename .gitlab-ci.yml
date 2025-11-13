@@ -6,21 +6,13 @@ stages:             # these stages (jobs) forms the CICD pipeline
   - androidtest     # this is a JOB to run tests in your Android application (it's okay you don't have any test for now)
 
 maven-build:            
-  stage: mavenbuild
-  tags:
-    - springboot_tag
-  script:
-    - echo "🏁 Current working directory: $(pwd)"
-    - ls -R Backend
-    - cd Backend/Craftsy
-    - echo "📁 Now inside: $(pwd)"
-    - ls
-    - test -f pom.xml || (echo "❌ pom.xml not found — wrong directory!" && exit 1)
-    - mvn clean package -DskipTests
-  artifacts:
-    paths:
-      - Backend/Craftsy/target/*.jar
-            # where to output the packaged jar file, change 'Backend' to to where you have the pom.xml
+  stage: mavenbuild     # one of the stages listed above
+  tags:                 # to specify which runner to execute this job
+    - springboot_tag    # change to your runner's tag
+  script:               # what to execute for this job
+    - cd Backend/Craftsy       # change 'Backend' to to where you have the pom.xml (do not add / in the beginning)
+    - mvn package       # maven package
+  artifacts:            # where to output the packaged jar file, change 'Backend' to to where you have the pom.xml
     paths:
     - Backend/Craftsy/target/*.jar # change 'Backend' to where you have 'target' (do not add a / in the beginning)
   only:
