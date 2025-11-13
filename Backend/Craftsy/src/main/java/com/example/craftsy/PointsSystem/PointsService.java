@@ -39,6 +39,10 @@ public class PointsService {
     public void awardPointsForPost(Users user, Long postId) {
         awardPoints(user, POINTS_POST, "POST_CREATED", postId
         );
+
+        UserPoints userPoints = getUserPoints(user);
+        userPoints.setTutorialsCount(userPoints.getPostsCount() + 1);
+        userPointsRepository.save(userPoints);
     }
 
     /**

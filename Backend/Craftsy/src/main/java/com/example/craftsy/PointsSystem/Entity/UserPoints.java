@@ -20,7 +20,7 @@ public class UserPoints {
     private Integer totalPoints = 0;
 
     @Column(name = "current_tier")
-    private String currentTier = "BEGINNER";  // BEGINNER, INTERMEDIATE, EXPERT, ADVANCED, CHAMPION
+    private String currentTier = "BEGINNER";  // BEGINNER, INTERMEDIATE, EXPERT, CHAMPION
 
     @Column(name = "posts_count")
     private Integer postsCount = 0;
