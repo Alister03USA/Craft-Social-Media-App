@@ -7,6 +7,7 @@ import com.example.craftsy.Group.Repository.GroupRepository;
 import com.example.craftsy.Notification.Entity.Notification;
 import com.example.craftsy.Notification.NotificationWebSocket;
 import com.example.craftsy.Notification.Repository.NotificationRepository;
+import com.example.craftsy.PointsSystem.PointsService;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import jakarta.websocket.*;
@@ -44,6 +45,7 @@ public class GroupMessageWebsocket {
     private static UserRepository userRepository;
     private static GroupMessageRepository groupMessageRepository;
     private static NotificationRepository notificationRepository;
+    private static PointsService  pointsService;
 
     // Inject Spring beans manually because @ServerEndpoint is not managed by Spring
     public static void setDependencies(GroupRepository gr, UserRepository ur,
@@ -119,6 +121,7 @@ public class GroupMessageWebsocket {
         // Parse message format: "REPLY:messageId:actualMessage" or just "actualMessage"
         Long replyToMessageId = null;
         String actualMessage = message;
+        boolean isReply = false;
 
         if (message.startsWith("REPLY:")) {
             String[] parts = message.split(":", 3);
@@ -126,6 +129,7 @@ public class GroupMessageWebsocket {
                 try {
                     replyToMessageId = Long.parseLong(parts[1]);
                     actualMessage = parts[2];
+                    isReply = true;
                 } catch (NumberFormatException e) {
                     logger.error("Invalid reply format: " + message);
                 }
@@ -152,6 +156,9 @@ public class GroupMessageWebsocket {
 
         groupMessageRepository.save(groupMessage);
 
+        if (isReply) {
+            pointsService.awardPointsForComment(sender, groupMessage.getId());
+        }
 
         // Broadcast message with reply info
         String broadcastMessage = formatBroadcastMessage(username, actualMessage, groupMessage.getReplyToUsername());
