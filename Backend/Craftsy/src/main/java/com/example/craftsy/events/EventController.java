@@ -4,7 +4,8 @@ import com.example.craftsy.Group.Entity.Group;
 import com.example.craftsy.Group.Repository.GroupRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
-import com.example.craftsy.feed.Feed;
+import com.example.craftsy.events.eventsComments.EventComment;
+import com.example.craftsy.events.eventsComments.EventCommentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,9 @@ public class EventController {
 
     @Autowired
     GroupRepository groupRepo;
+
+    @Autowired
+    EventCommentRepository eventCommentRepo;
 
     /**
      * Creates a public event that is not included in a group
@@ -232,5 +236,65 @@ public class EventController {
             events.sort(Comparator.comparing(Event::getEventDate));
         }
         return events;
+    }
+
+    /**
+     * add a comment to the event
+     * @param eventID
+     * @param text
+     * @return
+     */
+    @PostMapping("/event/{eventID}/comment")
+    Event addComment(@PathVariable Long eventID, @RequestBody String text){
+        Event event = eventRepo.findById(eventID)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        LocalDateTime time = LocalDateTime.now();
+        EventComment comment = new EventComment(text.replaceAll("^\"|\"$", ""), event, time);
+        eventCommentRepo.save(comment);
+        return event;
+    }
+
+    /**
+     * deleted a comment
+     * @param commentID
+     * @return updated event
+     */
+    @DeleteMapping("/event/comment/{commentID}")
+    Event deleteComment(@PathVariable Long commentID){
+        EventComment comment = eventCommentRepo.findById(commentID)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        Event event = comment.getEvent();
+        eventCommentRepo.delete(comment);
+        return event;
+    }
+
+    /**
+     * likes a comment
+     * @param commentID
+     * @return event
+     */
+    @PutMapping("/event/{commentID}/like")
+    Event likeComment(@PathVariable Long commentID){
+        EventComment comment = eventCommentRepo.findById(commentID)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        comment.addLike();
+        eventCommentRepo.save(comment);
+        Event event = comment.getEvent();
+        return event;
+    }
+
+    /**
+     * unlikes comment
+     * @param commentID
+     * @return event
+     */
+    @PutMapping("/event/{commentID}/unlike")
+    Event unlikeComment(@PathVariable Long commentID){
+        EventComment comment = eventCommentRepo.findById(commentID)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        comment.removeLike();
+        eventCommentRepo.save(comment);
+        Event event = comment.getEvent();
+        return event;
     }
 }
