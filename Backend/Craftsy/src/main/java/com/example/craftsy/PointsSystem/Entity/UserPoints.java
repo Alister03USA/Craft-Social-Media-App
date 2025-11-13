@@ -31,6 +31,9 @@ public class UserPoints {
     @Column(name = "comments_count")
     private Integer commentsCount = 0;
 
+    @Column(name = "challenges_count")
+    private Integer challengesCount = 0;
+
     @Column(name = "last_updated")
     private Date lastUpdated = new Date();
 
@@ -61,6 +64,9 @@ public class UserPoints {
 
     public Date getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(Date lastUpdated) { this.lastUpdated = lastUpdated; }
+
+    public Integer getChallengesCount() { return challengesCount; }
+    public void setChallengesCount(Integer challengesCount) { this.challengesCount = challengesCount; }
 
     // Auto-update tier based on points
     private void updateTier() {

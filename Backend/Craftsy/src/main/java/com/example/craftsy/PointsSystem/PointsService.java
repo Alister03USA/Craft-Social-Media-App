@@ -30,6 +30,7 @@ public class PointsService {
     private static final int POINTS_POST = 10;
     private static final int POINTS_TUTORIAL = 10;
     private static final int POINTS_COMMENT = 5;
+    private static final int POINTS_CHALLENGE_COMPLETION = 10;
 
 
     /**
@@ -70,6 +71,20 @@ public class PointsService {
         userPoints.setCommentsCount(userPoints.getCommentsCount() + 1);
         userPointsRepository.save(userPoints);
     }
+
+    /**
+     * Award points for completing a challenge
+     */
+    @Transactional
+    public void awardPointsForChallengeCompletion(Users user, Long challengeId) {
+        awardPoints(user, POINTS_CHALLENGE_COMPLETION, "CHALLENGE_COMPLETED", challengeId);
+
+        // Optionally, you could track number of challenges completed
+        UserPoints userPoints = getUserPoints(user);
+        userPoints.setChallengesCount(userPoints.getChallengesCount() + 1);
+        userPointsRepository.save(userPoints);
+    }
+
 
 
 
