@@ -18,7 +18,7 @@ public class EventComment {
     @JoinColumn(
             name = "eventId",
             nullable = false,
-            referencedColumnName = "eventID"
+            referencedColumnName = "id"
     )
     @JsonBackReference
     private Event event;

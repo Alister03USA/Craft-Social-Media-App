@@ -35,6 +35,10 @@ public class Event {
 
     private String craftType;
 
+    private Boolean isPublic;
+
+    private String description;
+
     @ManyToMany
     @JoinTable(
             name = "rsvpYes",
@@ -161,5 +165,29 @@ public class Event {
 
     public void removeComment(EventComment comment){
         this.comments.remove(comment);
+    }
+
+    public Boolean getPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(Boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void addRsvpYes(Users user){
+        this.rsvpYes.add(user);
+    }
+
+    public void addRsvpNo(Users user){
+        this.rsvpNo.add(user);
     }
 }
