@@ -2,6 +2,7 @@ package com.example.craftsy.feed;
 
 import com.example.craftsy.FollowingFollowers.Entity.Follow;
 import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+import com.example.craftsy.PointsSystem.PointsService;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.feed.feedComments.FeedComments;
@@ -31,6 +32,9 @@ public class FeedController {
     @Autowired
     ImageRepository imageRepository;
 
+    @Autowired
+    private PointsService pointsService;
+
     /**
      *
      * Posts a project to feed
@@ -54,6 +58,9 @@ public class FeedController {
         }
 
         Feed proj = feedRepository.save(project);
+
+        // award 20 points after posting
+        pointsService.awardPointsForPost(user, proj.getId());
         return proj;
     }
 
@@ -196,6 +203,9 @@ public class FeedController {
         comment.setDate(LocalDateTime.now());
         comment.setFeed(project);
         feedCommentsRepository.save(comment);
+
+        // award 10 points after commenting
+        pointsService.awardPointsForComment(user, comment.getId());
         return project;
     }
 

@@ -32,6 +32,8 @@ public class Tutorial {
 
     private String fileType;
 
+    private boolean isPrivate = false;
+
     // Getters and Setters
     public Long  getId() {
         return id;
@@ -52,7 +54,7 @@ public class Tutorial {
     }
 
     public void setDescription(String description) {
-         this.description = description;
+        this.description = description;
     }
 
 
@@ -106,4 +108,16 @@ public class Tutorial {
     }
 
 
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setIsPrivate(boolean isPrivate) {
+        this.isPrivate = isPrivate;
+    }
+
+
+
+
 }
+

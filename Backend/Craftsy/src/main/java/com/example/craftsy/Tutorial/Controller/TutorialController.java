@@ -40,6 +40,9 @@ public class TutorialController {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private com.example.craftsy.PointsSystem.PointsService pointsService;
+
 
 
 
@@ -56,8 +59,10 @@ public class TutorialController {
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("category") String category,
-            @RequestParam("file") MultipartFile file) { // MultipartFile is a spring class representing an uploaded file
-            // Extracts the title, desc, and file from the request
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "isPrivate", required = false, defaultValue = "false") boolean isPrivate
+    ) { // MultipartFile is a spring class representing an uploaded file
+        // Extracts the title, desc, and file from the request
         try {
 
             // Find user
@@ -67,6 +72,15 @@ public class TutorialController {
             }
 
             Users user = userOpt.get();
+
+            // Get user tier
+            String userTier = pointsService.getUserPoints(user).getCurrentTier();
+
+            // Only allow EXPERT or CHAMPION users to upload
+            if (!(userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+                return ResponseEntity.status(403).body("You must be EXPERT level or higher to upload tutorials.");
+
+            }
 
             //  Create folder if not exist
             String uploadDir = "uploads/tutorials";
@@ -88,6 +102,7 @@ public class TutorialController {
             tutorial.setFilePath(filePath.toString());
             tutorial.setCategory(category);
             tutorial.setUser(user);
+            tutorial.setIsPrivate(isPrivate);
 
             tutorialRepository.save(tutorial);
 
@@ -129,7 +144,8 @@ public class TutorialController {
             @RequestParam String title,
             @RequestParam String description,
             @RequestParam String category,
-            @RequestParam String fileUrl      // URL to external image/video
+            @RequestParam String fileUrl,
+            @RequestParam(value = "isPrivate", required = false, defaultValue = "false") boolean isPrivate// URL to external image/video
     ) {
         // Find user
         Optional<Users> userOpt = userRepository.findByUsername(username);
@@ -139,12 +155,22 @@ public class TutorialController {
 
         Users user = userOpt.get();
 
+        // Get user tier
+        String userTier = pointsService.getUserPoints(user).getCurrentTier();
+
+        // Only allow EXPERT or CHAMPION users to upload
+        if (!(userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+            return ResponseEntity.status(403).body("You must be EXPERT level or higher to upload tutorials.");
+
+        }
+
         Tutorial tutorial = new Tutorial();
         tutorial.setTitle(title);
         tutorial.setDescription(description);
         tutorial.setCategory(category);
         tutorial.setFileUrl(fileUrl); // store URL instead of file path
         tutorial.setUser(user);
+        tutorial.setIsPrivate(isPrivate);
         tutorialRepository.save(tutorial);
 
         return ResponseEntity.ok("Tutorial uploaded successfully with URL!");
@@ -154,7 +180,7 @@ public class TutorialController {
     /**
      * GET "/tutorial/{id}/file"
      * * Fetch the file of the Videos - Optimized for direct streaming
-    */
+     */
     @GetMapping("/{id}/file")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
@@ -211,13 +237,25 @@ public class TutorialController {
      * Returns correct file URL (local or external)
      */
     @GetMapping("/search")
-    public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query) {
+    public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query, @RequestParam String username) {
         List<Tutorial> tutorials = tutorialRepository
                 .findByUser_UsernameContainingIgnoreCaseOrTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrCategoryContainingIgnoreCase(
-                      query,  query, query, query);
+                        query,  query, query, query);
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String userTier = pointsService.getUserPoints(user).getCurrentTier();
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Tutorial t : tutorials) {
+
+            // Hide private tutorials if user is below Intermediate
+            if (t.isPrivate() && !( userTier.equals("INTERMEDIATE")||userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+                continue;
+            }
+
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getId());
             map.put("Username", t.getUser().getUsername());
@@ -240,32 +278,39 @@ public class TutorialController {
      * Fetch all tutorials uploaded by a specific user (For Main Search Tab)
      */
     @GetMapping("/user/{username}")
-    public ResponseEntity<List<Map<String, Object>>> getTutorialsByUser(@PathVariable String username) {
-        // 1. Find user
+    public ResponseEntity<List<Map<String, Object>>> getTutorialsByUser(
+            @PathVariable String username,
+            @RequestParam String viewer // viewer = the user making the request
+    ) {
         Optional<Users> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
+        Optional<Users> viewerOpt = userRepository.findByUsername(viewer);
+        if (userOpt.isEmpty() || viewerOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         Users user = userOpt.get();
+        Users viewerUser = viewerOpt.get();
+        String viewerTier = pointsService.getUserPoints(viewerUser).getCurrentTier();
 
-        // 2. Get tutorials uploaded by this user
         List<Tutorial> tutorials = tutorialRepository.findByUser(user);
 
-        // 3. Convert to list of maps for response
         List<Map<String, Object>> result = new ArrayList<>();
         for (Tutorial t : tutorials) {
+            if (t.isPrivate() && !(viewerTier.equals("INTERMEDIATE")||viewerTier.equals("EXPERT") || viewerTier.equals("CHAMPION"))) {
+                continue; // skip private tutorials for Beginner users
+            }
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getId());
             map.put("title", t.getTitle());
             map.put("description", t.getDescription());
             map.put("category", t.getCategory());
             map.put("username", t.getUser().getUsername());
+            map.put("isPrivate", t.isPrivate());
 
-            // Handle both local and external URLs
             String fileUrl = (t.getFileUrl() != null)
                     ? t.getFileUrl()
-                    : "/tutorial/" + t.getId(); // local file endpoint
+                    : "/tutorial/" + t.getId();
             map.put("fileURL", fileUrl);
 
             result.add(map);
@@ -273,6 +318,7 @@ public class TutorialController {
 
         return ResponseEntity.ok(result);
     }
+
 
 
 
@@ -287,7 +333,7 @@ public class TutorialController {
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) MultipartFile file // interface that handle file uploads
-            ) {
+    ) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
         if (tutorialOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -390,6 +436,7 @@ public class TutorialController {
 
 
 }
+
 
 
 

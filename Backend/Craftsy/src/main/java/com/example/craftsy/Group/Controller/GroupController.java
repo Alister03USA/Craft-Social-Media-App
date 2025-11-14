@@ -7,6 +7,7 @@ import com.example.craftsy.Group.Repository.GroupRepository;
 import com.example.craftsy.Notification.Entity.Notification;
 import com.example.craftsy.Notification.NotificationWebSocket;
 import com.example.craftsy.Notification.Repository.NotificationRepository;
+import com.example.craftsy.PointsSystem.PointsService;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,10 @@ public class GroupController {
     private NotificationRepository notificationRepository;
 
 
+    @Autowired
+    private PointsService pointsService;
+
+
     /**
      * POST /{adminUsername}/create/
      * This endpoint lets a user create a new group.
@@ -50,6 +55,15 @@ public class GroupController {
         }
 
         Users admin = adminOpt.get();
+
+        // Get user tier
+        String adminTier = pointsService.getUserPoints(admin).getCurrentTier();
+
+        // Only allow EXPERT or CHAMPION users to upload
+        if (!(adminTier.equals("EXPERT") || adminTier.equals("CHAMPION"))) {
+            return ResponseEntity.status(403).body(Map.of("message", "You must be EXPERT level or higher to upload tutorials."));
+
+        }
 
         // Check if a group with the same name already exists
         if (groupRepository.findByGroupName(groupRequest.getGroupName()).isPresent()) {
@@ -70,6 +84,9 @@ public class GroupController {
 
         // Save the group to the database
         groupRepository.save(group);
+
+        pointsService.awardPointsForPost(admin, group.getId());
+
 
         return ResponseEntity.ok(Map.of("message", "Group created successfully"));
     }
@@ -191,6 +208,8 @@ public class GroupController {
         if (group.getMembers().contains(user)) {
             return ResponseEntity.badRequest().body(Map.of("message", "User already in group"));
         }
+
+
 
         if (!group.isPrivate()) {
             group.getMembers().add(user);
