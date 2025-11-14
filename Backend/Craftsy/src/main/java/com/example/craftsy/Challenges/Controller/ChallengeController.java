@@ -76,6 +76,11 @@ public class ChallengeController {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!challenge.getIsActive()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "This challenge is inactive. You cannot join."));
+        }
+
         if (!challenge.getParticipants().contains(user)) {
             challenge.getParticipants().add(user);
             challengeRepository.save(challenge);
@@ -144,7 +149,7 @@ public class ChallengeController {
         LocalDate end = endDate != null ? endDate : LocalDate.MAX;
 
         List<Challenge> results = challengeRepository
-                .findByIsActiveTrueAndTypeContainingIgnoreCaseAndCategoryContainingIgnoreCaseAndTitleContainingIgnoreCaseAndStartDateGreaterThanEqualAndEndDateLessThanEqual(
+                .findByIsActiveTrueOrTypeContainingIgnoreCaseOrCategoryContainingIgnoreCaseOrTitleContainingIgnoreCaseOrStartDateGreaterThanEqualOrEndDateLessThanEqual(
                         type, category, title, start, end
                 );
 
@@ -157,15 +162,23 @@ public class ChallengeController {
     /**
      * Deactivate a challenge
      */
-    @PutMapping("/challenge/{challengeId}/deactivate")
-    public ResponseEntity<Map<String, String>> deactivateChallenge(@PathVariable Long challengeId) {
+    @PutMapping("/challenge/{username}/deactivate/{challengeId}")
+    public ResponseEntity<Map<String, String>> deactivateChallenge(@PathVariable String username, @PathVariable Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge not found"));
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Only creator can deactivate
+        if (!challenge.getCreatedBy().equals(user)) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("message", "Only the creator can deactivate this challenge"));
+        }
 
         challenge.setIsActive(false);
         challengeRepository.save(challenge);
 
-        return ResponseEntity.ok(Map.of("message", "Challenge deactivated"));
+        return ResponseEntity.ok(Map.of("message", "Challenge deactivated successfully"));
     }
 
 

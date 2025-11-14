@@ -12,5 +12,5 @@ public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
 
 
 
-    List<Challenge> findByIsActiveTrueAndTypeContainingIgnoreCaseAndCategoryContainingIgnoreCaseAndTitleContainingIgnoreCaseAndStartDateGreaterThanEqualAndEndDateLessThanEqual(String type, String category, String title, LocalDate start, LocalDate end);
+    List<Challenge> findByIsActiveTrueOrTypeContainingIgnoreCaseOrCategoryContainingIgnoreCaseOrTitleContainingIgnoreCaseOrStartDateGreaterThanEqualOrEndDateLessThanEqual(String type, String category, String title, LocalDate start, LocalDate end);
 }
