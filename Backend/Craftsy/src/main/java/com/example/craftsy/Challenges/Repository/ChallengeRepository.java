@@ -10,7 +10,9 @@ import java.util.List;
 public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
     List<Challenge> findByIsActiveTrue();
 
+    List<Challenge> findByTypeAndIsActiveTrue(String upperCase);
 
+    List<Challenge> findByCategoryAndIsActiveTrue(String category);
 
-    List<Challenge> findByIsActiveTrueOrTypeContainingIgnoreCaseOrCategoryContainingIgnoreCaseOrTitleContainingIgnoreCaseOrStartDateGreaterThanEqualOrEndDateLessThanEqual(String type, String category, String title, LocalDate start, LocalDate end);
+    List<Challenge> findByIsActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(LocalDate today, LocalDate today1);
 }
