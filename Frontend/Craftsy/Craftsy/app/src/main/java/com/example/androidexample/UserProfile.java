@@ -162,8 +162,15 @@ public class UserProfile extends BaseActivity {
 
         Button editButton = findViewById(R.id.editProfile);
         Button notifButton = findViewById(R.id.notifButton);
+        Button pointsCenterBtn = findViewById(R.id.btnPointsCenter);
+
         notifButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, NotificationCenterActivity.class);
+            startActivity(intent);
+        });
+
+        pointsCenterBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, PointsCenterActivity.class);
             startActivity(intent);
         });
 
