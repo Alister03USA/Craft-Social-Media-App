@@ -42,7 +42,7 @@ public class PointsService {
         );
 
         UserPoints userPoints = getUserPoints(user);
-        userPoints.setTutorialsCount(userPoints.getPostsCount() + 1);
+        userPoints.setPostsCount(userPoints.getPostsCount() + 1);
         userPointsRepository.save(userPoints);
     }
 
