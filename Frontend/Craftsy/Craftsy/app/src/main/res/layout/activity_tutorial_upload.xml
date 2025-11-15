@@ -16,9 +16,21 @@
         android:contentDescription="Back"
         app:tint="@color/dark_text" />
 
+    <TextView
+        android:id="@+id/uploadTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btnBack"
+        android:layout_marginTop="8dp"
+        android:layout_centerHorizontal="true"
+        android:text="Tutorial Upload"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/dark_text"/>
+
     <!-- Scrollable content -->
     <ScrollView
-        android:layout_below="@id/btnBack"
+        android:layout_below="@id/uploadTitle"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="24dp">
