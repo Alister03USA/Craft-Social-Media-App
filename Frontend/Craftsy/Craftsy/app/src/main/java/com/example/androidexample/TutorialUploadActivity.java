@@ -2,12 +2,14 @@ package com.example.androidexample;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -31,15 +33,17 @@ import java.util.Map;
 
 public class TutorialUploadActivity extends AppCompatActivity {
 
-    private static final String TAG = "TutorialUploadActivity";
+    private static final String TAG = "UPLOAD_DEBUG";
     private static final String BASE_URL =
             "http://coms-3090-028.class.las.iastate.edu:8080/tutorial";
+
     private static final int PICK_VIDEO_REQUEST = 101;
 
     private EditText titleInput, descInput, categoryInput, urlInput;
     private ImageView btnSelectFile, btnUpload;
     private ProgressBar progressBar;
     private Switch switchPrivate;
+
     private Uri selectedFileUri;
     private String username;
 
@@ -69,12 +73,17 @@ public class TutorialUploadActivity extends AppCompatActivity {
                 Toast.makeText(this, "No Internet connection", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (selectedFileUri != null) uploadFileToBackend();
-            else if (!urlInput.getText().toString().trim().isEmpty())
+
+            if (selectedFileUri != null) {
+                uploadFileToBackend();
+            } else if (!urlInput.getText().toString().trim().isEmpty()) {
                 uploadUrlToBackend(urlInput.getText().toString().trim());
-            else
+            } else {
                 Toast.makeText(this, "Please select a file or paste a URL", Toast.LENGTH_SHORT).show();
+            }
         });
+
+        Log.d(TAG, "Logged in username = " + username);
     }
 
     private void openFileChooser() {
@@ -94,6 +103,9 @@ public class TutorialUploadActivity extends AppCompatActivity {
                 String name = getFileName(selectedFileUri);
                 Toast.makeText(this, "Selected: " + name, Toast.LENGTH_SHORT).show();
                 btnSelectFile.setImageResource(android.R.drawable.ic_menu_upload);
+
+                Log.d(TAG, "Selected file URI = " + selectedFileUri);
+                Log.d(TAG, "Selected file name = " + name);
             }
         }
     }
@@ -101,13 +113,36 @@ public class TutorialUploadActivity extends AppCompatActivity {
     private String getFileName(Uri uri) {
         String result = null;
 
-        try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
-                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                result = cursor.getString(nameIndex);
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+
+                if (index >= 0) {
+                    result = cursor.getString(index);
+                }
+            }
+        } catch (Exception e) {
+            Log.e("UPLOAD_DEBUG", "getFileName error: ", e);
+        }
+
+        // Fallback if the provider didn't supply DISPLAY_NAME
+        if (result == null) {
+            result = uri.getLastPathSegment();
+
+            if (result == null || result.trim().isEmpty()) {
+                result = "uploaded_video.mp4";
             }
         }
-        return result != null ? result : "video.mp4";
+
+        return result;
+    }
+
+    private String getMimeType(Uri uri) {
+        String mime = getContentResolver().getType(uri);
+        if (mime != null) return mime;
+
+        String ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
     }
 
     private void uploadFileToBackend() {
@@ -116,12 +151,22 @@ public class TutorialUploadActivity extends AppCompatActivity {
         try {
             byte[] fileData = getFileDataFromUri(selectedFileUri);
             String fileName = getFileName(selectedFileUri);
+            String mimeType = getMimeType(selectedFileUri);
+
+            Log.d(TAG, "Read file size: " + fileData.length);
+            Log.d(TAG, "Uploading file: " + fileName);
+            Log.d(TAG, "MIME type = " + mimeType);
+
+            Map<String, String> formParams = getFormParams();
+            Log.d(TAG, "Form params: " + formParams);
 
             VolleyMultipartRequest request = new VolleyMultipartRequest(
                     Request.Method.POST,
                     BASE_URL + "/uploadFile",
                     response -> {
                         progressBar.setVisibility(android.view.View.GONE);
+                        String resp = new String(response.data, StandardCharsets.UTF_8);
+                        Log.d(TAG, "Upload Success Response: " + resp);
                         Toast.makeText(this, "Upload success!", Toast.LENGTH_SHORT).show();
                     },
                     error -> {
@@ -130,20 +175,22 @@ public class TutorialUploadActivity extends AppCompatActivity {
 
                         if (res != null && res.data != null) {
                             String err = new String(res.data, StandardCharsets.UTF_8);
+                            Log.e(TAG, "Server returned: " + err);
                             Toast.makeText(this, "Server error: " + err, Toast.LENGTH_LONG).show();
                         } else {
+                            Log.e(TAG, "Upload failed: " + error);
                             Toast.makeText(this, "Upload failed", Toast.LENGTH_LONG).show();
                         }
                     },
-                    getFormParams(),
-                    getByteData(fileName, fileData)
+                    formParams,
+                    getByteData(fileName, fileData, mimeType)
             );
 
             VolleySingleton.getInstance(this).addToRequestQueue(request);
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             progressBar.setVisibility(android.view.View.GONE);
+            Log.e(TAG, "File read failed", e);
             Toast.makeText(this, "File read failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
@@ -151,11 +198,15 @@ public class TutorialUploadActivity extends AppCompatActivity {
     private byte[] getFileDataFromUri(Uri uri) throws IOException {
         InputStream inputStream = getContentResolver().openInputStream(uri);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] data = new byte[1024];
+
+        if (inputStream == null) throw new IOException("InputStream is NULL!");
+
+        byte[] data = new byte[4096];
         int bytesRead;
 
-        while ((bytesRead = inputStream.read(data)) != -1)
+        while ((bytesRead = inputStream.read(data)) != -1) {
             buffer.write(data, 0, bytesRead);
+        }
 
         return buffer.toByteArray();
     }
@@ -168,20 +219,20 @@ public class TutorialUploadActivity extends AppCompatActivity {
                 BASE_URL + "/uploadUrl",
                 response -> {
                     progressBar.setVisibility(android.view.View.GONE);
-                    Toast.makeText(this, "Tutorial uploaded via URL!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Uploaded via URL!", Toast.LENGTH_SHORT).show();
                 },
                 error -> {
                     progressBar.setVisibility(android.view.View.GONE);
-
                     NetworkResponse res = error.networkResponse;
+
                     if (res != null && res.data != null) {
                         String err = new String(res.data, StandardCharsets.UTF_8);
                         Toast.makeText(this, "Server error: " + err, Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(this, "Upload failed", Toast.LENGTH_LONG).show();
                     }
-                })
-        {
+                }
+        ) {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = getFormParams();
@@ -209,9 +260,11 @@ public class TutorialUploadActivity extends AppCompatActivity {
         return params;
     }
 
-    private Map<String, VolleyMultipartRequest.DataPart> getByteData(String fileName, byte[] fileData) {
+    private Map<String, VolleyMultipartRequest.DataPart> getByteData(
+            String fileName, byte[] fileData, String mimeType) {
+
         Map<String, VolleyMultipartRequest.DataPart> params = new HashMap<>();
-        params.put("file", new VolleyMultipartRequest.DataPart(fileName, fileData, "video/mp4"));
+        params.put("file", new VolleyMultipartRequest.DataPart(fileName, fileData, mimeType));
         return params;
     }
 }

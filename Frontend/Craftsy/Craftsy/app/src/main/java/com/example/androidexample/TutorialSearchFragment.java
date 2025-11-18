@@ -69,16 +69,21 @@ public class TutorialSearchFragment extends Fragment implements SearchableTab {
 
     @Override
     public void refreshResults(String query) {
-        if (query == null || query.isEmpty()) return;
-        String url = BASE_URL + query;
-        Log.d("TutorialSearchFragment", "Fetching tutorials from " + url);
+        if (query == null) return;
+        if (query.trim().length() == 0) return;  // still blocks whitespace-only
+
+        String viewer = SessionManager.getInstance().getLoggedInUsername();
+        Log.d("TutorialSearch", "viewer = " + viewer);
+
+        String url = BASE_URL + query + "&username=" + viewer;
+        Log.d("TutorialSearch", "Fetching tutorials from " + url);
 
         JsonArrayRequest request = new JsonArrayRequest(
                 Request.Method.GET,
                 url,
                 null,
                 this::handleResponse,
-                error -> Log.e("TutorialSearchFragment", "❌ Error fetching tutorials", error)
+                error -> Log.e("TutorialSearch", "Error fetching tutorials", error)
         );
 
         VolleySingleton.getInstance(requireContext()).addToRequestQueue(request);
