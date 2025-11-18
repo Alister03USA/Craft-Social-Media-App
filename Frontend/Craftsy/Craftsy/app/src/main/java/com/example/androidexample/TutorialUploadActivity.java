@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -28,10 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Upload tutorial either via MP4 file or YouTube/URL.
- * Connects to backend /tutorial/uploadFile or /uploadUrl.
- */
 public class TutorialUploadActivity extends AppCompatActivity {
 
     private static final String TAG = "TutorialUploadActivity";
@@ -42,13 +39,16 @@ public class TutorialUploadActivity extends AppCompatActivity {
     private EditText titleInput, descInput, categoryInput, urlInput;
     private ImageView btnSelectFile, btnUpload;
     private ProgressBar progressBar;
+    private Switch switchPrivate;
     private Uri selectedFileUri;
-    private final String username = "Fuji"; // must exist in DB
+    private String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutorial_upload);
+
+        username = SessionManager.getInstance().getLoggedInUsername();
 
         ImageButton btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
@@ -60,8 +60,10 @@ public class TutorialUploadActivity extends AppCompatActivity {
         btnSelectFile = findViewById(R.id.btnSelectFile);
         btnUpload = findViewById(R.id.btnUpload);
         progressBar = findViewById(R.id.progressBar);
+        switchPrivate = findViewById(R.id.switchPrivate);
 
         btnSelectFile.setOnClickListener(v -> openFileChooser());
+
         btnUpload.setOnClickListener(v -> {
             if (!isNetworkConnected()) {
                 Toast.makeText(this, "No Internet connection", Toast.LENGTH_SHORT).show();
@@ -75,7 +77,6 @@ public class TutorialUploadActivity extends AppCompatActivity {
         });
     }
 
-    // File chooser
     private void openFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("video/*");
@@ -85,8 +86,10 @@ public class TutorialUploadActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == PICK_VIDEO_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
             selectedFileUri = data.getData();
+
             if (selectedFileUri != null) {
                 String name = getFileName(selectedFileUri);
                 Toast.makeText(this, "Selected: " + name, Toast.LENGTH_SHORT).show();
@@ -97,6 +100,7 @@ public class TutorialUploadActivity extends AppCompatActivity {
 
     private String getFileName(Uri uri) {
         String result = null;
+
         try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -108,6 +112,7 @@ public class TutorialUploadActivity extends AppCompatActivity {
 
     private void uploadFileToBackend() {
         progressBar.setVisibility(android.view.View.VISIBLE);
+
         try {
             byte[] fileData = getFileDataFromUri(selectedFileUri);
             String fileName = getFileName(selectedFileUri);
@@ -117,19 +122,16 @@ public class TutorialUploadActivity extends AppCompatActivity {
                     BASE_URL + "/uploadFile",
                     response -> {
                         progressBar.setVisibility(android.view.View.GONE);
-                        String resp = new String(response.data, StandardCharsets.UTF_8);
-                        Log.d(TAG, "✅ Upload success: " + resp);
                         Toast.makeText(this, "Upload success!", Toast.LENGTH_SHORT).show();
                     },
                     error -> {
                         progressBar.setVisibility(android.view.View.GONE);
                         NetworkResponse res = error.networkResponse;
+
                         if (res != null && res.data != null) {
                             String err = new String(res.data, StandardCharsets.UTF_8);
-                            Log.e(TAG, "❌ Upload failed: " + err);
                             Toast.makeText(this, "Server error: " + err, Toast.LENGTH_LONG).show();
                         } else {
-                            Log.e(TAG, "Upload failed: " + error);
                             Toast.makeText(this, "Upload failed", Toast.LENGTH_LONG).show();
                         }
                     },
@@ -151,7 +153,10 @@ public class TutorialUploadActivity extends AppCompatActivity {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         byte[] data = new byte[1024];
         int bytesRead;
-        while ((bytesRead = inputStream.read(data)) != -1) buffer.write(data, 0, bytesRead);
+
+        while ((bytesRead = inputStream.read(data)) != -1)
+            buffer.write(data, 0, bytesRead);
+
         return buffer.toByteArray();
     }
 
@@ -163,32 +168,28 @@ public class TutorialUploadActivity extends AppCompatActivity {
                 BASE_URL + "/uploadUrl",
                 response -> {
                     progressBar.setVisibility(android.view.View.GONE);
-                    Log.d(TAG, "✅ URL upload response: " + response);
                     Toast.makeText(this, "Tutorial uploaded via URL!", Toast.LENGTH_SHORT).show();
                 },
                 error -> {
                     progressBar.setVisibility(android.view.View.GONE);
+
                     NetworkResponse res = error.networkResponse;
                     if (res != null && res.data != null) {
                         String err = new String(res.data, StandardCharsets.UTF_8);
-                        Log.e(TAG, "❌ URL upload failed: " + err);
                         Toast.makeText(this, "Server error: " + err, Toast.LENGTH_LONG).show();
                     } else {
-                        Log.e(TAG, "Upload failed: " + error);
                         Toast.makeText(this, "Upload failed", Toast.LENGTH_LONG).show();
                     }
-                }) {
+                })
+        {
             @Override
             protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("username", username);
-                params.put("title", titleInput.getText().toString().trim());
-                params.put("description", descInput.getText().toString().trim());
-                params.put("category", categoryInput.getText().toString().trim());
+                Map<String, String> params = getFormParams();
                 params.put("fileUrl", videoUrl);
                 return params;
             }
         };
+
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
@@ -204,6 +205,7 @@ public class TutorialUploadActivity extends AppCompatActivity {
         params.put("title", titleInput.getText().toString().trim());
         params.put("description", descInput.getText().toString().trim());
         params.put("category", categoryInput.getText().toString().trim());
+        params.put("isPrivate", switchPrivate.isChecked() ? "true" : "false");
         return params;
     }
 
