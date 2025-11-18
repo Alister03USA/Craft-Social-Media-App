@@ -31,12 +31,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Activity that allows a user to upload craft tutorials.
+ * Supports uploading videos either from device storage or via an external URL,
+ * along with fields such as title, description, category, and privacy settings.
+ * Interacts with backend Spring Boot API using Volley multipart and POST requests.
+ */
 public class TutorialUploadActivity extends AppCompatActivity {
 
     private static final String TAG = "UPLOAD_DEBUG";
+
+    /** Base URL for tutorial related backend API endpoints. */
     private static final String BASE_URL =
             "http://coms-3090-028.class.las.iastate.edu:8080/tutorial";
 
+    /** Request code for selecting a video file from storage. */
     private static final int PICK_VIDEO_REQUEST = 101;
 
     private EditText titleInput, descInput, categoryInput, urlInput;
@@ -47,6 +56,13 @@ public class TutorialUploadActivity extends AppCompatActivity {
     private Uri selectedFileUri;
     private String username;
 
+    /**
+     * Called when the activity is created.
+     * Initializes UI components, sets click listeners, retrieves logged in username,
+     * and prepares upload logic for file or URL based submissions.
+     *
+     * @param savedInstanceState previous state of Activity if recreated
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,12 +102,23 @@ public class TutorialUploadActivity extends AppCompatActivity {
         Log.d(TAG, "Logged in username = " + username);
     }
 
+    /**
+     * Opens the system file chooser so the user can select a video file.
+     * Only video MIME types are allowed.
+     */
     private void openFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("video/*");
         startActivityForResult(Intent.createChooser(intent, "Select Video"), PICK_VIDEO_REQUEST);
     }
 
+    /**
+     * Handles activity results such as the user selecting a video file.
+     *
+     * @param requestCode the request identifier
+     * @param resultCode the operation result
+     * @param data file return data containing the selected Uri
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -110,25 +137,29 @@ public class TutorialUploadActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Extracts the file name for a given Uri using the content resolver.
+     * Provides a fallback in case DISPLAY_NAME is not available.
+     *
+     * @param uri the Uri of the selected file
+     * @return file name string
+     */
     private String getFileName(Uri uri) {
         String result = null;
 
         try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-
                 if (index >= 0) {
                     result = cursor.getString(index);
                 }
             }
         } catch (Exception e) {
-            Log.e("UPLOAD_DEBUG", "getFileName error: ", e);
+            Log.e(TAG, "getFileName error: ", e);
         }
 
-        // Fallback if the provider didn't supply DISPLAY_NAME
         if (result == null) {
             result = uri.getLastPathSegment();
-
             if (result == null || result.trim().isEmpty()) {
                 result = "uploaded_video.mp4";
             }
@@ -137,6 +168,12 @@ public class TutorialUploadActivity extends AppCompatActivity {
         return result;
     }
 
+    /**
+     * Determines the correct MIME type for a file based on its Uri.
+     *
+     * @param uri selected file Uri
+     * @return resolved MIME type string
+     */
     private String getMimeType(Uri uri) {
         String mime = getContentResolver().getType(uri);
         if (mime != null) return mime;
@@ -145,6 +182,10 @@ public class TutorialUploadActivity extends AppCompatActivity {
         return MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
     }
 
+    /**
+     * Uploads the selected video file to the backend using a multipart request.
+     * Sends metadata such as title, description, and username as form parameters.
+     */
     private void uploadFileToBackend() {
         progressBar.setVisibility(android.view.View.VISIBLE);
 
@@ -195,6 +236,13 @@ public class TutorialUploadActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Converts the selected file from Uri into a byte array for uploading.
+     *
+     * @param uri source file location
+     * @return byte array representing the file
+     * @throws IOException if reading fails
+     */
     private byte[] getFileDataFromUri(Uri uri) throws IOException {
         InputStream inputStream = getContentResolver().openInputStream(uri);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -211,6 +259,11 @@ public class TutorialUploadActivity extends AppCompatActivity {
         return buffer.toByteArray();
     }
 
+    /**
+     * Uploads a tutorial by providing an external URL instead of a local file.
+     *
+     * @param videoUrl direct link to online video content
+     */
     private void uploadUrlToBackend(String videoUrl) {
         progressBar.setVisibility(android.view.View.VISIBLE);
 
@@ -244,12 +297,23 @@ public class TutorialUploadActivity extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
+    /**
+     * Checks whether the device has an active network connection.
+     *
+     * @return true if connected, false if offline
+     */
     private boolean isNetworkConnected() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         return info != null && info.isConnected();
     }
 
+    /**
+     * Collects form parameters that accompany the tutorial upload request.
+     * These include username, title, description, category, and privacy flag.
+     *
+     * @return map of form parameters to send in request
+     */
     private Map<String, String> getFormParams() {
         Map<String, String> params = new HashMap<>();
         params.put("username", username);
@@ -260,6 +324,14 @@ public class TutorialUploadActivity extends AppCompatActivity {
         return params;
     }
 
+    /**
+     * Prepares multipart file data for video uploads.
+     *
+     * @param fileName the file name
+     * @param fileData raw bytes
+     * @param mimeType detected MIME type
+     * @return map containing multipart data for request
+     */
     private Map<String, VolleyMultipartRequest.DataPart> getByteData(
             String fileName, byte[] fileData, String mimeType) {
 

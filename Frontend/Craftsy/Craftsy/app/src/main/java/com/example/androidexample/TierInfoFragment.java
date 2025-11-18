@@ -15,7 +15,6 @@ import androidx.fragment.app.Fragment;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -67,12 +66,51 @@ public class TierInfoFragment extends Fragment {
             int min = tier.optInt("minPoints", 0);
             int max = tier.optInt("maxPoints", 0);
 
-            TextView tv = new TextView(getContext());
-            tv.setText(name + " : " + min + " - " + (max == Integer.MAX_VALUE ? "∞" : max));
-            tv.setTextSize(16f);
-            tv.setPadding(0, 10, 0, 10);
+            // Tier title
+            TextView title = new TextView(getContext());
+            title.setText(name + " : " + min + " - " + (max == Integer.MAX_VALUE ? "∞" : max));
+            title.setTextSize(18f);
+            title.setPadding(0, 15, 0, 5);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
 
-            tierContainer.addView(tv);
+            tierContainer.addView(title);
+
+            // Unlock description
+            TextView desc = new TextView(getContext());
+            desc.setTextSize(15f);
+            desc.setPadding(20, 0, 0, 15);
+
+            String unlocks = getUnlockInfo(name);
+            desc.setText(unlocks);
+
+            tierContainer.addView(desc);
+        }
+    }
+
+    /**
+     * Returns the unlock description for each tier
+     */
+    private String getUnlockInfo(String tierName) {
+        switch (tierName.toUpperCase()) {
+
+            case "BEGINNER":
+                return "- Cannot post tutorials\n"
+                        + "- Cannot view private tutorials\n"
+                        + "- Cannot create groups";
+
+            case "INTERMEDIATE":
+                return "- Can view private tutorials";
+
+            case "EXPERT":
+                return "- Can upload tutorial videos/projects\n"
+                        + "- Can create a group";
+
+            case "CHAMPION":
+                return "- Full access to all app features\n"
+                        + "- Can create challenges";
+
+            default:
+                return "- No unlock info available";
         }
     }
 }

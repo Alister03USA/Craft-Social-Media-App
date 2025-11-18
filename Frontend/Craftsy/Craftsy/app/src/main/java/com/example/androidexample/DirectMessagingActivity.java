@@ -52,6 +52,11 @@ import okhttp3.Request.Builder;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
+/**
+ * Activity responsible for handling direct messages and group messages.
+ * Provides WebSocket real time communication, file sending, reply threading,
+ * message reactions, and member management for group chats.
+ */
 public class DirectMessagingActivity extends AppCompatActivity implements MessageAdapter.MessageActions {
 
     private static final String TAG = "DirectMessage";
@@ -80,6 +85,13 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
     private ImageButton btnAddUser, btnRemoveUser;
     private View groupActionsContainer;
 
+    /**
+     * Called when the activity is created.
+     * Initializes the UI, loads chat metadata, establishes socket connection,
+     * fetches chat history, and sets up event listeners.
+     *
+     * @param b saved instance state if recreated
+     */
     @Override
     protected void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -137,8 +149,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         connectSocket();
     }
 
-    /* ========= FILE PICKER ========= */
-
+    /**
+     * Opens a system file picker to select images or PDF files.
+     */
     private void openPicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
@@ -146,6 +159,13 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         startActivityForResult(Intent.createChooser(intent, "Select File"), PICK_FILE_REQUEST);
     }
 
+    /**
+     * Handles the result returned by file picker.
+     *
+     * @param req request code
+     * @param res result code
+     * @param data returned data containing file Uri
+     */
     @Override
     protected void onActivityResult(int req, int res, @Nullable Intent data) {
         super.onActivityResult(req, res, data);
@@ -154,6 +174,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
+    /**
+     * Uploads a selected file to the backend server.
+     *
+     * @param uri file location on device
+     */
     private void uploadImageToBackend(Uri uri) {
         try {
             byte[] data = readBytesFromUri(uri);
@@ -208,8 +233,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
-    /* ========= HISTORY ========= */
-
+    /**
+     * Fetches message history from backend for the current conversation.
+     */
     private void fetchHistory() {
         progress.setVisibility(View.VISIBLE);
 
@@ -231,6 +257,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
+    /**
+     * Loads the user's message history into the RecyclerView.
+     *
+     * @param convo full JSON object containing messages
+     */
     private void loadHistory(JSONObject convo) {
         messages.clear();
 
@@ -251,6 +282,12 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         recycler.scrollToPosition(Math.max(messages.size() - 1, 0));
     }
 
+    /**
+     * Recursively parses a message and its replies from history.
+     *
+     * @param o raw message json
+     * @param parent optional parent message id if this is a reply
+     */
     private void parseHistoryMessage(JSONObject o, Long parent) {
         try {
             long id = o.optLong("id", 0);
@@ -261,7 +298,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
             Long imgId = null;
             String imgUrl = null;
 
-            // 1. REAL image object
             JSONObject img = o.optJSONObject("image");
             if (img != null) {
                 imgId = img.optLong("id", -1);
@@ -272,15 +308,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 }
             }
 
-            // 2. FALLBACK: text-based image (#image:123)
             if ((imgId == null || imgId == -1) && text.startsWith("#image:")) {
                 try {
                     imgId = Long.parseLong(text.substring(7).trim());
-
-                    // fetch metadata synchronously
                     String metaUrl = BASE_URL + "/images/" + imgId;
 
-                    // Declare final copies for lambda
                     final long fId = id;
                     final String fSender = sender;
                     final String fTs = ts;
@@ -307,8 +339,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                     );
 
                     VolleySingleton.getInstance(this).addToRequestQueue(imgReq);
-
-                    // do not add message now, will add in callback
                     return;
 
                 } catch (Exception ex) {
@@ -316,9 +346,8 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 }
             }
 
-            // 3. NORMAL message
             MessageItem m = new MessageItem(id, sender,
-                    imgId != null ? "" : text,  // remove #image: text
+                    imgId != null ? "" : text,
                     ts,
                     parent,
                     imgId,
@@ -347,16 +376,20 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
-    /* ========= LIVE MESSAGE INSERT ========= */
-
+    /**
+     * Inserts a newly received message into the list and scrolls to bottom.
+     *
+     * @param m message object
+     */
     private void addLiveMessage(MessageItem m) {
         messages.add(m);
         adapter.notifyItemInserted(messages.size() - 1);
         recycler.scrollToPosition(messages.size() - 1);
     }
 
-    /* ========= SENDING ========= */
-
+    /**
+     * Sends a message through WebSocket. If replying, formats payload accordingly.
+     */
     private void sendMessage() {
         String txt = etInput.getText().toString().trim();
         if (txt.isEmpty()) return;
@@ -371,8 +404,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         clearReplyPreview();
     }
 
-    /* ========= SOCKET ========= */
-
+    /**
+     * Establishes a WebSocket connection for live messaging.
+     */
     private void connectSocket() {
         try {
             String url = WS_BASE + "/chat/" + convoId + "/" + currentUser;
@@ -384,7 +418,17 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
+    /**
+     * WebSocket listener for handling live incoming messages and live updates.
+     */
     private class LiveWsListener extends WebSocketListener {
+
+        /**
+         * Handles text data received from the WebSocket.
+         *
+         * @param ws the active websocket
+         * @param text received server payload
+         */
         @Override
         public void onMessage(WebSocket ws, String text) {
 
@@ -436,6 +480,12 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
+    /**
+     * Fetches metadata for an image referenced in a live incoming message.
+     *
+     * @param sender username of sender
+     * @param imgId image identifier
+     */
     private void fetchImageMetaLive(String sender, long imgId) {
         String url = BASE_URL + "/images/" + imgId;
 
@@ -457,8 +507,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /* ========= REPLY HANDLER ========= */
-
+    /**
+     * Prepares the UI for replying to a specific message.
+     *
+     * @param m the message to reply to
+     */
     @Override
     public void onReply(MessageItem m) {
         replyingTo = m.getId();
@@ -472,8 +525,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         tvReplyPreview.setText("Replying to \"" + shortText + "\"");
     }
 
-    /* ========= GROUP MANAGEMENT ========= */
-
+    /**
+     * Prompts the user to enter a username to add to the group chat.
+     */
     private void promptUserAdd() {
         AutoCompleteTextView input = new AutoCompleteTextView(this);
         input.setHint("Enter username to add");
@@ -488,6 +542,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 .show();
     }
 
+    /**
+     * Prompts the user to enter a username to remove from the group chat.
+     */
     private void promptUserRemove() {
         AutoCompleteTextView input = new AutoCompleteTextView(this);
         input.setHint("Enter username to remove");
@@ -502,6 +559,12 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 .show();
     }
 
+    /**
+     * Sends a request to add or remove a group member.
+     *
+     * @param username target user
+     * @param add true to add, false to remove
+     */
     private void modifyGroupMember(String username, boolean add) {
         String endpoint = add ? "add" : "remove";
         String url = BASE_URL + "/messages/" + convoId + "/" + endpoint + "/" + username;
@@ -518,8 +581,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /* ========= MEMBERS ========= */
-
+    /**
+     * Parses group member list for mention auto completion.
+     *
+     * @param convo raw conversation json
+     */
     private void parseMembers(JSONObject convo) {
         memberUsernames.clear();
         try {
@@ -535,8 +601,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
-    /* ========= MENTION HANDLING ========= */
-
+    /**
+     * Sets up the watcher used to display mention dropdown when typing '@'.
+     */
     private void setupMentionWatcher() {
         etInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
@@ -547,6 +614,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         });
     }
 
+    /**
+     * Shows a dropdown list of group members for mention tagging.
+     */
     private void showMentionDropdown() {
         if (memberUsernames.isEmpty()) return;
         ArrayAdapter<String> ad = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, memberUsernames);
@@ -554,6 +624,9 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         etInput.showDropDown();
     }
 
+    /**
+     * Clears the reply preview UI and resets reply state.
+     */
     private void clearReplyPreview() {
         replyingTo = null;
         replyingToText = null;
@@ -561,14 +634,23 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         tvReplyPreview.setText("");
     }
 
-    /* ========= SMALL HELPERS ========= */
-
+    /**
+     * Returns a timestamp string for messages.
+     *
+     * @return current timestamp
+     */
     private String now() {
         if (Build.VERSION.SDK_INT >= 26)
             return java.time.LocalDateTime.now().toString();
         return String.valueOf(System.currentTimeMillis());
     }
 
+    /**
+     * Highlights all '@username' mentions inside a string.
+     *
+     * @param text raw message text
+     * @return formatted spannable string
+     */
     private SpannableString highlightMentions(String text) {
         SpannableString s = new SpannableString(text);
         Matcher m = Pattern.compile("@\\w+").matcher(text);
@@ -579,6 +661,12 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         return s;
     }
 
+    /**
+     * Reads a file's bytes from a given Uri.
+     *
+     * @param uri file uri
+     * @return byte array or null
+     */
     private byte[] readBytesFromUri(Uri uri) {
         try (InputStream in = getContentResolver().openInputStream(uri);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -594,6 +682,12 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
+    /**
+     * Gets a display friendly file name for a Uri.
+     *
+     * @param uri target file uri
+     * @return file name
+     */
     private String getFileName(Uri uri) {
         String res = null;
 
@@ -614,6 +708,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         return res;
     }
 
+    /**
+     * Sends a raw payload through the WebSocket.
+     *
+     * @param payload raw text to send
+     */
     private void socketSend(String payload) {
         try {
             if (socket != null) socket.send(payload);
@@ -622,16 +721,33 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         }
     }
 
+    /**
+     * Sends reaction data for a specific message.
+     *
+     * @param m target message
+     * @param type emoji type
+     */
     @Override
     public void onReact(MessageItem m, String type) {
         socketSend("#react:" + m.getId() + ":" + type);
     }
 
+    /**
+     * Removes a reaction from a specific message.
+     *
+     * @param m target message
+     * @param type emoji type
+     */
     @Override
     public void onRemoveReact(MessageItem m, String type) {
         socketSend("#!react:" + m.getId() + ":" + type);
     }
 
+    /**
+     * Handles long press on a message. Displays delete confirmation dialog.
+     *
+     * @param m message to delete
+     */
     @Override
     public void onLongPress(MessageItem m) {
         new AlertDialog.Builder(this)
@@ -642,6 +758,11 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
                 .show();
     }
 
+    /**
+     * Sends a DELETE request to remove a message permanently.
+     *
+     * @param m target message
+     */
     private void deleteMessage(MessageItem m) {
         String url = BASE_URL + "/messages/" + m.getId();
 

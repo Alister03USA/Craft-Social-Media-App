@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +25,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Activity that supports Create, Update, and Delete actions for feed posts.
+ * Users can upload images, edit post details, or delete posts entirely.
+ * Communicates with backend endpoints through Volley requests.
+ */
 public class FeedCRUDActivity extends AppCompatActivity {
 
     private static final String TAG = "FeedCRUDActivity";
@@ -34,8 +40,17 @@ public class FeedCRUDActivity extends AppCompatActivity {
     private Button buttonSave, buttonDelete, buttonBack, btnChooseImage;
     private ImageView imagePreview;
     private Uri selectedImageUri;
-    private String loggedInUsername, mode;
 
+    private String loggedInUsername;
+    private String mode;
+
+    /**
+     * Called when the activity is created.
+     * Initializes UI components, reads intent extras, and configures screen
+     * based on mode (create, edit, or delete).
+     *
+     * @param savedInstanceState previous state if activity recreated
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +70,6 @@ public class FeedCRUDActivity extends AppCompatActivity {
         mode = getIntent().getStringExtra("mode");
         loggedInUsername = getIntent().getStringExtra("username");
 
-        // ✅ Pre-fill fields if data is passed
         if (getIntent().hasExtra("projectName")) {
             editProjectName.setText(getIntent().getStringExtra("projectName"));
         }
@@ -81,12 +95,10 @@ public class FeedCRUDActivity extends AppCompatActivity {
             btnChooseImage.setEnabled(false);
             buttonSave.setOnClickListener(v -> updateFeed(editProjectName.getText().toString()));
         } else if ("delete".equals(mode)) {
-            disableInputs(); // keep values visible but not editable
+            disableInputs();
             btnChooseImage.setEnabled(false);
             buttonSave.setEnabled(false);
             buttonDelete.setText("Confirm Delete");
-
-            // ✅ Use the pre-filled project name, not empty EditText
             String projectName = getIntent().getStringExtra("projectName");
             buttonDelete.setOnClickListener(v -> deleteFeed(projectName));
         } else {
@@ -98,6 +110,10 @@ public class FeedCRUDActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Disables UI inputs when user is in delete confirmation mode.
+     * Keeps values visible but not editable.
+     */
     private void disableInputs() {
         editProjectName.setEnabled(false);
         editDesc.setEnabled(false);
@@ -106,12 +122,22 @@ public class FeedCRUDActivity extends AppCompatActivity {
         editVisibility.setEnabled(false);
     }
 
+    /**
+     * Opens file chooser to allow user to select an image from device storage.
+     */
     private void openImageChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
         startActivityForResult(Intent.createChooser(intent, "Select Image"), PICK_IMAGE_REQUEST);
     }
 
+    /**
+     * Handles the result from image selection and previews the chosen image.
+     *
+     * @param requestCode the type of request
+     * @param resultCode result status
+     * @param data contains selected image data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -124,6 +150,10 @@ public class FeedCRUDActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Uploads selected image to backend before creating a new feed post.
+     * After upload is complete, backend image id is used inside createFeed.
+     */
     private void uploadImageAndCreateFeed() {
         try {
             byte[] fileData = readBytesFromUri(selectedImageUri);
@@ -136,7 +166,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
                     response -> {
                         try {
                             String resp = new String(response.data, StandardCharsets.UTF_8);
-                            Log.d(TAG, "✅ Server response: " + resp);
+                            Log.d(TAG, "Server response: " + resp);
                             JSONObject obj = new JSONObject(resp);
                             long imageId = obj.getLong("id");
                             createFeed(imageId);
@@ -148,9 +178,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
                         String msg = "";
                         if (error.networkResponse != null && error.networkResponse.data != null)
                             msg = new String(error.networkResponse.data, StandardCharsets.UTF_8);
-                        Log.e(TAG, "❌ Upload failed. Code: " +
-                                (error.networkResponse != null ? error.networkResponse.statusCode : 0) +
-                                " | Body: " + msg, error);
+                        Log.e(TAG, "Upload failed: " + msg, error);
                         Toast.makeText(this, "Upload failed: " + msg, Toast.LENGTH_LONG).show();
                     },
                     new HashMap<>(),
@@ -162,12 +190,26 @@ public class FeedCRUDActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Packages the multipart image data for upload.
+     *
+     * @param fileName chosen file name
+     * @param fileData raw byte content of the image
+     * @return map containing multipart data for Volley request
+     */
     private Map<String, VolleyMultipartRequest.DataPart> getImagePart(String fileName, byte[] fileData) {
         Map<String, VolleyMultipartRequest.DataPart> map = new HashMap<>();
         map.put("image", new VolleyMultipartRequest.DataPart(fileName, fileData, "image/jpeg"));
         return map;
     }
 
+    /**
+     * Reads bytes from a file Uri using content resolver.
+     *
+     * @param uri source file Uri
+     * @return byte array of file contents
+     * @throws IOException when read fails
+     */
     private byte[] readBytesFromUri(Uri uri) throws IOException {
         try (InputStream input = getContentResolver().openInputStream(uri);
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -178,6 +220,12 @@ public class FeedCRUDActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Attempts to extract the name of a file represented by a Uri.
+     *
+     * @param uri Uri of the selected image
+     * @return readable file name
+     */
     private String getFileName(Uri uri) {
         String result = null;
         try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
@@ -191,6 +239,11 @@ public class FeedCRUDActivity extends AppCompatActivity {
         return result != null ? result : "image.jpg";
     }
 
+    /**
+     * Creates a new feed post using provided details and optional image.
+     *
+     * @param imageId backend id of uploaded image, or null if no image attached
+     */
     private void createFeed(Long imageId) {
         JSONObject json = new JSONObject();
         try {
@@ -199,6 +252,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
             json.put("projectType", editType.getText().toString());
             json.put("supplies", editSupplies.getText().toString());
             json.put("visibility", editVisibility.getText().toString());
+
             if (imageId != null) {
                 JSONArray arr = new JSONArray();
                 JSONObject img = new JSONObject();
@@ -213,7 +267,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
         String url = BASE_URL + "/feed/" + loggedInUsername;
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, json,
                 response -> {
-                    Toast.makeText(this, "✅ Post added successfully!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Post added successfully!", Toast.LENGTH_SHORT).show();
                     finish();
                 },
                 error -> {
@@ -224,6 +278,11 @@ public class FeedCRUDActivity extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
+    /**
+     * Sends a PUT request to update an existing feed post.
+     *
+     * @param projectName the name of the project being updated
+     */
     private void updateFeed(String projectName) {
         JSONObject json = new JSONObject();
         try {
@@ -231,19 +290,26 @@ public class FeedCRUDActivity extends AppCompatActivity {
             json.put("projectType", editType.getText().toString());
             json.put("supplies", editSupplies.getText().toString());
             json.put("visibility", editVisibility.getText().toString());
-        } catch (JSONException e) { e.printStackTrace(); }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         String url = BASE_URL + "/feed/" + loggedInUsername + "/" + projectName;
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.PUT, url, json,
                 response -> {
-                    Toast.makeText(this, "✅ Post updated", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Post updated", Toast.LENGTH_SHORT).show();
                     finish();
                 },
                 error -> Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show());
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /** DELETE /feed/{username}/{projectName} */
+    /**
+     * Deletes a feed post using project name as identifier.
+     * Sends a DELETE request to backend.
+     *
+     * @param projectName project to delete
+     */
     private void deleteFeed(String projectName) {
         if (projectName == null || projectName.trim().isEmpty()) {
             Toast.makeText(this, "Project name is missing — cannot delete.", Toast.LENGTH_SHORT).show();
@@ -256,7 +322,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
         com.android.volley.toolbox.StringRequest req = new com.android.volley.toolbox.StringRequest(
                 Request.Method.DELETE, url,
                 response -> {
-                    Toast.makeText(this, "🗑️ Post deleted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Post deleted!", Toast.LENGTH_SHORT).show();
                     finish();
                 },
                 error -> {
