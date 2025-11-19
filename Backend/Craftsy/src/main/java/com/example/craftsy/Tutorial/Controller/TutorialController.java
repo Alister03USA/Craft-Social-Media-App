@@ -9,6 +9,9 @@ import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
 import com.example.craftsy.Tutorial.Repository.TutorialRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -53,6 +56,16 @@ public class TutorialController {
      * @param file
      * @return
      */
+    @Operation(
+            summary = "Upload a tutorial using a file",
+            description = "Allows EXPERT or CHAMPION users to upload a tutorial video/image file. "
+                    + "Saves uploaded file locally and notifies all followers."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid user or file upload failure"),
+            @ApiResponse(responseCode = "403", description = "User does not meet tier requirements")
+    })
     @PostMapping(value = "/uploadFile", consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadTutorialFile(
             @RequestParam("username") String username,
@@ -138,6 +151,15 @@ public class TutorialController {
     /**
      * POST image/video by URL
      */
+    @Operation(
+            summary = "Upload a tutorial using an external URL",
+            description = "Stores external video/image URL instead of uploading a file."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial uploaded successfully with URL"),
+            @ApiResponse(responseCode = "400", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "User does not meet tier requirements")
+    })
     @PostMapping("/uploadUrl")
     public ResponseEntity<String> uploadTutorialUrl(
             @RequestParam String username,
@@ -181,6 +203,14 @@ public class TutorialController {
      * GET "/tutorial/{id}/file"
      * * Fetch the file of the Videos - Optimized for direct streaming
      */
+    @Operation(
+            summary = "Fetch or stream tutorial file",
+            description = "Streams local file or redirects to external file URL."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "File streamed successfully"),
+            @ApiResponse(responseCode = "500", description = "Error reading file")
+    })
     @GetMapping("/{id}/file")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
@@ -236,6 +266,14 @@ public class TutorialController {
      * Search tutorials by username, title, description, or category
      * Returns correct file URL (local or external)
      */
+    @Operation(
+            summary = "Search tutorials",
+            description = "Search by username, title, description, or category. Returns valid local/external file URL."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Search results returned successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/search")
     public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query, @RequestParam String username) {
         List<Tutorial> tutorials = tutorialRepository
@@ -277,6 +315,14 @@ public class TutorialController {
      * GET /tutorial/user/{username}
      * Fetch all tutorials uploaded by a specific user (For Main Search Tab)
      */
+    @Operation(
+            summary = "Get all tutorials uploaded by a specific user",
+            description = "Viewer tier determines visibility of private tutorials."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial list returned"),
+            @ApiResponse(responseCode = "404", description = "User or viewer not found")
+    })
     @GetMapping("/user/{username}")
     public ResponseEntity<List<Map<String, Object>>> getTutorialsByUser(
             @PathVariable String username,
@@ -326,6 +372,15 @@ public class TutorialController {
      * PUT "/tutorial/{id}"
      * Update the tutorials
      */
+    @Operation(
+            summary = "Update an existing tutorial",
+            description = "Updates title, description, category, or replaces the file."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial updated successfully"),
+            @ApiResponse(responseCode = "400", description = "File upload error"),
+            @ApiResponse(responseCode = "404", description = "Tutorial not found")
+    })
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // Endpoint expects data in form-data format
     public ResponseEntity<String> updateTutorials(
             @PathVariable Long id,
@@ -397,6 +452,15 @@ public class TutorialController {
      * Delete the tutorial
      *
      */
+    @Operation(
+            summary = "Delete a tutorial",
+            description = "Deletes database record and any associated local file."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Tutorial not found"),
+            @ApiResponse(responseCode = "400", description = "File delete error")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTutorial(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);

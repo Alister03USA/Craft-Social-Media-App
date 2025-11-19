@@ -10,6 +10,9 @@ import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.PointsSystem.PointsService;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +45,13 @@ public class GroupController {
      * This endpoint lets a user create a new group.
      * The user who creates the group becomes the admin automatically.
      */
+    @Operation(summary = "Create a new group",
+            description = "Allows a user to create a new group. The creator becomes the group admin automatically. Only EXPERT or CHAMPION users can create groups.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Group created successfully"),
+            @ApiResponse(responseCode = "400", description = "Admin not found or group name already exists"),
+            @ApiResponse(responseCode = "403", description = "User tier too low to create a group")
+    })
     @PostMapping("/{adminUsername}/create")
     public ResponseEntity<Map<String, String>> createGroup(
             @PathVariable String adminUsername, // takes value from url path to the parameter
@@ -98,6 +108,12 @@ public class GroupController {
      * @param admin
      * @return
      */
+    @Operation(summary = "Add member to group",
+            description = "Allows the group admin to add a new member to the group.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Member added successfully"),
+            @ApiResponse(responseCode = "400", description = "Group, user, or admin not found, or user already in group")
+    })
     @PostMapping("/{groupId}/{admin}/add-member/{username}")
     public ResponseEntity<Map<String, String>> addMember(
             @PathVariable Long groupId,
@@ -136,6 +152,12 @@ public class GroupController {
      * GET /{groupId}/members
      * Retrieve all members of a group.
      */
+    @Operation(summary = "Get group members",
+            description = "Retrieve all members of a specific group.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns a list of group members"),
+            @ApiResponse(responseCode = "400", description = "Group not found")
+    })
     @GetMapping("/{groupId}/members")
     public ResponseEntity<?> getGroupMembers(@PathVariable Long groupId) {
         Optional<Group> groupOpt = groupRepository.findById(groupId);
@@ -166,6 +188,12 @@ public class GroupController {
      * GET /groupId/{groupName}
      * Retrieve the group ID by its name.
      */
+    @Operation(summary = "Get group ID by name",
+            description = "Retrieve a group's ID using its name.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns the group ID and name"),
+            @ApiResponse(responseCode = "400", description = "Group not found")
+    })
     @GetMapping("/groupId/{groupName}")
     public ResponseEntity<?> getGroupIdByName(@PathVariable String groupName) {
         // Decode in case the name has spaces or special characters in the URL
@@ -190,6 +218,12 @@ public class GroupController {
      * Public Group - Join directly
      * Private Group - Sent request (only can be accepted/Declined by Admin)
      */
+    @Operation(summary = "Join a group",
+            description = "Allows a user to join a group. Public groups are joined directly; private groups require admin approval.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User joined successfully or request sent"),
+            @ApiResponse(responseCode = "400", description = "Group or user not found, or user already in group/request exists")
+    })
     @PostMapping("/{username}/join/{groupId}")
     public ResponseEntity<Map<String, String>> joinGroup(
             @PathVariable String username,
@@ -264,6 +298,12 @@ public class GroupController {
      * PUT - /joinRequest/{requestId}/{accepted}
      * Private Group only - Admin to accept or decline the join request
      */
+    @Operation(summary = "Handle join request",
+            description = "Admin can accept or decline a join request for private groups.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request handled successfully"),
+            @ApiResponse(responseCode = "400", description = "Request not found")
+    })
     @PutMapping("/joinRequest/{requestId}/{accepted}")
     public ResponseEntity<Map<String, String>> handleJoinRequest(
             @PathVariable Long requestId,
@@ -332,6 +372,12 @@ public class GroupController {
     /**
      * PUT {username}/update/{groupId}
      */
+    @Operation(summary = "Update group details",
+            description = "Allows the admin to update group name, description, and craft.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Group updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Only admin can update group")
+    })
     @PutMapping("/{username}/update/{groupId}")
     public ResponseEntity<?> updateGroup(
             @PathVariable String username,
@@ -371,6 +417,12 @@ public class GroupController {
      * GET /{username}/groups
      * Retrieve all groups that a user is a member of.
      */
+    @Operation(summary = "Get all groups of a user",
+            description = "Retrieve all groups that a user is a member of.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of groups returned"),
+            @ApiResponse(responseCode = "400", description = "User not found")
+    })
     @GetMapping("/{username}/groups")
     public ResponseEntity<?> getUserGroups(@PathVariable String username) {
         // Find the user
@@ -411,6 +463,12 @@ public class GroupController {
     /**
      * PUT /{currentAdmin}/{groupId}/transfer-admin/{newAdmin}
      */
+    @Operation(summary = "Transfer group admin rights",
+            description = "Allows the current admin to transfer admin rights to another member.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Admin transferred successfully"),
+            @ApiResponse(responseCode = "400", description = "Only current admin can transfer rights or new admin must be a member")
+    })
     @PutMapping("/{currentAdmin}/{groupId}/transfer-admin/{newAdmin}")
     public ResponseEntity<?> transferAdmin(
             @PathVariable String currentAdmin,
@@ -459,6 +517,12 @@ public class GroupController {
      * DELETE /{username}/leave/{groupId}
      * Allows a member to leave a group voluntarily.
      */
+    @Operation(summary = "Leave a group",
+            description = "Allows a member to voluntarily leave a group. Admin cannot leave their own group.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User left successfully"),
+            @ApiResponse(responseCode = "400", description = "Group/user not found, or admin cannot leave")
+    })
     @DeleteMapping("/{username}/leave/{groupId}")
     public ResponseEntity<Map<String, String>> leaveGroup(
             @PathVariable Long groupId,
@@ -513,6 +577,12 @@ public class GroupController {
     /**
      * DELETE /{username}/delete/{groupId}
      */
+    @Operation(summary = "Delete a group",
+            description = "Allows the admin to delete a group. All members are notified.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Group deleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Only admin can delete group")
+    })
     @DeleteMapping("/{username}/delete/{groupId}")
     public ResponseEntity<?> deleteGroup(
             @PathVariable String username,
@@ -554,6 +624,13 @@ public class GroupController {
      * DELETE /{groupId}/{admin}/removeMember/{username}
      * Remove a user from a group. Only admins can do this.
      */
+    @Operation(summary = "Remove a member from a group",
+            description = "Allows the admin to remove a member from the group.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Member removed successfully"),
+            @ApiResponse(responseCode = "400", description = "Only admin can remove member or member not found")
+    })
+
     @DeleteMapping("/{groupId}/{admin}/removeMember/{username}")
     public ResponseEntity<Map<String, String>> removeMember(
             @PathVariable Long groupId,

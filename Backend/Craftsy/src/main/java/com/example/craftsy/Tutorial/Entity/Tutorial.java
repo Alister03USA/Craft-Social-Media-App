@@ -2,6 +2,9 @@ package com.example.craftsy.Tutorial.Entity;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 
 /**
@@ -14,22 +17,33 @@ public class Tutorial {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "User is required.")
     @ManyToOne
     @JoinColumn(name = "user_id")
     private Users user;
 
+    @NotBlank(message = "Title is required.")
+    @Size(min = 3, max = 100, message = "Title must be between 3 and 100 characters.")
     private String title;
 
+
+    @Size(max = 500, message = "Description cannot exceed 500 characters.")
     private String description;
 
+    @NotBlank(message = "Category is required.")
+    @Size(min = 3, max = 50, message = "Category must be between 3 and 50 characters.")
     private String category; // Knitting, woodcrating, etc
 
     private String fileUrl;
 
+    @Size(max = 255, message = "File name cannot exceed 255 characters.")
     private String fileName;
 
+    @Size(max = 500, message = "File path cannot exceed 500 characters.")
     private String filePath;
 
+
+    @Size(max = 50, message = "File type cannot exceed 50 characters.")
     private String fileType;
 
     private boolean isPrivate = false;

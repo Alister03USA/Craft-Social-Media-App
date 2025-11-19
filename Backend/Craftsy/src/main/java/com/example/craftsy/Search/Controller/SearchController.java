@@ -12,6 +12,12 @@ import com.example.craftsy.Tutorial.Entity.Tutorial;
 import com.example.craftsy.Tutorial.Repository.TutorialRepository;
 import com.example.craftsy.feed.Feed;
 import com.example.craftsy.feed.FeedRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +48,22 @@ public class SearchController {
      * GET /search/user?query=abc
      * Search for users by username
      */
+    @Operation(
+            summary = "Search for users",
+            description = "Search for users whose username contains the query string. "
+                    + "If viewerUsername is provided, relationship status (isFollowing, isPending) "
+                    + "will be included."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Search results returned successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Users.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
+
     @GetMapping("/user")
     public ResponseEntity<List<Map<String, Object>>> searchUsers(@RequestParam String query,
                                                                  @RequestParam(required = false) String viewerUsername // who is searching
@@ -93,6 +115,19 @@ public class SearchController {
      * GET /search/group?query=abc
      * Search for groups by group name or username
      */
+    @Operation(
+            summary = "Search for groups",
+            description = "Search for groups whose name or admin username contains the query string."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Group search results returned successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Group.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @GetMapping("/group")
     public ResponseEntity<List<Map<String, Object>>> searchGroups(@RequestParam String query) {
         List<Group> groups = groupRepository.findByGroupNameContainingIgnoreCaseOrGroupAdmin_UsernameContainingIgnoreCase(query, query);
@@ -115,6 +150,19 @@ public class SearchController {
      * GET /search/project?query=abc
      * Search for projects by projectName or Username to find the user's project
      */
+    @Operation(
+            summary = "Search for user projects",
+            description = "Search for projects by projectName or username of the project owner."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Project search results returned successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Feed.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @GetMapping("/project")
     public ResponseEntity<List<Map<String, Object>>> searchProjects(@RequestParam String query) {
         List<Feed> projects = feedRespository.findByProjectNameContainingIgnoreCaseOrUser_UsernameContainingIgnoreCase(query, query);
@@ -139,6 +187,20 @@ public class SearchController {
     /**
      * Search for tutorial by username, title, description, or category
      */
+    @Operation(
+            summary = "Search for tutorials",
+            description = "Search for tutorials by username, title, description, or category. "
+                    + "Returns metadata for each matching tutorial."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Tutorial search results returned successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Tutorial.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @GetMapping("/tutorial")
     public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query) {
         List<Tutorial> tutorials = tutorialRepository

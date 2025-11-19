@@ -2,6 +2,11 @@ package com.example.craftsy.PointsSystem.Entity;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
+
 import java.util.Date;
 
 @Entity
@@ -13,6 +18,7 @@ public class PointsHistory {
     private Long id;
 
     @ManyToOne
+    @NotNull(message = "User must not be null")
     @JoinColumn(name = "user_id")
     private Users user;
 
@@ -20,6 +26,8 @@ public class PointsHistory {
     private Integer pointsEarned;
 
     @Column(name = "action_type")
+    @NotBlank(message = "Action type cannot be blank")
+    @Size(min = 3, max = 50, message = "Action type length must be between 3 and 50")
     private String actionType;  // POST_CREATED, TUTORIAL_POSTED, COMMENT_ADDED
 
     @Column(name = "reference_id")
@@ -28,6 +36,7 @@ public class PointsHistory {
 
 
     @Column(name = "created_at")
+    @PastOrPresent(message = "Creation time cannot be in the future")
     private Date createdAt = new Date();
 
     // Constructor
