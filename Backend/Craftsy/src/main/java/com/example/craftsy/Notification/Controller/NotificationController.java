@@ -5,6 +5,9 @@ import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.Notification.Entity.Notification;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +31,12 @@ public class NotificationController {
      * PUT /notifications/{id}/read
      * Mark a notification as read
      */
+    @Operation(summary = "Mark a notification as read",
+            description = "Updates the notification to read and removes it from the active notification list via WebSocket")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Notification marked as read"),
+            @ApiResponse(responseCode = "404", description = "Notification not found")
+    })
     @PutMapping("/{id}/read")
     public ResponseEntity<String> markAsRead(@PathVariable Long id) {
         Notification notification = notificationRepository.findById(id)
@@ -47,6 +56,12 @@ public class NotificationController {
      * POST /notifications
      * Create a new notification and push it via WebSocket
      */
+    @Operation(summary = "Create a new notification",
+            description = "Creates a notification for a receiver and pushes it via WebSocket")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Notification created successfully"),
+            @ApiResponse(responseCode = "404", description = "Receiver not found")
+    })
     @PostMapping
     public ResponseEntity<Notification> createNotification(
             @RequestParam String receiverUsername,
@@ -79,6 +94,12 @@ public class NotificationController {
 
     // Get all the notifications from a user
     @GetMapping("/{username}")
+    @Operation(summary = "Get unread notifications for a user",
+            description = "Fetches all unread notifications for the specified username and marks them as read")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of unread notifications returned"),
+            @ApiResponse(responseCode = "404", description = "Username not found")
+    })
     public ResponseEntity<List<Notification>> getNotification(@PathVariable String username) {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Username not found"));

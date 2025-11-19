@@ -10,6 +10,9 @@ import com.example.craftsy.Notification.NotificationWebSocket;
 import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,6 +45,13 @@ public class GroupMessageController {
     /**
      * Get message history for a group
      */
+    @Operation(summary = "Get group message history",
+            description = "Retrieve the message history for a specific group. Only group members can access messages.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns the list of messages"),
+            @ApiResponse(responseCode = "403", description = "User is not a member of this group"),
+            @ApiResponse(responseCode = "404", description = "Group or user not found")
+    })
     @GetMapping("/{username}/{groupId}/history")
     public ResponseEntity<?> getMessageHistory(
             @PathVariable Long groupId,
@@ -65,6 +75,13 @@ public class GroupMessageController {
     /**
      * Upload an image/media to group
      */
+    @Operation(summary = "Upload an image to a group",
+            description = "Allows a member to upload an image to the group. Other members are notified.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file type or user not in group"),
+            @ApiResponse(responseCode = "500", description = "Server error while saving file")
+    })
     @PostMapping(
             value = "/{groupId}/{senderUsername}/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -133,6 +150,14 @@ public class GroupMessageController {
     /**
      * Get image file by message ID
      */
+    @Operation(summary = "Get uploaded image by message ID",
+            description = "Retrieve the image associated with a specific message.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns the image bytes"),
+            @ApiResponse(responseCode = "400", description = "Message does not contain an image"),
+            @ApiResponse(responseCode = "404", description = "Image file not found"),
+            @ApiResponse(responseCode = "500", description = "Error reading the image file")
+    })
     @GetMapping("/image/{messageId}")
     public ResponseEntity<?> getImage(@PathVariable Long messageId) {
         try {
@@ -169,6 +194,11 @@ public class GroupMessageController {
     }
 
     // Get message for reply
+    @Operation(summary = "Get comments for a message",
+            description = "Retrieve all reply messages (comments) for a specific message.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns list of comments")
+    })
     @GetMapping("/{messageId}/comments")
     public ResponseEntity<List<Map<String, Object>>> getComments(@PathVariable Long messageId) {
         List<GroupMessage> comments = groupMessageRepository.findByReplyToMessageId(messageId);

@@ -143,4 +143,8 @@ public class Feed {
     public void setImages(List<Image> images) {
         this.images = images;
     }
+
+    public Long getId() {
+        return id;
+    }
 }
