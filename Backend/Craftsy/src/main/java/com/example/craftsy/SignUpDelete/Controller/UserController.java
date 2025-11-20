@@ -28,7 +28,7 @@ public class UserController {
      * Validates password strength, and if valid, saves the user to the database.
      */
     @Operation(
-            summary = "Create a new user account",
+            summary = "Test: Create a new user account",
             description = "Registers a new Craftsy user. Password must contain uppercase, lowercase, number and be at least 8 characters long."
     )
     @ApiResponses({
