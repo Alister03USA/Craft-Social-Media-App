@@ -9,6 +9,12 @@ import com.example.craftsy.feed.feedComments.FeedComments;
 import com.example.craftsy.feed.feedComments.FeedCommentsRepository;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.images.ImageRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,8 +48,20 @@ public class FeedController {
      * @param project the project being posted
      * @return the posted project
      */
+    @Operation(
+            summary = "Post a project",
+            description = "Creates a new project for the given user, sets the date, links images, and awards points."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project posted",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PostMapping("/feed/{username}")
-    Feed postProject(@PathVariable String username, @RequestBody Feed project){
+    Feed postProject(@Parameter(description = "The username of the user posting the project")
+                     @PathVariable String username,
+                     @Parameter(description = "The project content to post")
+                     @RequestBody Feed project){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         project.setUser(user);
@@ -69,8 +87,18 @@ public class FeedController {
      * @param username the user that is posting the project
      * @return list of projects
      */
+    @Operation(
+            summary = "Get a user's feed",
+            description = "Returns all projects posted by the user and the users they follow, sorted from most recent to oldest."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Feed retrieved",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/feed/{username}")
-    List<Feed> getUserFeed(@PathVariable String username){
+    List<Feed> getUserFeed(@Parameter(description = "The username of the user whose feed is being retrieved")
+                           @PathVariable String username){
         List<Feed> userFeed = new ArrayList<Feed>();
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -93,8 +121,18 @@ public class FeedController {
      * @param username
      * @return
      */
+    @Operation(
+            summary = "Get all projects by one user",
+            description = "Returns every project posted by the specified user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Projects retrieved",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/feed/home/{username}")
-    List<Feed> getUserProjects(@PathVariable String username){
+    List<Feed> getUserProjects(@Parameter(description = "The username of the user whose projects are being retrieved")
+                               @PathVariable String username){
         List<Feed> userFeed = new ArrayList<Feed>();
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -111,8 +149,20 @@ public class FeedController {
      * @param projectName
      * @return
      */
+    @Operation(
+            summary = "Get a specific project",
+            description = "Fetches a single project by username and project name."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project retrieved",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User or project not found")
+    })
     @GetMapping("/feed/{username}/{projectName}")
-    Feed getProject(@PathVariable String username, @PathVariable String projectName){
+    Feed getProject(@Parameter(description = "The username of the project owner")
+                    @PathVariable String username,
+                    @Parameter(description = "The name of the project to retrieve")
+                    @PathVariable String projectName){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed project = feedRepository.findByUserAndProjectName(user, projectName)
@@ -127,8 +177,17 @@ public class FeedController {
      * @param projectName name of project to be deleted
      * @return Post deleted, if successful; Post not found if post doesn't exist; User not found if user doesn't exist
      */
+    @Operation(
+            summary = "Delete a project",
+            description = "Deletes a project for the given user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project deleted"),
+            @ApiResponse(responseCode = "404", description = "User or project not found")
+    })
     @DeleteMapping("/feed/{username}/{projectName}")
-    String deleteProject(@PathVariable String username, @PathVariable String projectName){
+    String deleteProject(@Parameter(description = "The username of the project owner") @PathVariable String username,
+                         @Parameter(description = "The name of the project to delete") @PathVariable String projectName){
         Optional<Users> userOpt = userRepository.findByUsername(username);
         if(userOpt.isEmpty()){
             return "User not found";
@@ -150,9 +209,19 @@ public class FeedController {
      * @param projectUpdated the updated information
      * @return the updated project
      */
+    @Operation(
+            summary = "Update a project",
+            description = "Updates the details of a project for a given user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project updated",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User or project not found")
+    })
     @PutMapping("/feed/{username}/{projectName}")
-    Feed updateProject(@PathVariable String username, @PathVariable String projectName,
-                       @RequestBody Feed projectUpdated){
+    Feed updateProject(@Parameter(description = "The username of the project owner") @PathVariable String username,
+                       @Parameter(description = "The name of the project to update") @PathVariable String projectName,
+                       @Parameter(description = "The updated project details") @RequestBody Feed projectUpdated){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed project = feedRepository.findByUserAndProjectName(user, projectName)
@@ -193,9 +262,19 @@ public class FeedController {
      * @param comment comment contents
      * @return the pattern with new comment
      */
+    @Operation(
+            summary = "Add a comment",
+            description = "Adds a comment to a project and awards points."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment added",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User or project not found")
+    })
     @PostMapping("/feed/{username}/{projectName}/comment")
-    Feed addComment(@PathVariable String username, @PathVariable String projectName,
-                        @RequestBody FeedComments comment){
+    Feed addComment(@Parameter(description = "The username of the project owner") @PathVariable String username,
+                    @Parameter(description = "The name of the project") @PathVariable String projectName,
+                    @Parameter(description = "The comment to add") @RequestBody FeedComments comment){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed project = feedRepository.findByUserAndProjectName(user,projectName)
@@ -216,9 +295,19 @@ public class FeedController {
      * @param id
      * @return pattern with updated comments
      */
+    @Operation(
+            summary = "Delete a comment",
+            description = "Deletes a comment from a project."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment deleted",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User, project, or comment not found")
+    })
     @DeleteMapping("/feed/{username}/{projectName}/{id}")
-    Feed deleteComment(@PathVariable String username, @PathVariable String projectName,
-                           @PathVariable Long id){
+    Feed deleteComment(@Parameter(description = "The username of the project owner") @PathVariable String username,
+                       @Parameter(description = "The name of the project") @PathVariable String projectName,
+                       @Parameter(description = "The ID of the comment to delete") @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed project = feedRepository.findByUserAndProjectName(user,projectName)
@@ -237,9 +326,19 @@ public class FeedController {
      * @param id
      * @return updated pattern contents
      */
+    @Operation(
+            summary = "Like a comment",
+            description = "Adds a like to a comment for a given project."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment liked",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User, project, or comment not found")
+    })
     @PutMapping("/feed/{username}/{projectName}/{id}")
-    Feed likeComment(@PathVariable String username, @PathVariable String projectName,
-                         @PathVariable Long id){
+    Feed likeComment(@Parameter(description = "The username of the project owner") @PathVariable String username,
+                     @Parameter(description = "The name of the project") @PathVariable String projectName,
+                     @Parameter(description = "The ID of the comment to like") @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed feed = feedRepository.findByUserAndProjectName(user,projectName)
@@ -259,9 +358,19 @@ public class FeedController {
      * @param id
      * @return
      */
+    @Operation(
+            summary = "Unlike a comment",
+            description = "Removes a like from a comment for a given project."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment unliked",
+                    content = @Content(schema = @Schema(implementation = Feed.class))),
+            @ApiResponse(responseCode = "404", description = "User, project, or comment not found")
+    })
     @PutMapping("/feed/{username}/{projectName}/{id}/unlike")
-    Feed unlikeComment(@PathVariable String username, @PathVariable String projectName,
-                       @PathVariable Long id){
+    Feed unlikeComment(@Parameter(description = "The username of the project owner") @PathVariable String username,
+                       @Parameter(description = "The name of the project") @PathVariable String projectName,
+                       @Parameter(description = "The ID of the comment to unlike") @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed feed = feedRepository.findByUserAndProjectName(user,projectName)

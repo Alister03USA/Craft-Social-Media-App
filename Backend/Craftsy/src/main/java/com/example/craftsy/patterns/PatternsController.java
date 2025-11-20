@@ -8,6 +8,12 @@ import com.example.craftsy.images.Image;
 import com.example.craftsy.images.ImageRepository;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import com.example.craftsy.patterns.patternsComments.PatternsCommentsRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,8 +43,25 @@ public class PatternsController {
      * @param username the user that is posting the pattern
      * @return The posted pattern
      */
+    @Operation(
+            summary = "Posts a new pattern",
+            description = "Creates a new pattern associated with the given username. "
+                    + "Images will be linked by ID if provided."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pattern posted successfully",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PostMapping("/patterns/{username}")
-    Patterns postPattern(@RequestBody Patterns pattern, @PathVariable String username){
+    Patterns postPattern(@io.swagger.v3.oas.annotations.parameters.RequestBody(
+                                 description = "Pattern data to be created",
+                                 required = true,
+                                 content = @Content(schema = @Schema(implementation = Patterns.class))
+                         )
+                         @RequestBody Patterns pattern,
+                         @Parameter(description = "Username of the posting user", required = true)
+                         @PathVariable String username){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -64,8 +87,24 @@ public class PatternsController {
      * @param description
      * @return
      */
+    @Operation(
+            summary = "Updates the description of a pattern",
+            description = "Replaces the description text of a pattern belonging to a user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pattern updated successfully",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User or pattern not found")
+    })
     @PutMapping("/patterns/{username}/{patternName}")
-    Patterns updatePatternDescription(@PathVariable String username, @PathVariable String patternName, @RequestBody String description){
+    Patterns updatePatternDescription(
+            @Parameter(description = "Username of the pattern owner") @PathVariable String username,
+            @Parameter(description = "Name of the pattern to update") @PathVariable String patternName,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "New description text",
+                    required = true
+            )
+            @RequestBody String description){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
@@ -81,8 +120,17 @@ public class PatternsController {
      * @param search the string to search for in patternNames
      * @return list of patterns from highest to lowest rated
      */
+    @Operation(
+            summary = "Search patterns by title",
+            description = "Returns all patterns whose titles contain the search text, sorted from highest to lowest rating."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of matching patterns",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+    })
     @GetMapping("/patterns/title/{search}")
-    List<Patterns> searchPatterns(@PathVariable String search){
+    List<Patterns> searchPatterns(@Parameter(description = "Search text for pattern names")
+                                  @PathVariable String search){
         Optional<List<Patterns>> optResults = patternsRepository.findByPatternNameContaining(search);
         if(optResults.isEmpty()){
             return null;
@@ -97,8 +145,18 @@ public class PatternsController {
      * @param username the user to search for
      * @return list of patterns from highest to lowest rated
      */
+    @Operation(
+            summary = "Get all patterns from a specific author",
+            description = "Returns patterns uploaded by the given username, sorted from highest to lowest rating."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of patterns",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/patterns/author/{username}")
-    List<Patterns> getUserPatterns(@PathVariable String username){
+    List<Patterns> getUserPatterns(@Parameter(description = "Username whose patterns to retrieve")
+                                   @PathVariable String username){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         List<Patterns> patternsList = patternsRepository.findByUser(user)
@@ -113,8 +171,18 @@ public class PatternsController {
      * @param patternName
      * @return pattern
      */
+    @Operation(
+            summary = "Get a specific pattern",
+            description = "Fetches a pattern by username and pattern name."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pattern found",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User or pattern not found")
+    })
     @GetMapping("/patterns/{username}/{patternName}")
-    Patterns getPattern(@PathVariable String username, @PathVariable String patternName){
+    Patterns getPattern(@Parameter(description = "Username of the pattern owner") @PathVariable String username,
+                        @Parameter(description = "Pattern name") @PathVariable String patternName){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
@@ -128,8 +196,19 @@ public class PatternsController {
      * @param username
      * @return list of patterns from most recently posted to oldest
      */
+    @Operation(
+            summary = "Get patterns posted by user and followed users",
+            description = "Returns patterns from the user and all users they follow, "
+                    + "sorted from newest to oldest."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of patterns",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/patterns/{username}")
-    List<Patterns> getFollowersPatterns(@PathVariable String username){
+    List<Patterns> getFollowersPatterns(@Parameter(description = "Username whose feed to view")
+                                        @PathVariable String username){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Optional<List<Patterns>> patternsOpt = patternsRepository.findByUser(user);
@@ -174,8 +253,17 @@ public class PatternsController {
      * @param patternName the name of the pattern to be deleted
      * @return Pattern not found, or patternName deleted
      */
+    @Operation(
+            summary = "Delete a pattern",
+            description = "Deletes a pattern with a specific name belonging to the given user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pattern deleted"),
+            @ApiResponse(responseCode = "404", description = "User or pattern not found")
+    })
     @DeleteMapping("/patterns/{username}/{patternName}")
-    String deletePattern(@PathVariable String patternName, @PathVariable String username){
+    String deletePattern(@Parameter(description = "Pattern name") @PathVariable String patternName,
+                         @Parameter(description = "Username") @PathVariable String username){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Optional<Patterns> optPattern = patternsRepository.findByUserAndPatternName(user, patternName);
@@ -194,9 +282,25 @@ public class PatternsController {
      * @param comment comment contents
      * @return the pattern with new comment
      */
+    @Operation(
+            summary = "Add a comment to a pattern",
+            description = "Adds a new comment to the specified pattern. If the comment includes a rating, "
+                    + "the pattern's rating is updated."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment added",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User or pattern not found")
+    })
     @PostMapping("/patterns/{username}/{patternName}/comment")
-    Patterns addComment(@PathVariable String username, @PathVariable String patternName,
-                                @RequestBody PatternsComments comment){
+    Patterns addComment(@Parameter(description = "Username") @PathVariable String username,
+                        @Parameter(description = "Pattern name") @PathVariable String patternName,
+                        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                                description = "Comment contents",
+                                required = true,
+                                content = @Content(schema = @Schema(implementation = PatternsComments.class))
+                        )
+                        @RequestBody PatternsComments comment){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)
@@ -217,9 +321,19 @@ public class PatternsController {
      * @param id
      * @return pattern with updated comments
      */
+    @Operation(
+            summary = "Delete a comment from a pattern",
+            description = "Removes a specific comment from the given pattern."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment deleted",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User, pattern, or comment not found")
+    })
     @DeleteMapping("/patterns/{username}/{patternName}/{id}")
-    Patterns deleteComment(@PathVariable String username, @PathVariable String patternName,
-                         @PathVariable Long id){
+    Patterns deleteComment(@Parameter(description = "Username") @PathVariable String username,
+                           @Parameter(description = "Pattern name") @PathVariable String patternName,
+                           @Parameter(description = "Comment ID") @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)
@@ -238,9 +352,19 @@ public class PatternsController {
      * @param id
      * @return updated pattern contents
      */
+    @Operation(
+            summary = "Like a comment",
+            description = "Increases the like count on a comment by 1."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment liked",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User, pattern, or comment not found")
+    })
     @PutMapping("/patterns/{username}/{patternName}/{id}/like")
-    Patterns likeComment(@PathVariable String username, @PathVariable String patternName,
-                         @PathVariable Long id){
+    Patterns likeComment(@Parameter(description = "Username") @PathVariable String username,
+                         @Parameter(description = "Pattern name") @PathVariable String patternName,
+                         @Parameter(description = "Comment ID") @PathVariable Long id){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)
@@ -261,9 +385,24 @@ public class PatternsController {
      * @param updatedComment
      * @return
      */
+    @Operation(
+            summary = "Update a comment",
+            description = "Edits the text of a comment belonging to a particular pattern."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment updated",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User, pattern, or comment not found")
+    })
     @PutMapping("patterns/{username}/{patternName}/{id}")
-    Patterns updateComment(@PathVariable String username, @PathVariable String patternName,
-                           @PathVariable Long id, @RequestBody String updatedComment){
+    Patterns updateComment(@Parameter(description = "Username") @PathVariable String username,
+                           @Parameter(description = "Pattern name") @PathVariable String patternName,
+                           @Parameter(description = "Comment ID") @PathVariable Long id,
+                           @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                                   description = "Updated comment text",
+                                   required = true
+                           )
+                           @RequestBody String updatedComment){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)

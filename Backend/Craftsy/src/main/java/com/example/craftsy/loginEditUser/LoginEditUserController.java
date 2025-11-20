@@ -1,5 +1,11 @@
 package com.example.craftsy.loginEditUser;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +23,25 @@ public class LoginEditUserController {
      * @param update The updated user information. Comes from body.
      * @return the updated user information
      */
+    @Operation(
+            summary = "Updates the user information",
+            description = "Updates fields of a user's profile. Only the non-null fields in the request body will be updated."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully updated user information",
+                    content = @Content(schema = @Schema(implementation = LoginEditUser.class))),
+            @ApiResponse(responseCode = "400", description = "Password not strong enough"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PutMapping("/user/{username}")
-    LoginEditUser editUser(@PathVariable String username, @RequestBody LoginEditUser update){
-        //creates user from body. Throws exception if username not found.
+    LoginEditUser editUser(
+            @Parameter(description = "Username of profile to update", required = true) @PathVariable String username,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Updated user information",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = LoginEditUser.class))
+            )@RequestBody LoginEditUser update){
+
         LoginEditUser user = loginEditUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if(update.getUsername() != null) {
@@ -73,8 +95,19 @@ public class LoginEditUserController {
      * @param password password for user
      * @return User not found, {username} succesfully logged in, Incorrect password
      */
+    @Operation(
+            summary = "Login user with username and password",
+            description = "Validates credentials and returns user information if successful."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully logged in",
+                    content = @Content(schema = @Schema(implementation = LoginEditUser.class))),
+            @ApiResponse(responseCode = "400", description = "Incorrect password"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/login/{username}/{password}")
-    LoginEditUser login(@PathVariable String username, @PathVariable String password){
+    LoginEditUser login(@Parameter(description = "Username of the user") @PathVariable String username,
+                        @Parameter(description = "Password of the user") @PathVariable String password){
         LoginEditUser user = loginEditUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if(!user.getPassword().equals(password)) {

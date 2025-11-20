@@ -55,7 +55,7 @@ android-build:
   image: afirefly/android-ci:java17 # Docker image that has Android environments installed     gjandres/android-ci:latest
   stage: androidbuild               # one of the stages listed above
   tags:
-   - android_tag                    # change to your runner's tag
+   - android_tag2                  # change to your runner's tag
   before_script:                    # enable gradlew, change 'Frontend' to where you have 'gradlew'
     - export GRADLE_USER_HOME=`pwd`/.gradle
     - chmod +x ./Frontend/Craftsy/Craftsy/gradlew
@@ -72,7 +72,7 @@ android-test:
   image: afirefly/android-ci:java17
   stage: androidtest               # one of the stages listed above
   tags:
-    - android_tag                   # change to your runner's tag
+    - android_tag2                   # change to your runner's tag
   before_script:                   # enable gradlew, change 'Frontend' to where you have 'gradlew'
      - export GRADLE_USER_HOME=`pwd`/.gradle
      - chmod +x Frontend/Craftsy/Craftsy/gradlew
