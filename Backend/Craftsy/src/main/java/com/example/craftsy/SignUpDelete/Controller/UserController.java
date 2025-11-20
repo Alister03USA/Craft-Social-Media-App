@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController                           // Marks this class as a REST controller (handles HTTP requests)
-@RequestMapping("/users")                 // All routes here will start with "/users"
+@RequestMapping("/users")                 
 public class UserController {
 
     // Injects the UserRepository automatically
