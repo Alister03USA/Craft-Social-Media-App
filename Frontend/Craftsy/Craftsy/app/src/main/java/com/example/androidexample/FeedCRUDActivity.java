@@ -29,6 +29,8 @@ import java.util.Map;
  * Activity that supports Create, Update, and Delete actions for feed posts.
  * Users can upload images, edit post details, or delete posts entirely.
  * Communicates with backend endpoints through Volley requests.
+ *
+ * @author Ji Xian Fu
  */
 public class FeedCRUDActivity extends AppCompatActivity {
 

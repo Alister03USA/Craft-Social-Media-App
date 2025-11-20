@@ -56,6 +56,8 @@ import okhttp3.WebSocketListener;
  * Activity responsible for handling direct messages and group messages.
  * Provides WebSocket real time communication, file sending, reply threading,
  * message reactions, and member management for group chats.
+ *
+ *@author Ji Xian Fu
  */
 public class DirectMessagingActivity extends AppCompatActivity implements MessageAdapter.MessageActions {
 

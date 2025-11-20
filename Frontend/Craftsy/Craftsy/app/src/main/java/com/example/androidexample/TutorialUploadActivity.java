@@ -36,6 +36,8 @@ import java.util.Map;
  * Supports uploading videos either from device storage or via an external URL,
  * along with fields such as title, description, category, and privacy settings.
  * Interacts with backend Spring Boot API using Volley multipart and POST requests.
+ *
+ * @author Ji Xian Fu
  */
 public class TutorialUploadActivity extends AppCompatActivity {
 
