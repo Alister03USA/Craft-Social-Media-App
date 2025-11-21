@@ -22,6 +22,12 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Activity responsible for displaying a feed of user-created patterns.
+ * Fetches patterns from the backend using the logged-in user's username,
+ * displays them in a RecyclerView, and provides UI options to create new patterns.
+ * @author Quinn Weidenaar
+ */
 public class PatternActivity extends BaseActivity {
 
     private RecyclerView recyclerView;
@@ -31,6 +37,13 @@ public class PatternActivity extends BaseActivity {
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/patterns";
     private static final String TAG = "PatternActivity";
 
+    /**
+     * Called when the activity is first created.
+     * Initializes UI components, sets up toolbar and bottom navigation,
+     * and loads pattern data from backend.
+     *
+     * @param savedInstanceState previous saved instance state, if any
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,7 +52,7 @@ public class PatternActivity extends BaseActivity {
         // Setup bottom navigation
         setupBottomNavigation(R.id.pattern);
 
-        //  Toolbar setup for top-right "Create" button
+        // Toolbar setup for top-right "Create" button
         Toolbar toolbar = findViewById(R.id.patternsToolbar);
         setSupportActionBar(toolbar);
         setTitle("Patterns");
@@ -51,18 +64,28 @@ public class PatternActivity extends BaseActivity {
         adapter = new PatternAdapter(this, patterns);
         recyclerView.setAdapter(adapter);
 
-
         fetchPatterns();
     }
 
-    //  Inflate the top-right "Create Pattern" menu
+    /**
+     * Inflates the top-right menu which contains the "Create Pattern" button.
+     *
+     * @param menu menu instance to populate
+     * @return true if menu successfully created
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.pattern_feed_menu, menu);
         return true;
     }
 
-    //  Handle the "Create Pattern" button click
+    /**
+     * Handles toolbar menu interactions. Launches CreatePatternActivity when
+     * the "Create Pattern" button is clicked.
+     *
+     * @param item selected menu item
+     * @return true if handled, otherwise passes to superclass
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_create_pattern) {
@@ -81,7 +104,10 @@ public class PatternActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //  Fetch patterns from backend using SessionManager username
+    /**
+     * Fetches patterns for the logged-in user from the backend.
+     * Populates the RecyclerView adapter with the results.
+     */
     private void fetchPatterns() {
         SessionManager session = SessionManager.getInstance();
         String username = session.getLoggedInUsername();
@@ -89,7 +115,6 @@ public class PatternActivity extends BaseActivity {
             username = "testUser"; // fallback if not logged in
             Log.w(TAG, "No logged-in username found. Using fallback: testUser");
         }
-
 
         String url = BASE_URL + "/" + username;
         Log.d(TAG, "Fetching patterns from: " + url);
@@ -144,11 +169,17 @@ public class PatternActivity extends BaseActivity {
                 }
         );
 
-
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
+
     private static final String IMAGE_BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/";
 
+    /**
+     * Extracts the first image file path from a JSONArray of images.
+     *
+     * @param images JSON array containing image metadata objects
+     * @return the full URL of the first image, or an empty string if none found
+     */
     private String getFirstImagePath(JSONArray images) {
         if (images != null && images.length() > 0) {
             JSONObject img = images.optJSONObject(0);
@@ -161,7 +192,4 @@ public class PatternActivity extends BaseActivity {
         }
         return "";
     }
-
-
 }
-
