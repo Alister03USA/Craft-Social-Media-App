@@ -18,7 +18,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.widget.ImageView;
 import android.widget.Toast;
-
+import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -52,7 +52,6 @@ public class UserProfile extends BaseActivity {
     private byte[] newProfileImageData = null; // holds image bytes if user selects a new image
 
 
-
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
     @Override
@@ -61,7 +60,9 @@ public class UserProfile extends BaseActivity {
         showProfileView();
     }
 
-    /** ------------------- FETCH FOLLOWERS / FOLLOWING COUNTS ------------------- **/
+    /**
+     * ------------------- FETCH FOLLOWERS / FOLLOWING COUNTS -------------------
+     **/
     private void fetchFollowersAndFollowing(String username) {
         String followersUrl = BASE_URL + "/" + username + "/followers";
         JsonArrayRequest followersRequest = new JsonArrayRequest(
@@ -93,7 +94,9 @@ public class UserProfile extends BaseActivity {
     }
 
 
-    /** ------------------- VIEW MODE ------------------- **/
+    /**
+     * ------------------- VIEW MODE -------------------
+     **/
     private void showProfileView() {
         setContentView(R.layout.activity_user_profile);
         setupBottomNavigation(R.id.nav_my_profile);
@@ -105,12 +108,17 @@ public class UserProfile extends BaseActivity {
         TextView followingTv = findViewById(R.id.followingCount);
         TextView craftSpecialtiesTv = findViewById(R.id.CraftSpecialties);
         ImageView profileImageView = findViewById(R.id.profileImage); // NEW: profile image
+        ImageView tierBadge = findViewById(R.id.tierBadge);
+        TextView pointsText = findViewById(R.id.pointsText);
+        TextView tierText = findViewById(R.id.tierText);
+        ProgressBar tierProgress = findViewById(R.id.tierProgress);
 
         SessionManager session = SessionManager.getInstance();
 
         String usernameValue = session.getLoggedInUsername();
         String displayNameValue = session.getDisplayName();
-        if (displayNameValue == null || displayNameValue.isEmpty()) displayNameValue = usernameValue;
+        if (displayNameValue == null || displayNameValue.isEmpty())
+            displayNameValue = usernameValue;
 
         usernameTv.setText(usernameValue);
         displayNameTv.setText(displayNameValue);
@@ -134,7 +142,7 @@ public class UserProfile extends BaseActivity {
 
         // 🔹 NEW: Load profile image from session
         String profileImageFilename = session.getProfileImageUrl();
-        if(profileImageFilename != null && !profileImageFilename.isEmpty()){
+        if (profileImageFilename != null && !profileImageFilename.isEmpty()) {
             String fullUrl = BASE_URL + "/uploads/" + profileImageFilename;
             Glide.with(this)
                     .load(fullUrl)
@@ -147,21 +155,31 @@ public class UserProfile extends BaseActivity {
         }
 
         fetchFollowersAndFollowing(usernameValue);
+        fetchUserPoints(usernameValue);
 
         // 🔹 NEW: Load posts thumbnails grid for this user
         loadUserPosts(usernameValue);
 
         Button editButton = findViewById(R.id.editProfile);
         Button notifButton = findViewById(R.id.notifButton);
+        Button pointsCenterBtn = findViewById(R.id.btnPointsCenter);
+
         notifButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, NotificationCenterActivity.class);
+            startActivity(intent);
+        });
+
+        pointsCenterBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, PointsCenterActivity.class);
             startActivity(intent);
         });
 
         editButton.setOnClickListener(v -> showEditProfile());
     }
 
-    /** ------------------- LOAD USER POSTS ------------------- **/
+    /**
+     * ------------------- LOAD USER POSTS -------------------
+     **/
     private void loadUserPosts(String username) {
         GridLayout postsGrid = findViewById(R.id.postsGrid);
         postsGrid.removeAllViews();
@@ -198,7 +216,6 @@ public class UserProfile extends BaseActivity {
                         String projectName = post.optString("projectName", null);
 
 
-
                         // Load image
                         loadImageIntoView(imageView, imageId);
 
@@ -206,13 +223,12 @@ public class UserProfile extends BaseActivity {
                         imageView.setOnClickListener(v -> {
 
 
+                            // Inside imageView.setOnClickListener(...)
+                            Intent intent = new Intent(UserProfile.this, UserPostsDetailActivity.class);
+                            intent.putExtra("projectName", projectName);
+                            intent.putExtra("username", username); // keep this!
 
-                                // Inside imageView.setOnClickListener(...)
-                                Intent intent = new Intent(UserProfile.this, UserPostsDetailActivity.class);
-                                intent.putExtra("projectName", projectName);
-                                intent.putExtra("username", username); // keep this!
-
-                                startActivity(intent);
+                            startActivity(intent);
 
 
                         });
@@ -233,7 +249,6 @@ public class UserProfile extends BaseActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
-
 
 
     private void loadImageIntoView(ImageView imageView, long imageId) {
@@ -265,7 +280,9 @@ public class UserProfile extends BaseActivity {
     }
 
 
-    /** ------------------- EDIT MODE ------------------- **/
+    /**
+     * ------------------- EDIT MODE -------------------
+     **/
     private void showEditProfile() {
         setContentView(R.layout.activity_user_profile_edit);
 
@@ -280,7 +297,8 @@ public class UserProfile extends BaseActivity {
 
         String usernameValue = session.getLoggedInUsername();
         String displayNameValue = session.getDisplayName();
-        if (displayNameValue == null || displayNameValue.isEmpty()) displayNameValue = usernameValue;
+        if (displayNameValue == null || displayNameValue.isEmpty())
+            displayNameValue = usernameValue;
 
         username.setText(usernameValue);
         displayName.setText(displayNameValue);
@@ -296,7 +314,7 @@ public class UserProfile extends BaseActivity {
 
 // Load current profile image from session or default
         String currentImageUrl = session.getProfileImageUrl(); // make sure SessionManager has this
-        if(currentImageUrl != null && !currentImageUrl.isEmpty()){
+        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
             Glide.with(this)
                     .load(BASE_URL + "/uploads/" + currentImageUrl)
                     .placeholder(R.drawable.profile)
@@ -323,7 +341,9 @@ public class UserProfile extends BaseActivity {
         });
     }
 
-    /** ------------------- SAVE PROFILE ------------------- **/
+    /**
+     * ------------------- SAVE PROFILE -------------------
+     **/
     private void saveProfile() {
         String name = displayName.getText().toString().trim();
         String user = username.getText().toString().trim();
@@ -414,7 +434,8 @@ public class UserProfile extends BaseActivity {
                             }
 
                             @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {}
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+                            }
                         });
 
             } catch (Exception e) {
@@ -473,6 +494,63 @@ public class UserProfile extends BaseActivity {
     }
 
 
+    private void fetchUserPoints(String username) {
+        String url = BASE_URL + "/points/" + username;
 
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> {
+                    try {
+                        int totalPoints = response.optInt("totalPoints", 0);
+                        String currentTier = response.optString("currentTier", "BEGINNER");
+                        int pointsToNextTier = response.optInt("pointsToNextTier", 0);
 
+                        TextView pointsText = findViewById(R.id.pointsText);
+                        TextView tierText = findViewById(R.id.tierText);
+                        ProgressBar tierProgress = findViewById(R.id.tierProgress);
+                        ImageView tierBadge = findViewById(R.id.tierBadge);
+
+                        pointsText.setText("Points: " + totalPoints);
+                        tierText.setText("Tier: " + currentTier);
+
+                        int progress = 0;
+                        if (currentTier.equals("BEGINNER")) {
+                            progress = (int) ((totalPoints / 100.0) * 100);
+                        } else if (currentTier.equals("INTERMEDIATE")) {
+                            progress = (int) (((totalPoints - 100) / 100.0) * 100);
+                        } else if (currentTier.equals("EXPERT")) {
+                            progress = (int) (((totalPoints - 200) / 100.0) * 100);
+                        } else if (currentTier.equals("CHAMPION")) {
+                            progress = 100;
+                        }
+                        tierProgress.setProgress(progress);
+
+                        switch (currentTier) {
+                            case "BEGINNER":
+                                tierBadge.setImageResource(R.drawable.badge_beginner);
+                                break;
+                            case "INTERMEDIATE":
+                                tierBadge.setImageResource(R.drawable.badge_intermediate);
+                                break;
+                            case "EXPERT":
+                                tierBadge.setImageResource(R.drawable.badge_expert);
+                                break;
+                            case "CHAMPION":
+                                tierBadge.setImageResource(R.drawable.badge_champion);
+                                break;
+                            default:
+                                tierBadge.setImageResource(R.drawable.badge_beginner);
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                },
+                error -> Log.e("POINTS_ERROR", "Failed to load points", error)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
+    }
 }

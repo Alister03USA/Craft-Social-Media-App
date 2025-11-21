@@ -9,18 +9,16 @@ import com.android.volley.toolbox.HttpHeaderParser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * ✅ Unified VolleyMultipartRequest
- * Works for Craftsy uploads (images, videos, tutorials)
- * Compatible with Spring Boot @RequestParam("file") and text params.
- */
 public class VolleyMultipartRequest extends Request<NetworkResponse> {
 
     private static final String LINE_FEED = "\r\n";
     private static final String TWO_HYPHENS = "--";
+
+    // RFC correct boundary
     private final String boundary = "----CraftsyBoundary" + UUID.randomUUID();
 
     private final Response.Listener<NetworkResponse> mListener;
@@ -52,38 +50,48 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
     @Override
     public byte[] getBody() throws AuthFailureError {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
         try {
-            // 🧾 Text fields
-            if (textParams != null && !textParams.isEmpty()) {
+            // TEXT PARTS
+            if (textParams != null) {
                 for (Map.Entry<String, String> entry : textParams.entrySet()) {
-                    bos.write((TWO_HYPHENS + boundary + LINE_FEED).getBytes());
-                    bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"" + LINE_FEED).getBytes());
-                    bos.write(("Content-Type: text/plain; charset=UTF-8" + LINE_FEED).getBytes());
-                    bos.write(LINE_FEED.getBytes());
-                    bos.write(entry.getValue().getBytes());
-                    bos.write(LINE_FEED.getBytes());
+
+                    bos.write((TWO_HYPHENS + boundary + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                    bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                    bos.write(("Content-Type: text/plain; charset=UTF-8" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                    bos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
+
+                    bos.write(entry.getValue().getBytes(StandardCharsets.UTF_8));
+                    bos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
                 }
             }
 
-            // 📦 File fields
-            if (fileParams != null && !fileParams.isEmpty()) {
+            // FILE PARTS
+            if (fileParams != null) {
                 for (Map.Entry<String, DataPart> entry : fileParams.entrySet()) {
                     DataPart dp = entry.getValue();
-                    bos.write((TWO_HYPHENS + boundary + LINE_FEED).getBytes());
+
+                    // Start file part
+                    bos.write((TWO_HYPHENS + boundary + LINE_FEED).getBytes(StandardCharsets.UTF_8));
                     bos.write(("Content-Disposition: form-data; name=\"" + entry.getKey()
-                            + "\"; filename=\"" + dp.getFileName() + "\"" + LINE_FEED).getBytes());
-                    bos.write(("Content-Type: " + dp.getType() + LINE_FEED).getBytes());
-                    bos.write(LINE_FEED.getBytes());
+                            + "\"; filename=\"" + dp.getFileName() + "\"" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                    bos.write(("Content-Type: " + dp.getType() + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                    bos.write(("Content-Transfer-Encoding: binary" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+                    bos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
+
+                    // File content
                     bos.write(dp.getContent());
-                    bos.write(LINE_FEED.getBytes());
+                    bos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
                 }
             }
 
-            // 🧩 End boundary
-            bos.write((TWO_HYPHENS + boundary + TWO_HYPHENS + LINE_FEED).getBytes());
+            // STRICT RFC FINAL BOUNDARY (NO CRLF AFTER)
+            bos.write((TWO_HYPHENS + boundary + TWO_HYPHENS).getBytes(StandardCharsets.UTF_8));
+
         } catch (IOException e) {
             throw new AuthFailureError("Multipart body build error: " + e.getMessage());
         }
+
         return bos.toByteArray();
     }
 
@@ -101,19 +109,7 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
     public void deliverError(VolleyError error) {
         mErrorListener.onErrorResponse(error);
     }
-    private void writeDataPart(ByteArrayOutputStream bos, DataPart dataFile, String inputName) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append(TWO_HYPHENS).append(boundary).append(LINE_FEED);
-        sb.append("Content-Disposition: form-data; name=\"").append(inputName)
-                .append("\"; filename=\"").append(dataFile.getFileName()).append("\"").append(LINE_FEED);
-        sb.append("Content-Type: ").append(dataFile.getType()).append(LINE_FEED);
-        sb.append(LINE_FEED);
-        bos.write(sb.toString().getBytes("UTF-8"));
-        bos.write(dataFile.getContent());
-        bos.write(LINE_FEED.getBytes("UTF-8"));
-    }
 
-    /** 🧠 Binary data holder for files */
     public static class DataPart {
         private final String fileName;
         private final byte[] content;

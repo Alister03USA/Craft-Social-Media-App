@@ -88,11 +88,6 @@ public class SearchActivity extends BaseActivity {
     private void triggerSearch(String query) {
         int position = viewPager.getCurrentItem();
 
-        // If we're in the Tutorials tab, handle search manually
-        if (position == 3) {
-            fetchTutorials(query);
-            return;
-        }
 
         // Otherwise send search query to active fragment (Users, Groups, Projects)
         String tag = "f" + position;
@@ -100,25 +95,6 @@ public class SearchActivity extends BaseActivity {
         if (fragment instanceof SearchableTab) {
             ((SearchableTab) fragment).refreshResults(query);
         }
-    }
-
-    /**
-     * ✅ Fetch Tutorials from backend
-     * GET /tutorial/search?query={text}
-     */
-    private void fetchTutorials(String query) {
-        String url = "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/search?query=" + query;
-        Log.d("TutorialSearch", "Fetching tutorials from URL: " + url);
-
-        JsonArrayRequest request = new JsonArrayRequest(
-                Request.Method.GET,
-                url,
-                null,
-                response -> handleTutorialResponse(response),
-                error -> Log.e("TutorialSearch", "❌ Error fetching tutorials", error)
-        );
-
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
     /**
