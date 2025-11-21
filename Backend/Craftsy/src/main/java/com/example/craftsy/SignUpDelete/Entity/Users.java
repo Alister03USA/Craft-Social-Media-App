@@ -4,6 +4,8 @@ import com.example.craftsy.images.Image;
 import com.example.craftsy.messages.conversations.DirectConversation;
 import com.example.craftsy.messages.conversations.GroupConversation;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -19,14 +21,19 @@ public class Users {
     private Long id;
 
     // Unique username for login
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 30, message = "Username must be between 3–30 characters")
     @Column(nullable = false, unique = true)
     private String username;
 
     // Display name shown to other users
+    @NotBlank(message = "Display name is required")
+    @Size(max = 50, message = "Display name cannot exceed 50 characters")
     @Column(nullable = false, unique = true)
     private String displayName;
 
     // Short biography
+    @Size(max = 1000, message = "Bio cannot exceed 1000 characters")
     @Column(length = 1000)
     private String bio;
 
@@ -34,6 +41,7 @@ public class Users {
     private String profilePic;
 
     // User's craft specialties
+    @Size(max = 255, message = "Craft specialties cannot exceed 255 characters")
     @Column(name = "craftSpecialties")
     private String craftSpecialties;
 
@@ -47,6 +55,7 @@ public class Users {
     private String email;
 
     // Hashed password
+    @NotBlank(message = "Password is required")
     @Column(nullable = false)
     private String password;
 

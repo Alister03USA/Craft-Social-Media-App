@@ -87,6 +87,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemCount() { return data.size(); }
 
+
+    /* ========================================================================
+       BASE HOLDER WITH VIEW RESET IMPLEMENTATION
+       ======================================================================== */
     abstract class BaseHolder extends RecyclerView.ViewHolder {
         TextView tvMsg, tvMeta, tvReply, tvReacts;
         ImageButton btnReact, btnReply;
@@ -96,35 +100,66 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         BaseHolder(@NonNull View v) { super(v); }
 
         void bindCommon(MessageItem m) {
-            // Show sender name for received messages in group chats
+
+            /* ===========================================================
+               RESET ALL VIEWS FIRST TO STOP RECYCLER GHOST CONTENT
+               =========================================================== */
+            if (tvSender != null) {
+                tvSender.setText("");
+                tvSender.setVisibility(View.GONE);
+            }
+
+            tvReply.setText("");
+            tvReply.setVisibility(View.GONE);
+
+            tvMsg.setText("");
+            tvMeta.setText("");
+
+            tvReacts.setText("");
+            tvReacts.setVisibility(View.GONE);
+
+            imgContent.setImageDrawable(null);
+            imgContent.setVisibility(View.GONE);
+
+
+            /* ===========================================================
+               SENDER LABEL (GROUP CHAT)
+               =========================================================== */
             if (tvSender != null) {
                 if (!m.getSender().equals(me) && !TextUtils.isEmpty(m.getSender())) {
                     tvSender.setVisibility(View.VISIBLE);
                     tvSender.setText(m.getSender());
-                } else {
-                    tvSender.setVisibility(View.GONE);
                 }
             }
 
-            // Reply header
+            /* ===========================================================
+               REPLY HEADER
+               =========================================================== */
             if (m.getReplyTo() != null) {
                 tvReply.setVisibility(View.VISIBLE);
                 String parentText = findParentText(m.getReplyTo());
                 if (!TextUtils.isEmpty(parentText)) {
                     if (parentText.length() > 40)
                         parentText = parentText.substring(0, 40) + "...";
+
                     SpannableString s = new SpannableString("Replying to \"" + parentText + "\"");
                     s.setSpan(new StyleSpan(Typeface.BOLD), 0, 12, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     tvReply.setText(s);
-                } else tvReply.setText("Replying to message");
-            } else {
-                tvReply.setVisibility(View.GONE);
+                } else {
+                    tvReply.setText("Replying to message");
+                }
             }
 
-            // Message text
-            tvMsg.setText(m.getContent());
+            /* ===========================================================
+               NORMAL TEXT
+               =========================================================== */
+            if (!TextUtils.isEmpty(m.getContent())) {
+                tvMsg.setText(m.getContent());
+            }
 
-            // Image content
+            /* ===========================================================
+               IMAGE MESSAGE (RESET SAFE WITH GLIDE)
+               =========================================================== */
             if (m.hasImage()) {
                 imgContent.setVisibility(View.VISIBLE);
                 Glide.with(itemView.getContext())
@@ -132,16 +167,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         .placeholder(R.drawable.ic_post_placeholder)
                         .error(R.drawable.ic_post_placeholder)
                         .into(imgContent);
-            } else {
-                imgContent.setVisibility(View.GONE);
             }
 
-            // Timestamp
-            tvMeta.setText(m.getTimestamp());
+            /* ===========================================================
+               TIMESTAMP
+               =========================================================== */
+            if (!TextUtils.isEmpty(m.getTimestamp())) {
+                tvMeta.setText(m.getTimestamp());
+            }
 
-            // Reactions
+            /* ===========================================================
+               REACTIONS
+               =========================================================== */
             Map<String, Integer> reacts = m.getReactions();
-            if (!reacts.isEmpty()) {
+            if (reacts != null && !reacts.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 for (Map.Entry<String, Integer> e : reacts.entrySet()) {
                     String emoji = reactionEmojiMap.getOrDefault(e.getKey(), e.getKey());
@@ -151,9 +190,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
                 tvReacts.setVisibility(View.VISIBLE);
                 tvReacts.setText(sb.toString().trim());
-            } else tvReacts.setVisibility(View.GONE);
+            }
 
-            // Buttons and long press
+            /* ===========================================================
+               ACTION LISTENERS
+               =========================================================== */
             btnReact.setOnClickListener(v -> showReactMenu(v, m));
             btnReply.setOnClickListener(v -> actions.onReply(m));
             itemView.setOnLongClickListener(v -> { actions.onLongPress(m); return true; });
@@ -181,7 +222,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     actions.onRemoveReact(m, reactionType);
                     m.getReactions().remove(reactionType);
                 } else {
-                    m.getReactions().clear(); // one per user
+                    m.getReactions().clear();
                     m.getReactions().put(reactionType, 1);
                     actions.onReact(m, reactionType);
                 }
@@ -203,6 +244,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+
+    /* ========================================================================
+       LEFT HOLDER
+       ======================================================================== */
     class LeftHolder extends BaseHolder {
         LeftHolder(@NonNull View v) {
             super(v);
@@ -218,10 +263,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         void bind(MessageItem m) { bindCommon(m); }
     }
 
+    /* ========================================================================
+       RIGHT HOLDER
+       ======================================================================== */
     class RightHolder extends BaseHolder {
         RightHolder(@NonNull View v) {
             super(v);
-            // tvSender is not used for sent messages
             tvMsg = v.findViewById(R.id.tvMsg);
             tvMeta = v.findViewById(R.id.tvMeta);
             tvReply = v.findViewById(R.id.tvReply);

@@ -10,6 +10,12 @@ import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 
 import java.util.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +42,20 @@ public class FollowController {
      * - If viewer has sent a pending follow request, isPending = true
      * - Otherwise, both are false
      */
+    @Operation(
+            summary = "Get relationship status with a target user",
+            description = "Checks if the viewer user is following the target user, "
+                    + "has a pending follow request, or neither."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Relationship information returned successfully",
+                    content = @Content(schema = @Schema(implementation = Map.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Target user not found"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @GetMapping("/{viewerUsername}/profile/{targetUsername}")
     public ResponseEntity<Map<String, Object>> getProfileStatus(
             @PathVariable String viewerUsername,
@@ -88,6 +108,19 @@ public class FollowController {
      * Sends a follow request to the target user.
      * Creates a pending follow and a notification for the target.
      */
+    @Operation(
+            summary = "Send a follow request",
+            description = "Creates a pending follow request and sends notifications to both users."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Follow request sent successfully",
+                    content = @Content(schema = @Schema(implementation = Map.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "User not found or request already exists"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @PostMapping("{followerUsername}/follow/{targetUsername}")
     public ResponseEntity<Map<String, String>> sendFollowRequest(
             @PathVariable String followerUsername,
@@ -158,6 +191,21 @@ public class FollowController {
      * Unfollows a user or cancels a pending follow request.
      * Adjusts follower/following counts if it was accepted.
      */
+    @Operation(
+            summary = "Unfollow a user or cancel a pending follow request",
+            description = "Removes an existing follow relationship. If the follow was accepted, "
+                    + "the follower/following counts are updated."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Unfollow successful",
+                    content = @Content(schema = @Schema(implementation = Map.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Not following or invalid request"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @DeleteMapping("{followerUsername}/unfollow/{targetUsername}")
     public ResponseEntity<Map<String, String>> unfollowUser(
             @PathVariable String followerUsername,
@@ -209,6 +257,20 @@ public class FollowController {
      * PUT /notifications/respond/{notificationId}/{accepted}
      * Accept or reject a follow request from a specific follower
      */
+    @Operation(
+            summary = "Respond to a follow request",
+            description = "Accepts or declines a follow request based on the notification ID. "
+                    + "Also sends real-time notifications to the requester."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Follow request processed successfully",
+                    content = @Content(schema = @Schema(implementation = Map.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid follow request"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @PutMapping("/notifications/respond/{notificationId}/{accepted}")
     public ResponseEntity<Map<String, String>> respondToFollowRequest(
             @PathVariable Long notificationId,
@@ -294,6 +356,19 @@ public class FollowController {
      * GET /{username}/following
      * Retrieves a list of users that the given username is following (accepted only)
      */
+    @Operation(
+            summary = "Get list of users the specified user is following",
+            description = "Returns a list of usernames that the user is following. "
+                    + "Only accepted follow relationships are included."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Following list retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))
+            ),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @GetMapping("/{username}/following")
     public ResponseEntity<List<String>> getFollowing(@PathVariable String username) {
         Optional<Users> userOpt = userRepository.findByUsername(username);
@@ -322,6 +397,19 @@ public class FollowController {
      * GET /{username}/followers
      * Retrieves a list of users who follow the given username (accepted only)
      */
+    @Operation(
+            summary = "Get list of users who follow the specified user",
+            description = "Returns a list of usernames who follow the user. "
+                    + "Only accepted follow relationships are included."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Followers list retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))
+            ),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
     @GetMapping("/{username}/followers")
     public ResponseEntity<List<String>> getFollowers(@PathVariable String username) {
         Optional<Users> userOpt = userRepository.findByUsername(username);

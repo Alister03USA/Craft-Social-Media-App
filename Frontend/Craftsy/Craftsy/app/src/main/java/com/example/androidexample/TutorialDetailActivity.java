@@ -19,7 +19,7 @@ import com.android.volley.toolbox.StringRequest;
 
 /**
  * Displays both YouTube and MP4 tutorials properly in a WebView.
- * Author: Ji Xian Fu (Frontend)
+ * Enforces: only the uploader can edit or delete the tutorial.
  */
 public class TutorialDetailActivity extends AppCompatActivity {
 
@@ -34,7 +34,7 @@ public class TutorialDetailActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
 
     private long tutorialId = -1L;
-    private String title, description, category, fileUrl, username;
+    private String title, description, category, fileUrl, uploaderUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,16 +58,18 @@ public class TutorialDetailActivity extends AppCompatActivity {
         description = getIntent().getStringExtra("description");
         category = getIntent().getStringExtra("category");
         fileUrl = getIntent().getStringExtra("fileUrl");
-        username = getIntent().getStringExtra("username");
+        uploaderUsername = getIntent().getStringExtra("username");
 
-        Log.d(TAG, "Loaded tutorialId=" + tutorialId + " | title=" + title);
+        Log.d(TAG, "Loaded tutorialId=" + tutorialId + " | uploader=" + uploaderUsername);
 
         titleText.setText(title);
         descText.setText(description);
         categoryText.setText(category);
-        usernameText.setText(username != null ? "By: " + username : "By: Unknown");
+        usernameText.setText(uploaderUsername != null ? "By: " + uploaderUsername : "By: Unknown");
 
         btnBack.setOnClickListener(v -> finish());
+
+        enforceEditDeletePermissions();
 
         btnEdit.setOnClickListener(v -> {
             Intent intent = new Intent(this, EditTutorialActivity.class);
@@ -81,6 +83,29 @@ public class TutorialDetailActivity extends AppCompatActivity {
         btnDelete.setOnClickListener(v -> showDeleteDialog());
 
         setupWebView();
+    }
+
+    /**
+     * Only show Edit/Delete buttons when the logged-in user is the uploader.
+     */
+    private void enforceEditDeletePermissions() {
+        String loggedInUser = SessionManager.getInstance().getLoggedInUsername();
+
+        Log.d(TAG, "loggedInUser=" + loggedInUser + " | uploader=" + uploaderUsername);
+
+        if (loggedInUser == null || uploaderUsername == null) {
+            btnEdit.setVisibility(android.view.View.GONE);
+            btnDelete.setVisibility(android.view.View.GONE);
+            return;
+        }
+
+        if (loggedInUser.equalsIgnoreCase(uploaderUsername)) {
+            btnEdit.setVisibility(android.view.View.VISIBLE);
+            btnDelete.setVisibility(android.view.View.VISIBLE);
+        } else {
+            btnEdit.setVisibility(android.view.View.GONE);
+            btnDelete.setVisibility(android.view.View.GONE);
+        }
     }
 
     /** Displays both YouTube and MP4 tutorials properly */
@@ -99,7 +124,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
         String normalizedUrl = fileUrl.trim();
         Log.d(TAG, "Loading tutorial URL: " + normalizedUrl);
 
-        // --- Handle YouTube links ---
         if (normalizedUrl.contains("youtube.com") || normalizedUrl.contains("youtu.be")) {
             String videoId = null;
             try {
@@ -114,7 +138,7 @@ public class TutorialDetailActivity extends AppCompatActivity {
                     videoId = videoId.substring(0, videoId.indexOf("&"));
                 }
             } catch (Exception e) {
-                Log.e(TAG, "❌ Failed to extract YouTube video ID", e);
+                Log.e(TAG, "Failed to extract YouTube video ID", e);
             }
 
             String thumbnail = videoId != null
@@ -135,9 +159,8 @@ public class TutorialDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // --- Handle local uploaded MP4 files ---
         if (normalizedUrl.startsWith("/tutorial/")) {
-            String fullPath = BASE_URL.replace("/tutorial", "") + normalizedUrl;
+            String fullPath = BASE_URL + normalizedUrl;
             Log.d(TAG, "Playing MP4: " + fullPath);
 
             String html = "<!DOCTYPE html><html><body style='margin:0;padding:0;background-color:black;'>"
@@ -150,7 +173,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // --- Fallback for other URLs ---
         if (normalizedUrl.startsWith("http")) {
             webView.loadUrl(normalizedUrl);
         }

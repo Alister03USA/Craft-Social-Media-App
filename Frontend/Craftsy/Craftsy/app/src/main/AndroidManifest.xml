@@ -152,7 +152,7 @@
         <activity android:name=".CommentsActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
-
+        <activity android:name=".PointsCenterActivity" />
 
 
 

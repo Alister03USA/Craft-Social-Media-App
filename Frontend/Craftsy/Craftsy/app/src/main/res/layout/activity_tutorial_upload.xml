@@ -1,107 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="24dp"
     android:background="@color/craftsy_background">
 
-    <!-- Back button -->
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_margin="12dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_arrow_back"
-        android:contentDescription="Back"
-        app:tint="@color/dark_text" />
-
-    <!-- Scrollable content -->
-    <ScrollView
-        android:layout_below="@id/btnBack"
+    <LinearLayout
+        android:orientation="vertical"
+        android:paddingBottom="32dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="24dp">
+        android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:orientation="vertical"
+        <!-- Back Button -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            android:tint="@color/dark_text" />
+
+        <!-- Screen Title -->
+        <TextView
+            android:id="@+id/uploadTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Upload Tutorial"
+            android:textColor="@color/dark_text"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Title -->
+        <EditText
+            android:id="@+id/inputTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal">
+            android:hint="Title"
+            android:background="@drawable/edit_text_bg"
+            android:padding="16dp"
+            android:textColor="@color/dark_text"
+            android:textColorHint="@color/text_gray" />
 
-            <!-- Title input -->
-            <EditText
-                android:id="@+id/inputTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Tutorial Title"
-                android:inputType="text"
-                android:textColor="@color/dark_text"
-                android:backgroundTint="@color/dark_text" />
+        <!-- Description -->
+        <EditText
+            android:id="@+id/inputDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:background="@drawable/edit_text_bg"
+            android:padding="16dp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/dark_text"
+            android:textColorHint="@color/text_gray"
+            android:minLines="3" />
 
-            <!-- Category input -->
-            <EditText
-                android:id="@+id/inputCategory"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Category"
-                android:layout_marginTop="8dp"
-                android:inputType="text"
-                android:textColor="@color/dark_text"
-                android:backgroundTint="@color/dark_text" />
+        <!-- Category -->
+        <EditText
+            android:id="@+id/inputCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Category"
+            android:background="@drawable/edit_text_bg"
+            android:padding="16dp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/dark_text"
+            android:textColorHint="@color/text_gray" />
 
-            <!-- Description input -->
-            <EditText
-                android:id="@+id/inputDescription"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Description"
-                android:layout_marginTop="8dp"
-                android:inputType="textMultiLine"
-                android:minLines="3"
-                android:gravity="top"
-                android:textColor="@color/dark_text"
-                android:backgroundTint="@color/dark_text" />
+        <!-- NEW: Privacy Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
 
-            <!-- Video URL input -->
-            <EditText
-                android:id="@+id/inputUrl"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Or paste YouTube / video URL"
-                android:layout_marginTop="16dp"
-                android:inputType="textUri"
-                android:textColor="@color/dark_text"
-                android:backgroundTint="@color/dark_text" />
-
-            <!-- Select file button -->
-            <ImageView
-                android:id="@+id/btnSelectFile"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="16dp"
-                android:src="@drawable/ic_upload"
-                android:contentDescription="Select video"
-                android:background="@drawable/rounded_bg_gray"
-                android:padding="16dp" />
-
-            <!-- Upload button -->
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnUpload"
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:src="@drawable/ic_upload_arrow"
-                app:backgroundTint="@color/craftsy_accent" />
+                android:text="Private tutorial?"
+                android:textSize="16sp"
+                android:textColor="@color/dark_text"
+                android:layout_weight="1" />
 
-            <!-- Progress bar -->
-            <ProgressBar
-                android:id="@+id/progressBar"
+            <Switch
+                android:id="@+id/switchPrivate"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:visibility="gone" />
-
+                android:layout_height="wrap_content" />
         </LinearLayout>
-    </ScrollView>
-</RelativeLayout>
+
+        <!-- File Selector -->
+        <ImageView
+            android:id="@+id/btnSelectFile"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/ic_upload"
+            android:src="@drawable/ic_upload"
+            android:scaleType="center"
+            android:contentDescription="Select File" />
+
+        <!-- OR Url Input -->
+        <EditText
+            android:id="@+id/inputUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Or paste video URL"
+            android:background="@drawable/edit_text_bg"
+            android:padding="16dp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/dark_text"
+            android:textColorHint="@color/text_gray" />
+
+        <!-- Upload Button -->
+        <ImageView
+            android:id="@+id/btnUpload"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/button_primary_bg"
+            android:padding="16dp"
+            android:src="@drawable/ic_upload_arrow"
+            android:contentDescription="Upload"
+            android:scaleType="centerInside" />
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+
+</ScrollView>

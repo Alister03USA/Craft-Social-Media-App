@@ -2,6 +2,10 @@ package com.example.craftsy.Notification.Entity;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -20,6 +24,7 @@ public class Notification {
 
     // The user who receives the notification
     @ManyToOne
+    @NotNull(message = "User must not be null")
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
@@ -27,10 +32,14 @@ public class Notification {
 
     // Title of the notification
     @Column(nullable = false)
+    @NotBlank(message = "Title cannot be blank")
+    @Size(min = 3, max = 100, message = "Title length must be between 3 and 100 characters")
     private String title;
 
     // Message content
     @Column(nullable = false)
+    @NotBlank(message = "Message cannot be blank")
+    @Size(min = 3, max = 500, message = "Message length must be between 3 and 500 characters")
     private String message;
 
 
@@ -42,11 +51,13 @@ public class Notification {
 
     // Has the user read the notification?
     @Column(name = "is_read", nullable = false)
+    @NotNull(message = "Read status must not be null")
     private Boolean isRead = false;
 
     // Timestamp when the notification was created
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
+    @PastOrPresent(message = "Created date cannot be in the future")
     private Date createdAt = new Date();
 
     // Default constructor

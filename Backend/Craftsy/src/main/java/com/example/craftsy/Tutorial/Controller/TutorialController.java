@@ -9,6 +9,9 @@ import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
 import com.example.craftsy.Tutorial.Repository.TutorialRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -40,6 +43,9 @@ public class TutorialController {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private com.example.craftsy.PointsSystem.PointsService pointsService;
+
 
 
 
@@ -50,14 +56,26 @@ public class TutorialController {
      * @param file
      * @return
      */
+    @Operation(
+            summary = "Upload a tutorial using a file",
+            description = "Allows EXPERT or CHAMPION users to upload a tutorial video/image file. "
+                    + "Saves uploaded file locally and notifies all followers."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid user or file upload failure"),
+            @ApiResponse(responseCode = "403", description = "User does not meet tier requirements")
+    })
     @PostMapping(value = "/uploadFile", consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadTutorialFile(
             @RequestParam("username") String username,
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("category") String category,
-            @RequestParam("file") MultipartFile file) { // MultipartFile is a spring class representing an uploaded file
-            // Extracts the title, desc, and file from the request
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "isPrivate", required = false, defaultValue = "false") boolean isPrivate
+    ) { // MultipartFile is a spring class representing an uploaded file
+        // Extracts the title, desc, and file from the request
         try {
 
             // Find user
@@ -67,6 +85,15 @@ public class TutorialController {
             }
 
             Users user = userOpt.get();
+
+            // Get user tier
+            String userTier = pointsService.getUserPoints(user).getCurrentTier();
+
+            // Only allow EXPERT or CHAMPION users to upload
+            if (!(userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+                return ResponseEntity.status(403).body("You must be EXPERT level or higher to upload tutorials.");
+
+            }
 
             //  Create folder if not exist
             String uploadDir = "uploads/tutorials";
@@ -88,6 +115,7 @@ public class TutorialController {
             tutorial.setFilePath(filePath.toString());
             tutorial.setCategory(category);
             tutorial.setUser(user);
+            tutorial.setIsPrivate(isPrivate);
 
             tutorialRepository.save(tutorial);
 
@@ -123,13 +151,23 @@ public class TutorialController {
     /**
      * POST image/video by URL
      */
+    @Operation(
+            summary = "Upload a tutorial using an external URL",
+            description = "Stores external video/image URL instead of uploading a file."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial uploaded successfully with URL"),
+            @ApiResponse(responseCode = "400", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "User does not meet tier requirements")
+    })
     @PostMapping("/uploadUrl")
     public ResponseEntity<String> uploadTutorialUrl(
             @RequestParam String username,
             @RequestParam String title,
             @RequestParam String description,
             @RequestParam String category,
-            @RequestParam String fileUrl      // URL to external image/video
+            @RequestParam String fileUrl,
+            @RequestParam(value = "isPrivate", required = false, defaultValue = "false") boolean isPrivate// URL to external image/video
     ) {
         // Find user
         Optional<Users> userOpt = userRepository.findByUsername(username);
@@ -139,12 +177,22 @@ public class TutorialController {
 
         Users user = userOpt.get();
 
+        // Get user tier
+        String userTier = pointsService.getUserPoints(user).getCurrentTier();
+
+        // Only allow EXPERT or CHAMPION users to upload
+        if (!(userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+            return ResponseEntity.status(403).body("You must be EXPERT level or higher to upload tutorials.");
+
+        }
+
         Tutorial tutorial = new Tutorial();
         tutorial.setTitle(title);
         tutorial.setDescription(description);
         tutorial.setCategory(category);
         tutorial.setFileUrl(fileUrl); // store URL instead of file path
         tutorial.setUser(user);
+        tutorial.setIsPrivate(isPrivate);
         tutorialRepository.save(tutorial);
 
         return ResponseEntity.ok("Tutorial uploaded successfully with URL!");
@@ -154,7 +202,15 @@ public class TutorialController {
     /**
      * GET "/tutorial/{id}/file"
      * * Fetch the file of the Videos - Optimized for direct streaming
-    */
+     */
+    @Operation(
+            summary = "Fetch or stream tutorial file",
+            description = "Streams local file or redirects to external file URL."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "File streamed successfully"),
+            @ApiResponse(responseCode = "500", description = "Error reading file")
+    })
     @GetMapping("/{id}/file")
     public ResponseEntity<?> getTutorialFile(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
@@ -210,17 +266,37 @@ public class TutorialController {
      * Search tutorials by username, title, description, or category
      * Returns correct file URL (local or external)
      */
+    @Operation(
+            summary = "Search tutorials",
+            description = "Search by username, title, description, or category. Returns valid local/external file URL."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Search results returned successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/search")
-    public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query) {
+    public ResponseEntity<List<Map<String, Object>>> searchTutorials(@RequestParam String query, @RequestParam String username) {
         List<Tutorial> tutorials = tutorialRepository
                 .findByUser_UsernameContainingIgnoreCaseOrTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrCategoryContainingIgnoreCase(
-                      query,  query, query, query);
+                        query,  query, query, query);
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String userTier = pointsService.getUserPoints(user).getCurrentTier();
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Tutorial t : tutorials) {
+
+            // Hide private tutorials if user is below Intermediate
+            if (t.isPrivate() && !( userTier.equals("INTERMEDIATE")||userTier.equals("EXPERT") || userTier.equals("CHAMPION"))) {
+                continue;
+            }
+
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getId());
-            map.put("Username", t.getUser().getUsername());
+            map.put("username", t.getUser().getUsername());
             map.put("title", t.getTitle());
             map.put("description", t.getDescription());
             map.put("category", t.getCategory());
@@ -239,33 +315,48 @@ public class TutorialController {
      * GET /tutorial/user/{username}
      * Fetch all tutorials uploaded by a specific user (For Main Search Tab)
      */
+    @Operation(
+            summary = "Get all tutorials uploaded by a specific user",
+            description = "Viewer tier determines visibility of private tutorials."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial list returned"),
+            @ApiResponse(responseCode = "404", description = "User or viewer not found")
+    })
     @GetMapping("/user/{username}")
-    public ResponseEntity<List<Map<String, Object>>> getTutorialsByUser(@PathVariable String username) {
-        // 1. Find user
+    public ResponseEntity<List<Map<String, Object>>> getTutorialsByUser(
+            @PathVariable String username,
+            @RequestParam String viewer // viewer = the user making the request
+    ) {
         Optional<Users> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
+        Optional<Users> viewerOpt = userRepository.findByUsername(viewer);
+        if (userOpt.isEmpty() || viewerOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         Users user = userOpt.get();
+        Users viewerUser = viewerOpt.get();
+        String viewerTier = pointsService.getUserPoints(viewerUser).getCurrentTier();
 
-        // 2. Get tutorials uploaded by this user
         List<Tutorial> tutorials = tutorialRepository.findByUser(user);
 
-        // 3. Convert to list of maps for response
         List<Map<String, Object>> result = new ArrayList<>();
         for (Tutorial t : tutorials) {
+            if (t.isPrivate() && !(viewerTier.equals("INTERMEDIATE")||viewerTier.equals("EXPERT") || viewerTier.equals("CHAMPION"))) {
+                continue; // skip private tutorials for Beginner users
+            }
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getId());
             map.put("title", t.getTitle());
             map.put("description", t.getDescription());
             map.put("category", t.getCategory());
             map.put("username", t.getUser().getUsername());
+            map.put("isPrivate", t.isPrivate());
 
-            // Handle both local and external URLs
             String fileUrl = (t.getFileUrl() != null)
                     ? t.getFileUrl()
-                    : "/tutorial/" + t.getId(); // local file endpoint
+                    : "/tutorial/" + t.getId();
             map.put("fileURL", fileUrl);
 
             result.add(map);
@@ -276,18 +367,28 @@ public class TutorialController {
 
 
 
+
     /**
      * PUT "/tutorial/{id}"
      * Update the tutorials
      */
+    @Operation(
+            summary = "Update an existing tutorial",
+            description = "Updates title, description, category, or replaces the file."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial updated successfully"),
+            @ApiResponse(responseCode = "400", description = "File upload error"),
+            @ApiResponse(responseCode = "404", description = "Tutorial not found")
+    })
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // Endpoint expects data in form-data format
     public ResponseEntity<String> updateTutorials(
             @PathVariable Long id,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) MultipartFile file // 9nterface that handle file uploads
-            ) {
+            @RequestParam(required = false) MultipartFile file // interface that handle file uploads
+    ) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
         if (tutorialOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -351,6 +452,15 @@ public class TutorialController {
      * Delete the tutorial
      *
      */
+    @Operation(
+            summary = "Delete a tutorial",
+            description = "Deletes database record and any associated local file."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tutorial deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Tutorial not found"),
+            @ApiResponse(responseCode = "400", description = "File delete error")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTutorial(@PathVariable Long id) {
         Optional<Tutorial> tutorialOpt = tutorialRepository.findById(id);
@@ -390,6 +500,7 @@ public class TutorialController {
 
 
 }
+
 
 
 

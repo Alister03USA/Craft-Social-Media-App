@@ -1,5 +1,11 @@
 package com.example.craftsy.images;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,8 +32,18 @@ public class ImageController {
      * @param id
      * @return
      */
+    @Operation(
+            summary = "Get an image by ID",
+            description = "Retrieves the image file information (ID and path) by image ID."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Image retrieved",
+                    content = @Content(schema = @Schema(implementation = Image.class))),
+            @ApiResponse(responseCode = "404", description = "Image not found")
+    })
     @GetMapping("/images/{id}")
-    public ResponseEntity<Image> getImageById(@PathVariable Long id) {
+    public ResponseEntity<Image> getImageById(@Parameter(description = "ID of the image to retrieve")
+                                                  @PathVariable Long id) {
         return imageRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -38,8 +54,18 @@ public class ImageController {
      * @param imageFile
      * @return the image id and path
      */
+    @Operation(
+            summary = "Upload an image",
+            description = "Uploads an image file and stores its path in the database. Returns the saved image with ID and path."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully",
+                    content = @Content(schema = @Schema(implementation = Image.class))),
+            @ApiResponse(responseCode = "500", description = "Failed to upload or save the image")
+    })
     @PostMapping("/images")
-    public ResponseEntity<Image> handleFileUpload(@RequestParam("image") MultipartFile imageFile) {
+    public ResponseEntity<Image> handleFileUpload(@Parameter(description = "Image file to upload")
+                                                      @RequestParam("image") MultipartFile imageFile) {
         try {
             File uploadDir = new File(directory);
             if (!uploadDir.exists()) {
@@ -66,8 +92,18 @@ public class ImageController {
      * @param id
      * @return
      */
+    @Operation(
+            summary = "Delete an image",
+            description = "Deletes an image by ID and removes its file from disk."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Image deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Image not found"),
+            @ApiResponse(responseCode = "500", description = "Failed to delete image file from disk")
+    })
     @DeleteMapping("/images/{id}")
-    public ResponseEntity<String> deleteImage(@PathVariable Long id) {
+    public ResponseEntity<String> deleteImage(@Parameter(description = "ID of the image to delete")
+                                                  @PathVariable Long id) {
         Optional<Image> optionalImage = imageRepository.findById(id);
         if (!optionalImage.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
