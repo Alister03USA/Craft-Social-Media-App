@@ -12,6 +12,9 @@ import com.example.craftsy.Challenges.Repository.ChallengeRepository;
 import com.example.craftsy.PointsSystem.PointsService;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +58,12 @@ public class ChallengeController {
     /**
      * Create a new challenge
      */
+    @Operation(summary = "Create a new challenge", description = "Only CHAMPION users can create challenges")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Challenge created successfully"),
+            @ApiResponse(responseCode = "403", description = "Only CHAMPION users can create challenges"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PostMapping("/challenge/{username}/post")
     public ResponseEntity<Map<String, Object>> createChallenge(@PathVariable String username,
                                                                @RequestBody Challenge challenge) {
@@ -81,6 +90,10 @@ public class ChallengeController {
     /**
      * Get all active challenges
      */
+    @Operation(summary = "Get all active challenges", description = "Retrieve all challenges that are active")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of active challenges retrieved")
+    })
     @GetMapping("/challenge/active")
     public ResponseEntity<List<Challenge>> getActiveChallenges() {
         List<Challenge> activeChallenges = challengeRepository.findByIsActiveTrue();
@@ -91,6 +104,12 @@ public class ChallengeController {
     /**
      * Participate in a challenge
      */
+    @Operation(summary = "Participate in a challenge", description = "User can join an active challenge")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Participation recorded"),
+            @ApiResponse(responseCode = "400", description = "Challenge inactive or user already participating"),
+            @ApiResponse(responseCode = "404", description = "User or challenge not found")
+    })
     @PostMapping("/challenge/{username}/participate/{challengeId}")
     @Transactional
     public ResponseEntity<Map<String, String>> participateChallenge(@PathVariable String username, @PathVariable long challengeId) {
@@ -119,6 +138,12 @@ public class ChallengeController {
     /**
      * Mark challenge as completed and award points
      */
+    @Operation(summary = "Complete a challenge", description = "Mark a challenge as completed and award points")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Challenge completed and points awarded"),
+            @ApiResponse(responseCode = "400", description = "User not participating or already completed"),
+            @ApiResponse(responseCode = "404", description = "User or challenge not found")
+    })
     @PostMapping("/challenge/{username}/complete/{challengeId}")
     @Transactional
     public ResponseEntity<Map<String, String>> completeChallenge(
@@ -157,6 +182,10 @@ public class ChallengeController {
      * @param status
      * @return
      */
+    @Operation(summary = "Filter challenges", description = "Filter challenges by type, category, or ongoing status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Filtered challenges retrieved")
+    })
     @GetMapping("/challenge/filter")
     public ResponseEntity<?> getFilteredChallenges(
             @RequestParam(required = false) String type,
@@ -204,6 +233,12 @@ public class ChallengeController {
      * @param updatedChallenge
      * @return
      */
+    @Operation(summary = "Edit a challenge", description = "Only the creator can edit their challenge")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Challenge updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Only creator can edit this challenge"),
+            @ApiResponse(responseCode = "404", description = "User or challenge not found")
+    })
     @PutMapping("/challenge/{username}/edit/{challengeId}")
     public ResponseEntity<?> editChallenge(
             @PathVariable Long challengeId,
@@ -258,6 +293,12 @@ public class ChallengeController {
     /**
      * Deactivate a challenge
      */
+    @Operation(summary = "Deactivate a challenge", description = "Only the creator can deactivate their challenge")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Challenge deactivated successfully"),
+            @ApiResponse(responseCode = "403", description = "Only creator can deactivate this challenge"),
+            @ApiResponse(responseCode = "404", description = "User or challenge not found")
+    })
     @PutMapping("/challenge/{username}/deactivate/{challengeId}")
     public ResponseEntity<Map<String, String>> deactivateChallenge(@PathVariable String username, @PathVariable Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
@@ -282,6 +323,12 @@ public class ChallengeController {
      * DELETE a challenge by ID
      * Only the creator (CHAMPION user) can delete their own challenge
      */
+    @Operation(summary = "Delete a challenge", description = "Only the creator can delete their challenge")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Challenge deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Only creator can delete this challenge"),
+            @ApiResponse(responseCode = "404", description = "User or challenge not found")
+    })
     @DeleteMapping("/challenge/{username}/delete/{challengeId}")
     public ResponseEntity<Map<String, String>> deleteChallenge(
             @PathVariable Long challengeId,
@@ -311,6 +358,12 @@ public class ChallengeController {
      * @param file
      * @return
      */
+    @Operation(summary = "Create a post for a challenge", description = "User can create a post with optional media after joining the challenge")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Post created successfully"),
+            @ApiResponse(responseCode = "400", description = "User must join the challenge or already submitted a post"),
+            @ApiResponse(responseCode = "404", description = "User or challenge not found")
+    })
     @PostMapping(value = "/challenge/{username}/create/posts/{challengeId}",
     consumes =MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createChallengePost(
@@ -390,6 +443,11 @@ public class ChallengeController {
      * @param challengeId
      * @return
      */
+    @Operation(summary = "Get all posts of a challenge", description = "Retrieve all posts associated with a challenge")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Posts retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Challenge not found")
+    })
     @GetMapping("/challenge/{challengeId}/posts")
     public ResponseEntity<?> getChallengePosts(@PathVariable Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
