@@ -17,6 +17,17 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Activity responsible for displaying the posts in a specific group.
+ *
+ * This Activity handles:
+ *
+ *     Loading the group ID from the backend
+ *     Fetching and displaying previous posts
+ *     Opening WebSocket connections for real-time messages
+ *     Allowing users to create new posts using another Activity
+ * @author Quinn Weidenaar
+ */
 public class GroupActivity extends AppCompatActivity {
 
     private RecyclerView groupRecyclerView;
@@ -30,10 +41,16 @@ public class GroupActivity extends AppCompatActivity {
     private String username;
 
     private WebSocketManager wsManager;
-    private boolean wsInitialized = false; // ✅ Prevent duplicate connections
+    private boolean wsInitialized = false;
 
     private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
 
+    /**
+     * Initializes the UI, loads passed data, sets listeners, and triggers retrieval
+     * of the group ID followed by loading posts and connecting to WebSocket.
+     *
+     * @param savedInstanceState saved instance state bundle if activity is recreated
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,19 +81,25 @@ public class GroupActivity extends AppCompatActivity {
             i.putExtra("groupId", groupId);
             i.putExtra("groupName", groupName);
             startActivityForResult(i, CREATE_POST_REQUEST);
-
         });
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
-            public void handleOnBackPressed() { finish(); }
+            public void handleOnBackPressed() {
+                finish();
+            }
         });
     }
 
+    /**
+     * Sends a request to the backend to retrieve the group's ID based on the group name,
+     * initializes the WebSocket once the ID is received, and loads all existing posts.
+     */
     private void fetchGroupId() {
-        if (wsInitialized) return; // ✅ Stop reconnects when returning to this screen
+        if (wsInitialized) return;
 
         String url = BASE_URL + "/groupId/" + groupName;
+
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
@@ -85,7 +108,7 @@ public class GroupActivity extends AppCompatActivity {
 
                         if (!wsInitialized) {
                             initWebSocket();
-                            wsInitialized = true; // ✅ Mark WebSocket as connected once
+                            wsInitialized = true;
                         }
 
                         loadPosts();
@@ -99,7 +122,12 @@ public class GroupActivity extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
+    /**
+     * Initializes the WebSocket for real-time group messages and defines the listener
+     * for incoming events such as message receiving, errors, and connection updates.
+     */
     private void initWebSocket() {
+
         String wsUrl = "ws://coms-3090-028.class.las.iastate.edu:8080/ws/groupMessage/"
                 + groupId + "/" + username;
 
@@ -107,11 +135,17 @@ public class GroupActivity extends AppCompatActivity {
         wsManager.connect(wsUrl);
 
         wsManager.setListener(new WebSocketManager.WebSocketListener() {
+
+            /**
+             * Called when a new WebSocket message arrives.
+             * Parses the message, extracts media if present, and updates the UI list.
+             *
+             * @param message the incoming message sent through WebSocket
+             */
             @Override
             public void onMessage(String message) {
                 runOnUiThread(() -> {
                     try {
-                        // Ignore replies/comments for main feed
                         if (message.startsWith("REPLY:")) return;
 
                         int separatorIndex = message.indexOf(": ");
@@ -133,11 +167,19 @@ public class GroupActivity extends AppCompatActivity {
                                 } else break;
                             }
 
-                            if (content == null || content.isEmpty() || content.matches(".*uploaded an image.*") || content.matches(".*Image sent.*"))
+                            if (content == null || content.isEmpty() ||
+                                    content.matches(".*uploaded an image.*") ||
+                                    content.matches(".*Image sent.*"))
                                 return;
 
+                            posts.add(new GroupPostModel(
+                                    sender,
+                                    content.isEmpty() ? null : content,
+                                    messageId,
+                                    mediaUrl,
+                                    groupId
+                            ));
 
-                            posts.add(new GroupPostModel(sender, content.isEmpty() ? null : content, messageId, mediaUrl, groupId));
                             postAdapter.notifyItemInserted(posts.size() - 1);
                             groupRecyclerView.scrollToPosition(posts.size() - 1);
                         }
@@ -147,17 +189,29 @@ public class GroupActivity extends AppCompatActivity {
                 });
             }
 
-
+            /**
+             * Invoked when WebSocket connection is opened.
+             */
             @Override
             public void onOpen() {
                 Log.d("WebSocket", "Connected");
             }
 
+            /**
+             * Invoked when WebSocket connection is closed.
+             *
+             * @param reason explanation for disconnection
+             */
             @Override
             public void onClose(String reason) {
                 Log.d("WebSocket", "Closed: " + reason);
             }
 
+            /**
+             * Invoked when WebSocket encounters an error.
+             *
+             * @param ex the exception raised during WebSocket operations
+             */
             @Override
             public void onError(Exception ex) {
                 Log.e("WebSocket", "Error", ex);
@@ -165,13 +219,13 @@ public class GroupActivity extends AppCompatActivity {
         });
     }
 
-
-
-
-
-
+    /**
+     * Fetches all previous posts for the group using a REST API call.
+     * Filters out replies, parses media attachments, and populates the post list.
+     */
     private void loadPosts() {
         String url = BASE_URL + "/groupMessage/" + username + "/" + groupId + "/history";
+
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                 response -> {
                     posts.clear();
@@ -179,7 +233,6 @@ public class GroupActivity extends AppCompatActivity {
                         try {
                             JSONObject obj = response.getJSONObject(i);
 
-                            // Skip replies/comments
                             JSONObject replyTo = obj.optJSONObject("replyToMessage");
                             if (replyTo != null) continue;
 
@@ -190,7 +243,6 @@ public class GroupActivity extends AppCompatActivity {
                             Long messageId = null;
                             String mediaUrl = null;
 
-                            // Extract image placeholders
                             while (content.contains("[image:")) {
                                 int start = content.indexOf("[image:") + 7;
                                 int end = content.indexOf("]", start);
@@ -198,16 +250,13 @@ public class GroupActivity extends AppCompatActivity {
                                     String idStr = content.substring(start, end);
                                     messageId = Long.parseLong(idStr);
                                     mediaUrl = BASE_URL + "/groupMessage/image/" + messageId;
-
                                     content = content.replace("[image:" + messageId + "]", "").trim();
                                 } else break;
                             }
 
-                            // Skip posts with no content or images
-                            // Skip posts with no content or images, or system text without image
                             if ((content == null || content.isEmpty()) && mediaUrl == null) continue;
-                            if (mediaUrl == null && (content.matches(".*Image sent.*") || content.matches(".*uploaded an image.*"))) continue;
-
+                            if (mediaUrl == null && (content.matches(".*Image sent.*")
+                                    || content.matches(".*uploaded an image.*"))) continue;
 
                             posts.add(new GroupPostModel(
                                     sender,
@@ -232,10 +281,14 @@ public class GroupActivity extends AppCompatActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-
-
-
-
+    /**
+     * Receives the result of the CreateGroupPostActivity.
+     * If text message is returned, it is forwarded through the WebSocket.
+     *
+     * @param requestCode the code identifying the request
+     * @param resultCode  the result code returned by the child Activity
+     * @param data        additional data sent back from the Activity
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -247,11 +300,13 @@ public class GroupActivity extends AppCompatActivity {
                     wsManager.sendMessage(message);
                 }
             }
-            // images already handled separately by adapter
         }
     }
 
-
+    /**
+     * Cleans up the WebSocket connection when the Activity is destroyed.
+     * Prevents memory leaks and reconnection attempts when navigating back.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -260,6 +315,4 @@ public class GroupActivity extends AppCompatActivity {
             wsInitialized = false;
         }
     }
-
 }
-

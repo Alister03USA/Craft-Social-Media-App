@@ -102,6 +102,18 @@
             android:name=".SignupActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".EventDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".EventFeedActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".CalendarActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
         <!-- Notification Center -->
         <activity
