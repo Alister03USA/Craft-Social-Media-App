@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
@@ -89,7 +90,8 @@
                     android:layout_height="wrap_content"
                     android:background="@android:color/white"
                     android:visibility="gone"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="16dp"
+                    tools:ignore="WebViewLayout" />
 
                 <VideoView
                     android:id="@+id/videoView"
@@ -109,7 +111,16 @@
                     android:textSize="16sp"
                     android:lineSpacingExtra="4dp"
                     android:paddingBottom="8dp" />
-
+                <Button
+                    android:id="@+id/btnSaveTutorial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Save to Board"
+                    android:textAllCaps="false"
+                    android:backgroundTint="@color/craftsy_accent"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/rounded_button"/>
             </LinearLayout>
         </ScrollView>
     </androidx.cardview.widget.CardView>

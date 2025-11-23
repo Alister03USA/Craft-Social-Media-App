@@ -13,7 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-
+import com.example.androidexample.SelectBoardDialog;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -80,8 +80,27 @@ public class FeedDetailActivity extends AppCompatActivity {
             if (!text.isEmpty()) postComment(text);
             else Toast.makeText(this, "Enter a comment", Toast.LENGTH_SHORT).show();
         });
+        Button btnSave = findViewById(R.id.btnSaveFeedProject);
+        btnSave.setOnClickListener(v -> {
+            SelectBoardDialog dialog = new SelectBoardDialog(FeedDetailActivity.this, board -> {
+                addProjectToBoard(board.getId(), projectName);
+            });
+            dialog.show();
+        });
     }
+    private void addProjectToBoard(long boardId, String projectName) {
+        String url = BASE + "/board/" + boardId + "/project/" + username + "/" + projectName;
 
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                response -> Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(this, "Error saving project", Toast.LENGTH_SHORT).show()
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
     private void fetchUserFeed(String user) {
         String url = BASE + "/feed/" + user;
         JsonArrayRequest req = new JsonArrayRequest(

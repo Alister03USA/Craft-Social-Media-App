@@ -11,9 +11,9 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.android.volley.toolbox.JsonObjectRequest;
 import androidx.appcompat.app.AppCompatActivity;
-
+import com.example.androidexample.SelectBoardDialog;
 import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 
@@ -79,12 +79,31 @@ public class TutorialDetailActivity extends AppCompatActivity {
             intent.putExtra("category", category);
             startActivity(intent);
         });
-
+        Button btnSave = findViewById(R.id.btnSaveTutorial);
+        btnSave.setOnClickListener(v -> {
+            SelectBoardDialog dialog = new SelectBoardDialog(TutorialDetailActivity.this, board -> {
+                addTutorialToBoard(board.getId(), tutorialId);
+            });
+            dialog.show();
+        });
         btnDelete.setOnClickListener(v -> showDeleteDialog());
 
         setupWebView();
     }
+    private void addTutorialToBoard(long boardId, long tutorialId) {
 
+        String url = BASE_URL + "/board/" + boardId + "/tutorial/" + tutorialId;
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                response -> Toast.makeText(this, "Tutorial saved", Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(this, "Failed to save", Toast.LENGTH_SHORT).show()
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
     /**
      * Only show Edit/Delete buttons when the logged-in user is the uploader.
      */
