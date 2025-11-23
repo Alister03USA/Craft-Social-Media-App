@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.androidexample">
 
-    <!-- 🌐 Permissions -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -153,8 +153,14 @@
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
         <activity android:name=".PointsCenterActivity" />
-
-
+        <activity
+            android:name=".BoardsListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".BoardDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
         <activity
             android:name=".PatternDetailActivity"

@@ -7,10 +7,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Parses Boards + Items from backend JSON, mapping directly
- * to your Pattern, FeedItem, and TutorialItem models.
- */
 public class JsonParser {
 
     public static List<BoardModel> parseBoards(JSONArray array) {
@@ -29,8 +25,9 @@ public class JsonParser {
 
     public static BoardModel parseBoard(JSONObject obj) {
         BoardModel board = new BoardModel();
+
         try {
-            board.id = obj.getLong("id");
+            board.id = obj.optLong("id", -1);
             board.boardName = obj.optString("boardName", "");
             board.description = obj.optString("description", "");
             board.dateCreated = obj.optString("dateCreated", "");
@@ -42,77 +39,91 @@ public class JsonParser {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return board;
     }
 
-    /* ------------------------------------------------------------
-       PATTERNS (Matches your Pattern.java constructor EXACTLY)
-       ------------------------------------------------------------ */
-    private static List<Pattern> parsePatterns(JSONArray arr) throws JSONException {
+    private static List<Pattern> parsePatterns(JSONArray arr) {
         List<Pattern> list = new ArrayList<>();
         if (arr == null) return list;
 
         for (int i = 0; i < arr.length(); i++) {
-            JSONObject p = arr.getJSONObject(i);
-            list.add(new Pattern(
-                    p.getLong("id"),
-                    p.optString("patternName", ""),
-                    p.optString("username", ""),
-                    p.optString("patternType", ""),
-                    (float) p.optDouble("rating", 0),
-                    p.optString("patternImage", ""),
-                    p.optString("patternLink", ""),
-                    p.optString("difficulty", ""),
-                    p.optString("description", ""),
-                    p.optString("supplies", ""),
-                    p.optString("date", "")
-            ));
+            try {
+                JSONObject p = arr.getJSONObject(i);
+
+                long id = p.optLong("id", -1);   // avoid crash if missing
+
+                list.add(new Pattern(
+                        id,
+                        p.optString("patternName", ""),
+                        p.optString("username", ""),
+                        p.optString("patternType", ""),
+                        (float) p.optDouble("rating", 0),
+                        p.optString("patternImage", ""),
+                        p.optString("patternLink", ""),
+                        p.optString("difficulty", ""),
+                        p.optString("description", ""),
+                        p.optString("supplies", ""),
+                        p.optString("date", "")
+                ));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
         return list;
     }
 
-    /* ------------------------------------------------------------
-       FEED ITEMS (Matches FeedItem.java constructor EXACTLY)
-       ------------------------------------------------------------ */
-    private static List<FeedItem> parseFeedItems(JSONArray arr) throws JSONException {
+    private static List<FeedItem> parseFeedItems(JSONArray arr) {
         List<FeedItem> list = new ArrayList<>();
         if (arr == null) return list;
 
         for (int i = 0; i < arr.length(); i++) {
-            JSONObject f = arr.getJSONObject(i);
-            list.add(new FeedItem(
-                    f.optString("username", ""),
-                    f.optString("projectName", ""),
-                    f.optString("projectType", ""),
-                    f.optString("supplies", ""),
-                    f.optString("projectDesc", ""),
-                    f.optString("visibility", ""),
-                    f.optString("date", ""),
-                    f.optString("imageUrl", "")
-            ));
+            try {
+                JSONObject f = arr.getJSONObject(i);
+
+                list.add(new FeedItem(
+                        f.optString("username", ""),
+                        f.optString("projectName", ""),
+                        f.optString("projectType", ""),
+                        f.optString("supplies", ""),
+                        f.optString("projectDesc", ""),
+                        f.optString("visibility", ""),
+                        f.optString("date", ""),
+                        f.optString("imageUrl", "")
+                ));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
+
         return list;
     }
 
-    /* ------------------------------------------------------------
-       TUTORIALS (Matches TutorialItem.java constructor EXACTLY)
-       ------------------------------------------------------------ */
-    private static List<TutorialItem> parseTutorials(JSONArray arr) throws JSONException {
+    private static List<TutorialItem> parseTutorials(JSONArray arr) {
         List<TutorialItem> list = new ArrayList<>();
         if (arr == null) return list;
 
         for (int i = 0; i < arr.length(); i++) {
-            JSONObject t = arr.getJSONObject(i);
-            list.add(new TutorialItem(
-                    t.getLong("id"),
-                    t.optString("title", ""),
-                    t.optString("description", ""),
-                    t.optString("category", ""),
-                    t.optString("fileURL", ""),
-                    t.optString("filePath", ""),
-                    t.optString("username", "")
-            ));
+            try {
+                JSONObject t = arr.getJSONObject(i);
+
+                list.add(new TutorialItem(
+                        t.optLong("id", -1),
+                        t.optString("title", ""),
+                        t.optString("description", ""),
+                        t.optString("category", ""),
+                        t.optString("fileURL", ""),
+                        t.optString("filePath", ""),
+                        t.optString("username", "")
+                ));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
+
         return list;
     }
 }

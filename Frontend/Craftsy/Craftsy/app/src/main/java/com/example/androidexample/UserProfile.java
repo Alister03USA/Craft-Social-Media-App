@@ -163,6 +163,7 @@ public class UserProfile extends BaseActivity {
         Button editButton = findViewById(R.id.editProfile);
         Button notifButton = findViewById(R.id.notifButton);
         Button pointsCenterBtn = findViewById(R.id.btnPointsCenter);
+        Button savedBoardsBtn = findViewById(R.id.btnSavedBoards);
 
         notifButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, NotificationCenterActivity.class);
@@ -175,6 +176,11 @@ public class UserProfile extends BaseActivity {
         });
 
         editButton.setOnClickListener(v -> showEditProfile());
+        savedBoardsBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, BoardsListActivity.class);
+            intent.putExtra("username", SessionManager.getInstance().getLoggedInUsername());
+            startActivity(intent);
+        });
     }
 
     /**
