@@ -346,6 +346,27 @@ public class ChallengeController {
                     .body(Map.of("message", "Only the creator can delete this challenge"));
         }
 
+        // 1. Find all posts for this challenge
+        List<ChallengePost> posts = challengePostRepository.findByChallengeIdOrderByCreatedAtDesc(challengeId);
+
+        for (ChallengePost post : posts) {
+            Long postId = post.getId();
+
+            // 2. Delete all comments for this post
+            List<ChallengePostComment> comments = challengePostCommentRepository.findByPostIdOrderByCreatedAtDesc(postId);
+            challengePostCommentRepository.deleteAll(comments);
+
+            // 3. Delete all likes for this post
+            challengePostLikeRepository.deleteAll(challengePostLikeRepository.findAll().stream()
+                    .filter(like -> like.getPost().getId().equals(postId))
+                    .toList());
+
+            // 4. Delete the post itself
+            challengePostRepository.delete(post);
+        }
+
+
+
         challengeRepository.delete(challenge);
         return ResponseEntity.ok(Map.of("message", "Challenge deleted successfully"));
     }
