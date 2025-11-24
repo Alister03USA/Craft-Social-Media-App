@@ -83,7 +83,9 @@ public class ChallengeController {
 
 
         challengeRepository.save(challenge);
-        return ResponseEntity.ok(Map.of("message", "Challenge created successfully"));
+        return ResponseEntity.ok(Map.of(
+                "message", "Challenge created successfully",
+                "challengeId", challenge.getId()));
     }
 
 
