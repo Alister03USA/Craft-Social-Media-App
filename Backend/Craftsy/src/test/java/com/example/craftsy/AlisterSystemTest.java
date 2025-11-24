@@ -477,7 +477,7 @@ public class AlisterSystemTest {
                 .delete("/challenge/" + championUsername + "/delete/" + challengeId)
                 .then()
                 .statusCode(200)
-                .body("message", equalTo("Challenge deleted successfully!"));
+                .body("message", equalTo("Challenge deleted successfully"));
     }
 
 
