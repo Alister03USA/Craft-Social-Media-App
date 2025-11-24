@@ -4,6 +4,16 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.boot.test.web.server.LocalServerPort;	// SBv3
+
+import org.junit.runner.RunWith;
+import org.springframework.test.context.junit4.SpringRunner;
+
+
+
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -11,14 +21,18 @@ import java.util.Map;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
-
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@RunWith(SpringRunner.class)
 public class AlisterSystemTest {
+
+    @LocalServerPort
+    int port;
 
 
     @BeforeEach
     public void setup() {
-        RestAssured.baseURI = "http://coms-3090-028.class.las.iastate.edu";
-        RestAssured.port = 8080;
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
         RestAssured.basePath = "";
     }
 
@@ -380,6 +394,8 @@ public class AlisterSystemTest {
 
 
 
+
+    // ==================== Challenges SYSTEM TEST ====================
 
     @Test
     public void testChallengeWorkflow() {
