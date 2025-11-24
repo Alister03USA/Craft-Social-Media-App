@@ -49,16 +49,6 @@ public class Challenge {
     private List<Users> completedUsers = new ArrayList<>();
 
 
-    @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChallengePost> posts = new ArrayList<>();
-
-    public List<ChallengePost> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(List<ChallengePost> posts) {
-        this.posts = posts;
-    }
 
 
     // Getters & Setters
