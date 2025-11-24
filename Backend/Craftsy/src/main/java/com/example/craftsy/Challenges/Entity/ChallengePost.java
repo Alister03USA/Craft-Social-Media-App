@@ -35,6 +35,9 @@ public class ChallengePost {
     @Column(name = "comment_count")
     private Integer commentCount = 0;
 
+
+
+
     // Getters and setters
     public void setId(Long id) {
         this.id = id;

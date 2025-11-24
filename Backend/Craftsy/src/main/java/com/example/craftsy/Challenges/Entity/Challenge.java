@@ -48,6 +48,9 @@ public class Challenge {
     )
     private List<Users> completedUsers = new ArrayList<>();
 
+
+
+
     // Getters & Setters
     public void setId(Long id) {
         this.id = id;
