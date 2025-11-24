@@ -95,7 +95,6 @@ public class GroupController {
         // Save the group to the database
         groupRepository.save(group);
 
-        pointsService.awardPointsForPost(admin, group.getId());
 
 
         return ResponseEntity.ok(Map.of("message", "Group created successfully"));

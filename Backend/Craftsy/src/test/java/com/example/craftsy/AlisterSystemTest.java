@@ -108,7 +108,7 @@ public class AlisterSystemTest {
             "groupName": "%s",
             "description": "Test group workflow",
             "craft": "Knitting",
-            "isPrivate": false
+            "is_private": false
         }
         """.formatted(groupName);
 
