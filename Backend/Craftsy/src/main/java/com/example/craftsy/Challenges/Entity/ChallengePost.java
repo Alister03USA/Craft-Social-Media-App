@@ -3,6 +3,8 @@ package com.example.craftsy.Challenges.Entity;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "challenge_posts")
@@ -34,6 +36,30 @@ public class ChallengePost {
 
     @Column(name = "comment_count")
     private Integer commentCount = 0;
+
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChallengePostComment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChallengePostLike> likes = new ArrayList<>();
+
+    public List<ChallengePostComment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<ChallengePostComment> comments) {
+        this.comments = comments;
+    }
+
+    public List<ChallengePostLike> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(List<ChallengePostLike> likes) {
+        this.likes = likes;
+    }
+
 
     // Getters and setters
     public void setId(Long id) {
