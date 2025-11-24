@@ -11,7 +11,7 @@ import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 
 import org.json.JSONArray;
-
+import android.widget.ImageButton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +43,8 @@ public class BoardsListActivity extends AppCompatActivity {
             CreateBoardDialog dialog = new CreateBoardDialog(BoardsListActivity.this, this::loadBoards);
             dialog.show();
         });
-
+        ImageButton btnBack = findViewById(R.id.btnBackBoards);
+        btnBack.setOnClickListener(v -> finish());
         loadBoards();
     }
 

@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
+import android.widget.ImageButton;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import android.content.Intent;
@@ -51,7 +51,8 @@ public class BoardDetailActivity extends AppCompatActivity {
 
         btnSaveDescription.setOnClickListener(v -> saveDescription());
         btnDeleteBoard.setOnClickListener(v -> deleteBoard());
-
+        ImageButton btnBack = findViewById(R.id.btnBackBoardDetail);
+        btnBack.setOnClickListener(v -> finish());
         loadBoard();
     }
 

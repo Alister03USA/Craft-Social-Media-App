@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -87,6 +88,8 @@ public class FeedDetailActivity extends AppCompatActivity {
             });
             dialog.show();
         });
+        ImageButton btnBack = findViewById(R.id.btnBackFeedDetail);
+        btnBack.setOnClickListener(v -> finish());
     }
     private void addProjectToBoard(long boardId, String projectName) {
         String url = BASE + "/board/" + boardId + "/project/" + username + "/" + projectName;
