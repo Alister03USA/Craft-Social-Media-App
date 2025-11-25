@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
@@ -48,6 +49,10 @@ public class OutsideUserProfile extends BaseActivity {
         followingTv = findViewById(R.id.followingCount);
         craftSpecialtiesTv = findViewById(R.id.craftSpecialties);
         profileImageView = findViewById(R.id.profileImage);
+        ImageView tierBadge = findViewById(R.id.tierBadgeOutside);
+        TextView pointsText = findViewById(R.id.pointsTextOutside);
+        TextView tierText = findViewById(R.id.tierTextOutside);
+        ProgressBar tierProgress = findViewById(R.id.tierProgressOutside);
 
         // Logged-in user
         loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
@@ -91,6 +96,7 @@ public class OutsideUserProfile extends BaseActivity {
         // Always fetch relationship + counts
         fetchFollowStatus(viewedUsername);
         fetchFollowersAndFollowing(viewedUsername);
+        fetchUserPoints(viewedUsername, tierBadge, pointsText, tierText, tierProgress);
 
         followButton.setOnClickListener(v -> {
             switch (currentState) {
@@ -290,5 +296,59 @@ public class OutsideUserProfile extends BaseActivity {
                 followButton.setTextColor(getResources().getColor(android.R.color.white));
                 break;
         }
+    }
+    private void fetchUserPoints(String username, ImageView badge, TextView pointsTv, TextView tierTv, ProgressBar progressBar) {
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/points/" + username;
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> {
+                    try {
+                        int totalPoints = response.optInt("totalPoints", 0);
+                        String currentTier = response.optString("currentTier", "BEGINNER");
+                        int pointsToNext = response.optInt("pointsToNextTier", 0);
+                        String nextTier = response.optString("nextTier", "MAX LEVEL");
+
+                        pointsTv.setText("Points: " + totalPoints);
+                        tierTv.setText("Tier: " + currentTier);
+
+                        progressBar.setMax(100);
+                        int progressValue;
+                        if (pointsToNext == 0) {
+                            progressValue = 100;
+                        } else {
+                            int required = (currentTier.equals("BEGINNER") ? 100 : currentTier.equals("INTERMEDIATE") ? 200 : currentTier.equals("EXPERT") ? 300 : 0);
+                            int lowerBound = (currentTier.equals("BEGINNER") ? 0 : currentTier.equals("INTERMEDIATE") ? 100 : currentTier.equals("EXPERT") ? 200 : 300);
+                            progressValue = (int)((totalPoints - lowerBound) * 100.0 / (required - lowerBound));
+                        }
+                        progressBar.setProgress(progressValue);
+
+                        switch (currentTier) {
+                            case "BEGINNER":
+                                badge.setImageResource(R.drawable.badge_beginner);
+                                break;
+                            case "INTERMEDIATE":
+                                badge.setImageResource(R.drawable.badge_intermediate);
+                                break;
+                            case "EXPERT":
+                                badge.setImageResource(R.drawable.badge_expert);
+                                break;
+                            case "CHAMPION":
+                                badge.setImageResource(R.drawable.badge_champion);
+                                break;
+                            default:
+                                badge.setImageResource(R.drawable.badge_beginner);
+                        }
+
+                    } catch (Exception e) {
+                        Log.e("POINTS", "Parse error", e);
+                    }
+                },
+                error -> Log.e("POINTS", "Failed to fetch points", error)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 }

@@ -1,0 +1,105 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/detailScroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Event Image -->
+        <ImageView
+            android:id="@+id/detailImage"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/feed_card_background" />
+
+        <!-- Event Title -->
+        <TextView
+            android:id="@+id/detailTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Event Title"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <!-- Event Date -->
+        <TextView
+            android:id="@+id/detailDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Date: Jan 15, 2025"
+            android:textSize="16sp"
+            android:textColor="@color/gray" />
+
+        <!-- Craft Type (this fixes the missing ID issue) -->
+        <TextView
+            android:id="@+id/detailTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Craft Type: Knitting"
+            android:textSize="16sp"
+            android:textColor="@color/gray" />
+
+        <!-- Host -->
+        <TextView
+            android:id="@+id/detailLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Host: Jane Doe"
+            android:textSize="16sp"
+            android:textColor="@color/gray" />
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/detailDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Event description goes here. It can be long, so the ScrollView allows scrolling."
+            android:textSize="16sp"
+            android:layout_marginTop="12dp" />
+
+        <!-- RSVP Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="24dp">
+
+            <Button
+                android:id="@+id/btnRsvpYes"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="RSVP Yes"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnRsvpNo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="RSVP No"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/gray"
+                android:textColor="@color/white" />
+        </LinearLayout>
+
+        <!-- View Comments Button -->
+        <Button
+            android:id="@+id/btnViewComments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View Comments"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/teal_700"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</ScrollView>

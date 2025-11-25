@@ -66,6 +66,11 @@ public class GroupController {
 
         Users admin = adminOpt.get();
 
+        var pointsInfo = pointsService.getUserPoints(admin);
+        if (pointsInfo == null) {
+            return ResponseEntity.status(500).body(Map.of("message", "User points info unavailable"));
+        }
+
         // Get user tier
         String adminTier = pointsService.getUserPoints(admin).getCurrentTier();
 
@@ -95,7 +100,6 @@ public class GroupController {
         // Save the group to the database
         groupRepository.save(group);
 
-        pointsService.awardPointsForPost(admin, group.getId());
 
 
         return ResponseEntity.ok(Map.of("message", "Group created successfully"));

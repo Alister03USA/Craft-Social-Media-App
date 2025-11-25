@@ -18,16 +18,65 @@
             android:gravity="center_horizontal">
 
             <!-- Profile picture -->
-            <ImageView
-                android:id="@+id/profileImage"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:src="@drawable/profile"
-                android:scaleType="centerCrop"
-                android:background="@drawable/profile"
-                android:contentDescription="Profile picture" />
+            <LinearLayout
+                android:id="@+id/pointsTierContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="start"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/tierBadgeOutside"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="12dp"
+                    android:src="@drawable/badge_beginner" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/pointsTextOutside"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Points: 0"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tierTextOutside"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tier: BEGINNER"
+                        android:textSize="14sp" />
+
+                    <ProgressBar
+                        android:id="@+id/tierProgressOutside"
+                        style="@android:style/Widget.ProgressBar.Horizontal"
+                        android:layout_width="150dp"
+                        android:layout_height="10dp"
+                        android:max="100"
+                        android:progress="0" />
+                </LinearLayout>
+            </LinearLayout>
 
             <!-- Display name -->
+
+            <ImageView
+                android:id="@+id/profileImage"
+                android:layout_width="118dp"
+                android:layout_height="122dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/profile"
+                android:contentDescription="Profile picture"
+                android:scaleType="centerCrop"
+                android:src="@drawable/profile" />
+
             <TextView
                 android:id="@+id/displayName"
                 android:layout_width="wrap_content"
@@ -66,11 +115,11 @@
 
             <!-- Follower / Following row -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginTop="16dp"
-                android:gravity="center">
+                android:gravity="center_horizontal">
 
                 <TextView
                     android:id="@+id/followersCount"
@@ -89,16 +138,19 @@
             </LinearLayout>
 
             <!-- Follow Button -->
+
+
+
             <Button
                 android:id="@+id/btn_follow"
                 android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:layout_gravity="center_horizontal"
                 android:background="@android:color/holo_blue_light"
                 android:text="Follow"
-                android:textSize="12sp"
-                android:textColor="@android:color/white" />
-
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
             <!-- User posts (grid-like) -->
             <GridLayout
                 android:id="@+id/postsGrid"
