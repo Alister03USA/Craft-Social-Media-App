@@ -4,6 +4,7 @@ import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -163,5 +164,10 @@ public class Patterns {
 
     public void setImages(List<Image> images) {
         this.images = images;
+    }
+
+    @JsonProperty("username")
+    public String getUsername(){
+        return user != null ? user.getUsername():"";
     }
 }
