@@ -97,7 +97,7 @@ public class GroupController {
         group.setGroupName(groupRequest.getGroupName());
         group.setGroupAdmin(admin); // Admin is the creator
         group.setDescription(groupRequest.getDescription());
-        group.setPrivate(groupRequest.isPrivate());
+        group.setisPrivate(groupRequest.isPrivate());
         group.setCraft(groupRequest.getCraft());
         group.setMembers(new HashSet<>());
 
@@ -630,6 +630,9 @@ public class GroupController {
             groupJoinRequestRepository.deleteAllByGroup(group);
 
         }
+
+        group.getMembers().clear();
+        groupRepository.save(group);
 
         groupRepository.delete(group);
 

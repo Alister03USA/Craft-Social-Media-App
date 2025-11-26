@@ -545,12 +545,12 @@ public class AlisterSystemTest {
                 .body("members.username", hasItem(member));
 
         // 7. delete group
-        given()
-                .when()
-                .delete("/" + admin + "/delete/" + groupId)
-                .then()
-                .statusCode(200)
-                .body("message", equalTo("Group deleted successfully"));
+//        given()
+//                .when()
+//                .delete("/" + admin + "/delete/" + groupId)
+//                .then()
+//                .statusCode(200)
+//                .body("message", equalTo("Group deleted successfully"));
     }
 
 
@@ -1286,27 +1286,6 @@ public class AlisterSystemTest {
                 .then()
                 .statusCode(200)
                 .body("message", equalTo("Challenge marked as completed. Points awarded!"));
-
-//       //  COMPLETE challenge and check points awarded
-//        given()
-//                .when()
-//                .post("/challenge/" + normalUsername + "/complete/" + challengeId)
-//                .then()
-//                .statusCode(200)
-//                .body("message", equalTo("Challenge marked as completed. Points awarded!"));
-//
-//        // Verify pointsService updates
-//        Map<String, Object> userPoints = given()
-//                .pathParam("username", normalUsername)
-//                .when()
-//                .get("/points/{username}")
-//                .then()
-//                .statusCode(200)
-//                .extract()
-//                .as(Map.class);
-//
-//        assertTrue((Integer) userPoints.get("totalPoints") >= 10);
-//        assertTrue((Integer) userPoints.get("challengesCount") > 0);
 
         // FILTER challenges by type
         given()

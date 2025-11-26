@@ -73,7 +73,7 @@ public class Group {
     public void setDescription(String description) { this.description = description; }
 
     public boolean isPrivate() { return isPrivate; }
-    public void setPrivate(boolean aPrivate) { isPrivate = aPrivate; }
+    public void setisPrivate(boolean aPrivate) { isPrivate = aPrivate; }
 
     public String getCraft() { return craft; }
     public void setCraft(String craft) { this.craft = craft; }
