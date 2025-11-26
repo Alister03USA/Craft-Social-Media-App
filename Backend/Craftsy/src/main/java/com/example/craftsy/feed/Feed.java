@@ -5,6 +5,7 @@ import com.example.craftsy.feed.feedComments.FeedComments;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -146,5 +147,10 @@ public class Feed {
 
     public Long getId() {
         return id;
+    }
+
+    @JsonProperty("username")
+    public String getUsername(){
+        return user != null ? user.getUsername():"";
     }
 }
