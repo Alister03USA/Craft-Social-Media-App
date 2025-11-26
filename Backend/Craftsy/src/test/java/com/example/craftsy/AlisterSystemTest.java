@@ -1,10 +1,20 @@
 package com.example.craftsy;
+import com.example.craftsy.FollowingFollowers.Entity.Follow;
+import com.example.craftsy.Group.Entity.Group;
+import com.example.craftsy.Group.Entity.GroupJoinRequest;
+import com.example.craftsy.Group.Repository.GroupJoinRequestRepository;
+import com.example.craftsy.Group.Repository.GroupRepository;
+import com.example.craftsy.Notification.Entity.Notification;
+import com.example.craftsy.Notification.Repository.NotificationRepository;
+import com.example.craftsy.PointsSystem.PointsService;
 import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.boot.test.web.server.LocalServerPort;	// SBv3
@@ -13,23 +23,33 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 
-
-
+import java.io.File;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.restassured.RestAssured.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @RunWith(SpringRunner.class)
 public class AlisterSystemTest {
 
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @LocalServerPort
     int port;
 
 
-    @BeforeEach
+    @Before
     public void setup() {
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = port;
@@ -68,16 +88,84 @@ public class AlisterSystemTest {
                 .then()
                 .statusCode(200)
                 .body(containsString("deleted successfully"));
+
+
+        // Missing username → your controller will still save user → expect 200
+        String userJson2 = """
+{
+    "displayName": "Test Display",
+    "password": "Abcdef12"
+}
+""";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(userJson2)
+                .when()
+                .post("/users/signup")
+                .then()
+                .statusCode(500);
+
+
+// Missing password → isPasswordStrong(null) throws → 500
+        String userJson3 = """
+{
+    "username": "NoPasswordUser",
+    "displayName": "Test Display"
+}
+""";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(userJson3)
+                .when()
+                .post("/users/signup")
+                .then()
+                .statusCode(500);
+
+
+
     }
+
+    @Test
+    public void testUsersEntityGettersSetters() {
+        Users u = new Users();
+        u.setUsername("user1");
+        u.setDisplayName("Display1");
+        u.setPassword("Password123");
+        u.setBio("Some bio");
+        u.setProfilePic("pic.jpg");
+        u.setCraftSpecialties("Knitting");
+        u.setFollowers(10);
+        u.setFollowing(5);
+        u.setEmail("test@example.com");
+
+
+
+        assertEquals("user1", u.getUsername());
+        assertEquals("Display1", u.getDisplayName());
+        assertEquals("Password123", u.getPassword());
+        assertEquals("Some bio", u.getBio());
+        assertEquals("pic.jpg", u.getProfilePic());
+        assertEquals("Knitting", u.getCraftSpecialties());
+        assertEquals(10, u.getFollowers());
+        assertEquals(5, u.getFollowing());
+        assertEquals("test@example.com", u.getEmail());
+    }
+
 
     // ==================== FOLLOWING/FOLLOWERS TEST ====================
     @Test
-    public void testFollowWorkflow() {
+    public void testFollowFullWorkflow() {
+        // Unique usernames for the test
         String follower = "Follower_" + System.currentTimeMillis();
         String target = "Target_" + System.currentTimeMillis();
+        String otherUser = "Other_" + System.currentTimeMillis();
 
+        // Create users
         createUser(follower, "Follower User", "Password123");
         createUser(target, "Target User", "Password123");
+        createUser(otherUser, "Other User", "Password123"); // for followers/following edge case
 
         // Send follow request
         given()
@@ -96,31 +184,392 @@ public class AlisterSystemTest {
                 .body("isPending", equalTo(true))
                 .body("isFollowing", equalTo(false));
 
-        // Unfollow (cancel request)
+        // Fetch notification for the target user
+        Users targetUser = userRepository.findByUsername(target)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        Long notificationId = notificationRepository
+                .findByUserAndIsReadFalseOrderByCreatedAtDesc(targetUser)
+                .stream()
+                .filter(n -> n.getMessage().contains("Follower User"))
+                .findFirst()
+                .map(Notification::getId)
+                .orElseThrow(() -> new RuntimeException("Notification for follower not found"));
+
+        // Respond to follow request (accept)
+        given()
+                .when()
+                .put("/notifications/respond/" + notificationId + "/true")
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Follow request accepted"));
+
+        // Check profile status following
+        given()
+                .when()
+                .get("/" + follower + "/profile/" + target)
+                .then()
+                .statusCode(200)
+                .body("isFollowing", equalTo(true))
+                .body("isPending", equalTo(false));
+
+
+        // target should have follower
+        given()
+                .when()
+                .get("/" + target + "/followers")
+                .then()
+                .statusCode(200)
+                .body("$", hasItem(follower));
+
+        //  follower should be following target
+        given()
+                .when()
+                .get("/" + follower + "/following")
+                .then()
+                .statusCode(200)
+                .body("$", hasItem(target));
+
+        // other user with no followers or following
+        given()
+                .when()
+                .get("/" + otherUser + "/followers")
+                .then()
+                .statusCode(200)
+                .body("$", empty());
+
+        given()
+                .when()
+                .get("/" + otherUser + "/following")
+                .then()
+                .statusCode(200)
+                .body("$", empty());
+
+        // ================== Unfollow ==================
         given()
                 .when()
                 .delete("/" + follower + "/unfollow/" + target)
                 .then()
                 .statusCode(200)
                 .body("message", equalTo("User unfollowed"));
+
+        // Confirm the lists are updated after unfollow
+        given()
+                .when()
+                .get("/" + target + "/followers")
+                .then()
+                .statusCode(200)
+                .body("$", not(hasItem(follower)));
+
+        given()
+                .when()
+                .get("/" + follower + "/following")
+                .then()
+                .statusCode(200)
+                .body("$", not(hasItem(target)));
     }
+
+
+
+    @Test
+    public void testFollowEntity() {
+        Users follower = new Users();
+        Users following = new Users();
+
+        // default constructor + setters
+        Follow follow = new Follow();
+        follow.setFollower(follower);
+        follow.setFollowing(following);
+        follow.setAccepted(true);
+        follow.setId(123L);
+
+        assertEquals(follower, follow.getFollower());
+        assertEquals(following, follow.getFollowing());
+        assertTrue(follow.isAccepted());
+        assertEquals(123L, follow.getId());
+
+        // full constructor
+        Follow follow2 = new Follow(follower, following, false);
+        assertEquals(follower, follow2.getFollower());
+        assertEquals(following, follow2.getFollowing());
+        assertFalse(follow2.isAccepted());
+    }
+
+
 
 
 
     // ==================== GROUP SYSTEM TEST ====================
     @Test
-    public void testFullGroupWorkflow() {
+    public void testFullGroupWorkflowWithExistingUsers() {
+        String admin = "alister_gan";  // existing admin
+        String member = "Fuji";        // existing member
+        String extraMember = "Extra_" + System.currentTimeMillis();
+
+        // 1. Create extra member
+        createUser(extraMember, "Extra User", "Password123");
+
+        // 2. Create group
+        String groupName = "SystemTestGroup_" + System.currentTimeMillis();
+        String groupJson = """
+    {
+        "groupName": "%s",
+        "description": "Test group workflow",
+        "craft": "Knitting",
+        "is_private": false
+    }
+    """.formatted(groupName);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(groupJson)
+                .when()
+                .post("/" + admin + "/create")
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Group created successfully"));
+
+        // 3. Get group ID
+        String groupId = given()
+                .when()
+                .get("/groupId/" + groupName)
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("groupId")
+                .toString();
+
+        // 4. Member joins group (PUBLIC)
+        given()
+                .when()
+                .post("/" + member + "/join/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("User added successfully"));
+
+        // 4A. Verify notification created for admin
+        given()
+                .when()
+                .get("/notifications/" + admin)
+                .then()
+                .statusCode(200)
+                .body("size()", greaterThanOrEqualTo(1));
+
+        // 5. Admin adds extra member
+        given()
+                .when()
+                .post("/" + groupId + "/" + admin + "/add-member/" + extraMember)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Member added successfully"));
+
+        // 5A. Verify notification for extraMember
+        given()
+                .when()
+                .get("/notifications/" + extraMember)
+                .then()
+                .statusCode(200)
+                .body("size()", greaterThanOrEqualTo(0));
+
+        // 6. Verify members list (member count logic)
+        given()
+                .when()
+                .get("/" + groupId + "/members")
+                .then()
+                .statusCode(200)
+                .body("totalMembers", equalTo(3))
+                .body("members.username", hasItems(admin, member, extraMember));
+
+        // 7. Update group by admin
+        String updateJson = """
+    {
+        "description": "Updated description by admin"
+    }
+    """;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(updateJson)
+                .when()
+                .put("/" + admin + "/update/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Group updated successfully"));
+
+        // 8. Transfer admin to Fuji
+        given()
+                .when()
+                .put("/" + admin + "/" + groupId + "/transfer-admin/" + member)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Admin transferred successfully"));
+
+        // 8A. Verify notification for new admin (Fuji)
+        given()
+                .when()
+                .get("/notifications/" + member)
+                .then()
+                .statusCode(200)
+                .body("size()", greaterThanOrEqualTo(1));
+
+        // 9. Update group as new admin
+        String updateJson2 = """
+    {
+        "description": "Updated description by new admin"
+    }
+    """;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(updateJson2)
+                .when()
+                .put("/" + member + "/update/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Group updated successfully"));
+
+        // 10. Extra member leaves group
+        given()
+                .when()
+                .delete("/" + extraMember + "/leave/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("You have left the group successfully"));
+
+        // 10A. Verify member count now 2
+        given()
+                .when()
+                .get("/" + groupId + "/members")
+                .then()
+                .statusCode(200)
+                .body("totalMembers", equalTo(2));
+
+        // 11. New admin tries to remove themselves → should fail
+        given()
+                .when()
+                .delete("/" + groupId + "/" + member + "/removeMember/" + member)
+                .then()
+                .statusCode(400);
+
+        // 12. New admin removes previous admin (alister_gan)
+        given()
+                .when()
+                .delete("/" + groupId + "/" + member + "/removeMember/" + admin)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Member removed successfully"));
+
+        // 12A. Verify member count = 1
+        given()
+                .when()
+                .get("/" + groupId + "/members")
+                .then()
+                .statusCode(200)
+                .body("totalMembers", equalTo(1));
+
+        // 13. Delete group
+        given()
+                .when()
+                .delete("/" + member + "/delete/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Group deleted successfully"));
+    }
+
+
+    @Test
+    public void testPrivateGroupJoinRequestWorkflow() {
+        String admin = "alister_gan";
+        String member = "Fuji";
+        String extraMember = "Extra_" + System.currentTimeMillis();
+
+        // 1. Create the extra member
+        createUser(extraMember, "Extra User", "Password123");
+
+        // 2. Create a private group
+        String groupName = "PrivateGroupTest_" + System.currentTimeMillis();
+        String groupJson = """
+    {
+        "groupName": "%s",
+        "description": "Test private group workflow",
+        "craft": "Knitting",
+        "isPrivate": true
+    }
+    """.formatted(groupName);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(groupJson)
+                .when()
+                .post("/" + admin + "/create")
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Group created successfully"));
+
+        // 3. Get Group ID
+        String groupId = given()
+                .when()
+                .get("/groupId/" + groupName)
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("groupId")
+                .toString();
+
+        // 4. Member sends join request to private group
+        String requestId = given()
+                .when()
+                .post("/" + member + "/join/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Join request sent"))
+                .body("requestId", notNullValue())
+                .extract()
+                .path("requestId")
+                .toString();
+
+        // 5. Admin accepts the join request
+        given()
+                .when()
+                .put("/joinRequest/" + requestId + "/true")
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("User added to group"));
+
+        // 6. Verify member list now contains the new member
+        given()
+                .when()
+                .get("/" + groupId + "/members")
+                .then()
+                .statusCode(200)
+                .body("members.username", hasItem(member));
+
+        // 7. delete group
+        given()
+                .when()
+                .delete("/" + admin + "/delete/" + groupId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Group deleted successfully"));
+    }
+
+
+
+
+
+
+    // ==================== GROUP MESSAGE SYSTEM TEST ====================
+    @Test
+    public void testGroupMessageWorkflow() throws Exception {
         String admin = "alister_gan";
         String member = "Fuji";
 
-
-        String groupName = "SystemTestGroup_" + System.currentTimeMillis();
-
-        // 1. Create Group
+        // 1. Create a group for messaging
+        String groupName = "SystemTestMessageGroup_" + System.currentTimeMillis();
         String groupJson = """
         {
             "groupName": "%s",
-            "description": "Test group workflow",
+            "description": "Group for message system test",
             "craft": "Knitting",
             "is_private": false
         }
@@ -135,15 +584,16 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Group created successfully"));
 
-        // 2. Get Group ID
-        String groupId = given()
+        // 2. Get group ID
+        Long groupId = given()
                 .when()
                 .get("/groupId/" + groupName)
                 .then()
                 .statusCode(200)
                 .extract()
-                .path("groupId")
-                .toString();
+                .jsonPath()
+                .getLong("groupId");
+
 
         // 3. Member joins group
         given()
@@ -153,24 +603,65 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("User added successfully"));
 
-        // 4. Update group
-        String updateJson = """
-        {
-            "groupName": "%s_Updated",
-            "description": "Updated description"
-        }
-        """.formatted(groupName);
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(updateJson)
+        // 4. Upload a media/image message
+        File testImage = new File("uploads/tutorials/1760579127952_sculptor-artist-working-with-clay-studio.jpg");
+        Long messageId = given()
+                .multiPart("file", testImage, "image/jpg")
                 .when()
-                .put("/" + admin + "/update/" + groupId)
+                .post("/groupMessage/" + groupId + "/" + admin + "/upload")
                 .then()
                 .statusCode(200)
-                .body("message", equalTo("Group updated successfully"));
+                .body("message", equalTo("Image uploaded successfully"))
+                .extract()
+                .jsonPath()
+                .getLong("messageId");
+        // 5. Fetch message history
+        given()
+                .when()
+                .get("/groupMessage/" + admin + "/" + groupId + "/history")
+                .then()
+                .statusCode(200)
+                .body("$", not(empty()))
+                .body("[0].sender.username", equalTo(admin))
+                .body("[0].mediaUrl", notNullValue());
 
-        // 5. Delete group
+        // 6. Retrieve the uploaded image
+        given()
+                .when()
+                .get("/groupMessage/image/" + messageId)
+                .then()
+                .statusCode(200)
+                .contentType(startsWith("image/"));
+
+        // 7. Test unauthorized access to history
+        String outsider = "Outsider_" + System.currentTimeMillis();
+        createUser(outsider, "Outsider User", "Password123");
+
+        given()
+                .when()
+                .get("/groupMessage/" + outsider + "/" + groupId + "/history")
+                .then()
+                .statusCode(403)
+                .body("error", containsString("not a member"));
+
+        // 8. Test image retrieval
+        given()
+                .when()
+                .get("/groupMessage/image/" + messageId)
+                .then()
+                .statusCode(200)
+                .contentType(startsWith("image/"));
+
+        // 9. Test comments extraction
+        given()
+                .when()
+                .get("/groupMessage/" + messageId + "/comments")
+                .then()
+                .statusCode(200)
+                .body("$", empty());
+
+
+// 10. Delete group
         given()
                 .when()
                 .delete("/" + admin + "/delete/" + groupId)
@@ -274,7 +765,10 @@ public class AlisterSystemTest {
     public void testTutorialWorkflow() {
 
         String username = "alister_gan";
+        String beginnerUsername = "GeneralUser";
         String title = "SystemTestTutorial_" + System.currentTimeMillis();
+        String titleFile = "SystemTestTutorial_File_" + System.currentTimeMillis();
+
 
         // CREATE tutorial (URL upload)
         given()
@@ -301,6 +795,7 @@ public class AlisterSystemTest {
                         .statusCode(200)
                         .extract()
                         .jsonPath().getLong("[0].id");
+
 
         // UPDATE tutorial (without file)
         String updatedTitle = title + "_UPDATED";
@@ -334,6 +829,180 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body(equalTo("Tutorial deleted successfully!"));
 
+        // ==================== 2. Upload tutorial via File ====================
+        File testFile = new File("uploads/tutorials/1760579127952_sculptor-artist-working-with-clay-studio.jpg");
+
+
+        // Upload tutorial via file
+        given()
+                .multiPart("username", username)
+                .multiPart("title", titleFile)
+                .multiPart("description", "File tutorial description")
+                .multiPart("category", "Painting")
+                .multiPart("file", testFile)
+                .when()
+                .post("/tutorial/uploadFile")
+                .then()
+                .statusCode(200)
+                .body(equalTo("Tutorial uploaded successfully!"));
+
+        Long fileTutorialId = given()
+                .queryParam("query", titleFile)
+                .queryParam("username", username)
+                .when()
+                .get("/tutorial/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("[0].id");
+
+
+        // ==================== 3. Fetch local file ====================
+        given()
+                .when()
+                .get("/tutorial/" + fileTutorialId + "/file")
+                .then()
+                .statusCode(200)
+                .header("Content-Disposition", containsString("inline"))
+                .header("Content-Type", notNullValue())
+                .extract().asByteArray();
+
+        // Test private tutorial visibility
+        String privateTitle = "PrivateTutorial_" + System.currentTimeMillis();
+        given()
+                .contentType(ContentType.URLENC)
+                .formParam("username", username)
+                .formParam("title", privateTitle)
+                .formParam("description", "Private tutorial description")
+                .formParam("category", "Knitting")
+                .formParam("fileUrl", "https://www.youtube.com/watch?v=private")
+                .formParam("isPrivate", true)
+                .when()
+                .post("/tutorial/uploadUrl")
+                .then()
+                .statusCode(200)
+                .body(equalTo("Tutorial uploaded successfully with URL!"));
+
+// SEARCH tutorial to get its ID
+        Long privateTutorialId = given()
+                .queryParam("query", privateTitle)
+                .queryParam("username", username)
+                .when()
+                .get("/tutorial/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("[0].id");
+
+        // BEGINNER user should not see it
+        given()
+                .queryParam("query", privateTitle)
+                .queryParam("username", beginnerUsername)
+                .when()
+                .get("/tutorial/search")
+                .then()
+                .statusCode(200)
+                .body("", not(hasItem(hasEntry("title", privateTitle))));
+
+        // INTERMEDIATE user should see it
+        String intermediateUser = "alister_gan";
+        given()
+                .queryParam("query", privateTitle)
+                .queryParam("username", intermediateUser)
+                .when()
+                .get("/tutorial/search")
+                .then()
+                .statusCode(200)
+                .body("title", hasItem(privateTitle));
+
+        // BEGINNER cannot upload
+        given()
+                .contentType(ContentType.URLENC)
+                .formParam("username", beginnerUsername)
+                .formParam("title", "LowTierUpload")
+                .formParam("description", "Test")
+                .formParam("category", "Knitting")
+                .formParam("fileUrl", "https://www.youtube.com/watch?v=test")
+                .when()
+                .post("/tutorial/uploadUrl")
+                .then()
+                .statusCode(403);
+
+    }
+
+
+    // ==================== Notification SYSTEM TEST ====================
+
+    @Test
+    public void testNotificationWorkflow() {
+
+        String senderUsername = "alister_gan";
+        String receiverUsername = "Quinn";
+        Long notificationId;
+
+        // 1. CREATE a notification
+        notificationId = given()
+                .queryParam("receiverUsername", receiverUsername)
+                .queryParam("senderUsername", senderUsername)
+                .queryParam("title", "System Test Notification")
+                .queryParam("message", "You have a new system notification!")
+                .queryParam("referenceId", 123L)
+                .when()
+                .post("/notifications")
+                .then()
+                .statusCode(200)
+                .body("title", equalTo("System Test Notification"))
+                .body("message", equalTo("You have a new system notification!"))
+                .extract()
+                .jsonPath()
+                .getLong("id");
+
+        // 2. GET unread notifications for receiver
+        List<Map<String, Object>> unreadNotifications = given()
+                .when()
+                .get("/notifications/" + receiverUsername)
+                .then()
+                .statusCode(200)
+                .body("$", not(empty()))
+                .extract()
+                .jsonPath()
+                .getList("$");
+
+        assertTrue(unreadNotifications.stream()
+                .anyMatch(n -> ((Integer) n.get("id")).longValue() == notificationId));
+
+        // Verify that notifications are marked as read after fetching
+        Notification fetchedNotification = notificationRepository.findById(notificationId).orElse(null);
+        assertNotNull(fetchedNotification);
+        assertTrue(fetchedNotification.getIsRead());
+
+        // 3. CREATE another notification for testing markAsRead
+        Long notifToMarkId = given()
+                .queryParam("receiverUsername", receiverUsername)
+                .queryParam("title", "MarkAsRead Test")
+                .queryParam("message", "Mark this notification as read")
+                .when()
+                .post("/notifications")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("id");
+
+        // 4. MARK the notification as read via PUT
+        given()
+                .when()
+                .put("/notifications/" + notifToMarkId + "/read")
+                .then()
+                .statusCode(200)
+                .body(equalTo("Notification marked as read"));
+
+        // 5. Verify in repository
+        Notification markedNotification = notificationRepository.findById(notifToMarkId).orElse(null);
+        assertNotNull(markedNotification);
+        assertTrue(markedNotification.getIsRead());
     }
 
 
@@ -393,6 +1062,120 @@ public class AlisterSystemTest {
     }
 
 
+    @Autowired
+    private PointsService pointsService;
+
+    @Test
+    public void testPointsHistoryAfterTutorialUpload() {
+
+        String username = "Quinn";
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Upload a tutorial via file
+        File testFile = new File("uploads/tutorials/1760579127952_sculptor-artist-working-with-clay-studio.jpg");
+        String tutorialTitle = "SystemTestTutorial_" + System.currentTimeMillis();
+
+        given()
+                .multiPart("username", username)
+                .multiPart("title", tutorialTitle)
+                .multiPart("description", "Testing PointsHistory")
+                .multiPart("category", "Painting")
+                .multiPart("file", testFile)
+                .when()
+                .post("/tutorial/uploadFile")
+                .then()
+                .statusCode(200)
+                .body(equalTo("Tutorial uploaded successfully!"));
+
+        // Search tutorial to get its ID
+        Long tutorialId = given()
+                .queryParam("query", tutorialTitle)
+                .queryParam("username", username)
+                .when()
+                .get("/tutorial/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("[0].id"); // get ID from JSON search result
+
+// 3. Award points via PointsService for this tutorial
+        pointsService.awardPointsForTutorial(user, tutorialId);
+
+        // 4. Award points for a post
+        pointsService.awardPointsForPost(user, 101L);
+
+        // 5. Award points for a comment
+        pointsService.awardPointsForComment(user, 201L);
+
+        // 6. Award points for a challenge completion
+        pointsService.awardPointsForChallengeCompletion(user, 301L);
+
+        // 7. GET user's points
+        Map<String, Object> userPoints =
+                given()
+                        .pathParam("username", username)
+                        .when()
+                        .get("/points/{username}")
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .as(Map.class);
+
+        assertEquals(username, userPoints.get("username"));
+        assertTrue((Integer) userPoints.get("totalPoints") > 0);
+        assertTrue((Integer) userPoints.get("postsCount") > 0);
+        assertTrue((Integer) userPoints.get("tutorialsCount") > 0);
+        assertTrue((Integer) userPoints.get("commentsCount") > 0);
+        assertNotNull(userPoints.get("currentTier"));
+
+        // 8. GET user's PointsHistory
+        List<Map<String, Object>> pointsHistory =
+                given()
+                        .pathParam("username", username)
+                        .when()
+                        .get("/points/{username}/history")
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .jsonPath()
+                        .getList("");
+
+        // Verify that tutorial, post, comment, challenge all appear
+        assertTrue(pointsHistory.size() >= 4);
+
+
+
+        // 9. GET leaderboard
+        given()
+                .when()
+                .get("/points/leaderboard")
+                .then()
+                .statusCode(200)
+                .body("$", not(empty()))
+                .body("[0].username", notNullValue())
+                .body("[0].totalPoints", notNullValue())
+                .body("[0].tier", notNullValue());
+
+        // 10. GET tier info
+        given()
+                .when()
+                .get("/points/tiers")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(4))
+                .body("[0].name", equalTo("BEGINNER"))
+                .body("[3].name", equalTo("CHAMPION"));
+
+    }
+
+
+
+
+
+
 
 
     // ==================== Challenges SYSTEM TEST ====================
@@ -448,6 +1231,14 @@ public class AlisterSystemTest {
                 .jsonPath()
                 .getLong("postId");
 
+        // GET posts of challenge
+        given()
+                .when()
+                .get("/challenge/" + challengeId + "/posts")
+                .then()
+                .statusCode(200)
+                .body("posts[0].id", equalTo(postId.intValue()));
+
         // LIKE the post
         given()
                 .when()
@@ -456,6 +1247,15 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Post liked"))
                 .body("likeCount", equalTo(1));
+
+      //  UNLIKE the post
+        given()
+                .when()
+                .delete("/challenge/" + championUsername + "/unlike/" + postId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Post unliked"))
+                .body("likeCount", equalTo(0));
 
         // COMMENT on the post
         Long commentId = given()
@@ -486,6 +1286,55 @@ public class AlisterSystemTest {
                 .then()
                 .statusCode(200)
                 .body("message", equalTo("Challenge marked as completed. Points awarded!"));
+
+//       //  COMPLETE challenge and check points awarded
+//        given()
+//                .when()
+//                .post("/challenge/" + normalUsername + "/complete/" + challengeId)
+//                .then()
+//                .statusCode(200)
+//                .body("message", equalTo("Challenge marked as completed. Points awarded!"));
+//
+//        // Verify pointsService updates
+//        Map<String, Object> userPoints = given()
+//                .pathParam("username", normalUsername)
+//                .when()
+//                .get("/points/{username}")
+//                .then()
+//                .statusCode(200)
+//                .extract()
+//                .as(Map.class);
+//
+//        assertTrue((Integer) userPoints.get("totalPoints") >= 10);
+//        assertTrue((Integer) userPoints.get("challengesCount") > 0);
+
+        // FILTER challenges by type
+        given()
+                .queryParam("type", "PHOTO")
+                .when()
+                .get("/challenge/filter")
+                .then()
+                .statusCode(200)
+                .body("$", not(empty()));
+
+        // EDIT challenge as creator
+        Map<String, Object> editBody = Map.of("title", "Edited Title");
+        given()
+                .contentType(ContentType.JSON)
+                .body(editBody)
+                .when()
+                .put("/challenge/" + championUsername + "/edit/" + challengeId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Challenge updated successfully"));
+
+        // DEACTIVATE challenge
+        given()
+                .when()
+                .put("/challenge/" + championUsername + "/deactivate/" + challengeId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Challenge deactivated successfully"));
 
         // DELETE challenge as creator
         given()
