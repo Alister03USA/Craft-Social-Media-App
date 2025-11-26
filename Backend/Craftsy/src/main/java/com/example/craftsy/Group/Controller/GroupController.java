@@ -626,6 +626,11 @@ public class GroupController {
         List<GroupMessage> messages = groupMessageRepository.findByGroupOrderByCreatedAtAsc(group);
         groupMessageRepository.deleteAll(messages);
 
+        if (group.isPrivate()){
+            groupJoinRequestRepository.deleteAllByGroup(group);
+
+        }
+
         groupRepository.delete(group);
 
         return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
