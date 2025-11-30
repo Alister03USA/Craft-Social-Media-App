@@ -1,0 +1,343 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SearchController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.Search.Controller</a>
+</div>
+
+<h1>Coverage Summary for Class: SearchController (com.example.craftsy.Search.Controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SearchController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    55.6%
+  </span>
+  <span class="absValue">
+    (10/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    91%
+  </span>
+  <span class="absValue">
+    (61/67)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Search.Controller;
+&nbsp;
+&nbsp;import com.example.craftsy.FollowingFollowers.Entity.Follow;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+&nbsp;import com.example.craftsy.Group.Entity.Group;
+&nbsp;import com.example.craftsy.Group.Repository.GroupRepository;
+&nbsp;import com.example.craftsy.FollowingFollowers.Repository.FollowRepository;
+&nbsp;
+&nbsp;
+&nbsp;import com.example.craftsy.Tutorial.Entity.Tutorial;
+&nbsp;import com.example.craftsy.Tutorial.Repository.TutorialRepository;
+&nbsp;import com.example.craftsy.feed.Feed;
+&nbsp;import com.example.craftsy.feed.FeedRepository;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.media.ArraySchema;
+&nbsp;import io.swagger.v3.oas.annotations.media.Content;
+&nbsp;import io.swagger.v3.oas.annotations.media.Schema;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponse;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponses;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.*;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/search&quot;)
+<b class="fc">&nbsp;public class SearchController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private UserRepository userRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private GroupRepository groupRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private FollowRepository followRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private FeedRepository feedRespository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private TutorialRepository tutorialRepository;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * GET /search/user?query=abc
+&nbsp;     * Search for users by username
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;Search for users&quot;,
+&nbsp;            description = &quot;Search for users whose username contains the query string. &quot;
+&nbsp;                    + &quot;If viewerUsername is provided, relationship status (isFollowing, isPending) &quot;
+&nbsp;                    + &quot;will be included.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(
+&nbsp;                    responseCode = &quot;200&quot;,
+&nbsp;                    description = &quot;Search results returned successfully&quot;,
+&nbsp;                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Users.class)))
+&nbsp;            ),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid query parameter&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Server error&quot;)
+&nbsp;    })
+&nbsp;
+&nbsp;    @GetMapping(&quot;/user&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; searchUsers(@RequestParam String query,
+&nbsp;                                                                 @RequestParam(required = false) String viewerUsername // who is searching
+&nbsp;                                                               ) { // Look for a parameter and pass its value to the method
+<b class="fc">&nbsp;        List&lt;Users&gt; users = userRepository.findByUsernameContainingIgnoreCase(query);</b>
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; result = new ArrayList&lt;&gt;();</b>
+&nbsp;
+&nbsp;        // If viewer exists, fetch their info once
+<b class="pc">&nbsp;        Optional&lt;Users&gt; viewerOpt = viewerUsername != null ? userRepository.findByUsername(viewerUsername) : Optional.empty();</b>
+<b class="fc">&nbsp;        Users viewer = viewerOpt.orElse(null);</b>
+&nbsp;
+<b class="fc">&nbsp;        for (Users u : users) {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;id&quot;, u.getId());</b>
+<b class="fc">&nbsp;            map.put(&quot;username&quot;, u.getUsername());</b>
+<b class="fc">&nbsp;            map.put(&quot;displayName&quot;, u.getDisplayName());</b>
+<b class="fc">&nbsp;            map.put(&quot;bio&quot;, u.getBio());</b>
+<b class="fc">&nbsp;            map.put(&quot;followers&quot;, u.getFollowers());</b>
+<b class="fc">&nbsp;            map.put(&quot;following&quot;, u.getFollowing());</b>
+<b class="fc">&nbsp;            map.put(&quot;craftSpecialties&quot;, u.getCraftSpecialties());</b>
+&nbsp;
+&nbsp;
+&nbsp;            // Relationship status
+<b class="fc">&nbsp;            boolean isFollowing = false;</b>
+<b class="fc">&nbsp;            boolean isPending = false;</b>
+&nbsp;
+<b class="pc">&nbsp;            if (viewer != null &amp;&amp; !viewer.getUsername().equals(u.getUsername())) {</b>
+<b class="nc">&nbsp;                Optional&lt;Follow&gt; followOpt = followRepository.findByFollowerAndFollowing(viewer, u);</b>
+<b class="nc">&nbsp;                if (followOpt.isPresent()) {</b>
+<b class="nc">&nbsp;                    Follow f = followOpt.get();</b>
+<b class="nc">&nbsp;                    if (f.isAccepted()) {</b>
+<b class="nc">&nbsp;                        isFollowing = true;</b>
+&nbsp;                    } else {
+<b class="nc">&nbsp;                        isPending = true;</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            map.put(&quot;isFollowing&quot;, isFollowing);</b>
+<b class="fc">&nbsp;            map.put(&quot;isPending&quot;, isPending);</b>
+<b class="fc">&nbsp;            result.add(map);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(result);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * GET /search/group?query=abc
+&nbsp;     * Search for groups by group name or username
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;Search for groups&quot;,
+&nbsp;            description = &quot;Search for groups whose name or admin username contains the query string.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(
+&nbsp;                    responseCode = &quot;200&quot;,
+&nbsp;                    description = &quot;Group search results returned successfully&quot;,
+&nbsp;                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Group.class)))
+&nbsp;            ),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid query parameter&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Server error&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/group&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; searchGroups(@RequestParam String query) {
+<b class="fc">&nbsp;        List&lt;Group&gt; groups = groupRepository.findByGroupNameContainingIgnoreCaseOrGroupAdmin_UsernameContainingIgnoreCase(query, query);</b>
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; result = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (Group g : groups) {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;id&quot;, g.getId());</b>
+<b class="fc">&nbsp;            map.put(&quot;groupName&quot;, g.getGroupName());</b>
+<b class="fc">&nbsp;            map.put(&quot;description&quot;, g.getDescription());</b>
+<b class="fc">&nbsp;            map.put(&quot;memberCount&quot;, g.getMemberCount());</b>
+<b class="fc">&nbsp;            map.put(&quot;isPrivate&quot;, g.isPrivate());</b>
+<b class="fc">&nbsp;            map.put(&quot;craft&quot;, g.getCraft());</b>
+<b class="fc">&nbsp;            result.add(map);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return ResponseEntity.ok(result);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * GET /search/project?query=abc
+&nbsp;     * Search for projects by projectName or Username to find the user&#39;s project
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;Search for user projects&quot;,
+&nbsp;            description = &quot;Search for projects by projectName or username of the project owner.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(
+&nbsp;                    responseCode = &quot;200&quot;,
+&nbsp;                    description = &quot;Project search results returned successfully&quot;,
+&nbsp;                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Feed.class)))
+&nbsp;            ),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid query parameter&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Server error&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/project&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; searchProjects(@RequestParam String query) {
+<b class="fc">&nbsp;        List&lt;Feed&gt; projects = feedRespository.findByProjectNameContainingIgnoreCaseOrUser_UsernameContainingIgnoreCase(query, query);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; result = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (Feed p : projects) {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;username&quot;, p.getUser().getUsername());</b>
+<b class="fc">&nbsp;            map.put(&quot;projectName&quot;, p.getProjectName());</b>
+<b class="fc">&nbsp;            map.put(&quot;projectType&quot;, p.getProjectType());</b>
+<b class="fc">&nbsp;            map.put(&quot;supplies&quot;, p.getSupplies());</b>
+<b class="fc">&nbsp;            map.put(&quot;projectDesc&quot;, p.getProjectDesc());</b>
+<b class="fc">&nbsp;            map.put(&quot;projectPic&quot;, p.getProjectPic());</b>
+<b class="fc">&nbsp;            map.put(&quot;visibility&quot;, p.getVisibility());</b>
+<b class="fc">&nbsp;            map.put(&quot;date&quot;, p.getDate());</b>
+<b class="fc">&nbsp;            result.add(map);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(result);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Search for tutorial by username, title, description, or category
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;Search for tutorials&quot;,
+&nbsp;            description = &quot;Search for tutorials by username, title, description, or category. &quot;
+&nbsp;                    + &quot;Returns metadata for each matching tutorial.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(
+&nbsp;                    responseCode = &quot;200&quot;,
+&nbsp;                    description = &quot;Tutorial search results returned successfully&quot;,
+&nbsp;                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Tutorial.class)))
+&nbsp;            ),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid query parameter&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Server error&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/tutorial&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; searchTutorials(@RequestParam String query) {
+<b class="fc">&nbsp;        List&lt;Tutorial&gt; tutorials = tutorialRepository</b>
+<b class="fc">&nbsp;                .findByUser_UsernameContainingIgnoreCaseOrTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrCategoryContainingIgnoreCase(</b>
+&nbsp;                        query, query, query, query);
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; result = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (Tutorial t : tutorials) {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;id&quot;, t.getId());</b>
+<b class="fc">&nbsp;            map.put(&quot;username&quot;, t.getUser());</b>
+<b class="fc">&nbsp;            map.put(&quot;title&quot;, t.getTitle());</b>
+<b class="fc">&nbsp;            map.put(&quot;description&quot;, t.getDescription());</b>
+<b class="fc">&nbsp;            map.put(&quot;category&quot;, t.getCategory());</b>
+<b class="fc">&nbsp;            map.put(&quot;fileUrl&quot;, t.getFileUrl());</b>
+<b class="fc">&nbsp;            map.put(&quot;filePath&quot;, t.getFilePath());</b>
+<b class="fc">&nbsp;            result.add(map);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return ResponseEntity.ok(result);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-11-29 22:14</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NotificationWebSocket</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.Notification</a>
+</div>
+
+<h1>Coverage Summary for Class: NotificationWebSocket (com.example.craftsy.Notification)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NotificationWebSocket</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    60%
+  </span>
+  <span class="absValue">
+    (6/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    20%
+  </span>
+  <span class="absValue">
+    (2/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    30%
+  </span>
+  <span class="absValue">
+    (12/40)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Notification;
+&nbsp;
+&nbsp;import com.example.craftsy.Notification.Entity.Notification;
+&nbsp;import com.example.craftsy.Notification.Repository.NotificationRepository;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import jakarta.websocket.*;
+&nbsp;import jakarta.websocket.server.PathParam;
+&nbsp;import jakarta.websocket.server.ServerEndpoint;
+&nbsp;import org.slf4j.Logger;
+&nbsp;import org.slf4j.LoggerFactory;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.Hashtable;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Component
+&nbsp;@ServerEndpoint(&quot;/ws/notifications/{username}&quot;)
+<b class="fc">&nbsp;public class NotificationWebSocket {</b>
+&nbsp;
+&nbsp;    private static NotificationRepository notificationRepository;
+&nbsp;    private static UserRepository userRepository;
+&nbsp;
+<b class="fc">&nbsp;    private static final Logger logger = LoggerFactory.getLogger(NotificationWebSocket.class);</b>
+&nbsp;
+&nbsp;    // Maps to track sessions
+<b class="fc">&nbsp;    private static Map&lt;Session, String&gt; sessionUsernameMap = new Hashtable&lt;&gt;();</b>
+<b class="fc">&nbsp;    private static Map&lt;String, Session&gt; usernameSessionMap = new Hashtable&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;    private static ObjectMapper mapper = new ObjectMapper();</b>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    public static void setDependencies(NotificationRepository notifRepo, UserRepository userRepo) {
+<b class="fc">&nbsp;        notificationRepository = notifRepo;</b>
+<b class="fc">&nbsp;        userRepository = userRepo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    public void setUserRepository(UserRepository repo) {
+<b class="fc">&nbsp;        NotificationWebSocket.userRepository = repo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Call when a new websocket connection is opened
+&nbsp;    @OnOpen
+&nbsp;    public void onOpen(Session session, @PathParam(value = &quot;username&quot;) String username) {
+<b class="nc">&nbsp;        sessionUsernameMap.put(session, username);</b>
+<b class="nc">&nbsp;        usernameSessionMap.put(username, session);</b>
+&nbsp;
+<b class="nc">&nbsp;        logger.info(&quot;Connected: &quot; + username);</b>
+&nbsp;
+&nbsp;        try {
+&nbsp;            // Fetch the Users object
+<b class="nc">&nbsp;            Users user = userRepository.findByUsername(username)</b>
+<b class="nc">&nbsp;                    .orElseThrow(() -&gt; new RuntimeException(&quot;User not found: &quot; + username));</b>
+&nbsp;
+&nbsp;            // Send all unread notifications to the user
+<b class="nc">&nbsp;            List&lt;Notification&gt; unreadNotifications = notificationRepository.findByUserAndIsReadFalseOrderByCreatedAtDesc(user);</b>
+&nbsp;
+<b class="nc">&nbsp;            sendNotificationsToUser(username, unreadNotifications);</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            logger.error(&quot;Error in onOpen for user: &quot; + username, e);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Send a list of notifications to a particular user
+&nbsp;    private void sendNotificationsToUser(String username, List&lt;Notification&gt; notifications) {
+<b class="nc">&nbsp;        Session session = usernameSessionMap.get(username);</b>
+<b class="nc">&nbsp;        if (session != null &amp;&amp; notifications != null) {</b>
+&nbsp;            try {
+<b class="nc">&nbsp;                for (Notification notification : notifications) {</b>
+<b class="nc">&nbsp;                    String json = mapper.writeValueAsString(notification);</b>
+<b class="nc">&nbsp;                    session.getBasicRemote().sendText(json);</b>
+&nbsp;                }
+&nbsp;            } catch (IOException e) {
+<b class="nc">&nbsp;                logger.error(&quot;Error sending notifications to user: &quot; + username, e);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Called when a websocket is closed
+&nbsp;    @OnClose
+&nbsp;    public void onClose(Session session) {
+<b class="nc">&nbsp;        String username = sessionUsernameMap.get(session);</b>
+<b class="nc">&nbsp;        sessionUsernameMap.remove(session);</b>
+<b class="nc">&nbsp;        usernameSessionMap.remove(username);</b>
+<b class="nc">&nbsp;        logger.info(&quot;Disconnected: &quot; + username);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Called on websocket error
+&nbsp;    @OnError
+&nbsp;    public void onError(Session session, Throwable error) {
+<b class="nc">&nbsp;        String username = sessionUsernameMap.get(session);</b>
+<b class="nc">&nbsp;        logger.error(&quot;WebSocket error for user: &quot; + username, error);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /** Static method to push a new notification immediately */
+&nbsp;    public static void pushNotification(String username, Notification notification) {
+<b class="fc">&nbsp;        Session session = usernameSessionMap.get(username);</b>
+<b class="pc">&nbsp;        if (session != null) {</b>
+&nbsp;            try {
+<b class="nc">&nbsp;                String json = mapper.writeValueAsString(notification);</b>
+<b class="nc">&nbsp;                session.getBasicRemote().sendText(json);</b>
+&nbsp;            } catch (IOException e) {
+<b class="nc">&nbsp;                logger.error(&quot;Error pushing notification to user: &quot; + username, e);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    public static void pushRemoveNotification(String username, Long notificationId) {
+<b class="fc">&nbsp;        Session session = usernameSessionMap.get(username);</b>
+<b class="pc">&nbsp;        if (session != null) {</b>
+&nbsp;            try {
+<b class="nc">&nbsp;                Map&lt;String, Object&gt; payload = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;                payload.put(&quot;removeId&quot;, notificationId);</b>
+<b class="nc">&nbsp;                String json = mapper.writeValueAsString(payload);</b>
+<b class="nc">&nbsp;                session.getBasicRemote().sendText(json);</b>
+&nbsp;            } catch (IOException e) {
+<b class="nc">&nbsp;                logger.error(&quot;Error sending remove event to user: {}&quot;, username, e);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-11-29 22:14</div>
+</div>
+</body>
+</html>
