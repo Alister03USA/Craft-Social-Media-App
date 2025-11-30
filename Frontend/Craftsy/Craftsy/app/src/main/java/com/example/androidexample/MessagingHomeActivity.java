@@ -43,7 +43,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
     private ImageButton newChatBtn;
     private ProgressBar progressBar;
     private String currentUsername;
-    private Button MHbckButton;
+    private ImageButton MHbckButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

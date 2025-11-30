@@ -55,5 +55,17 @@
             android:stepSize="1"
             android:numStars="5"
             android:layout_marginTop="8dp" />
+
+        <!-- REMOVE BUTTON (visible only in board mode) -->
+        <Button
+            android:id="@+id/btnRemovePattern"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Remove"
+            android:textAllCaps="false"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/red"
+            android:textColor="@android:color/white"
+            android:visibility="gone"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

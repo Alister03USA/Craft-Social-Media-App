@@ -60,13 +60,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- 🔹 Edit/Delete buttons -->
+        <!-- Buttons row (EDIT / DELETE / REMOVE FROM BOARD) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:gravity="end">
+            android:gravity="end"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/buttonRemoveFromBoard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Remove"
+                android:textSize="12sp"
+                android:backgroundTint="@color/red"
+                android:textColor="@color/text_white"
+                android:visibility="gone"
+                android:paddingHorizontal="12dp" />
 
             <Button
                 android:id="@+id/buttonEdit"

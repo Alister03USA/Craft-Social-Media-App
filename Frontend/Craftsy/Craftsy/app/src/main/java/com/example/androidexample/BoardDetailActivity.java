@@ -77,21 +77,26 @@ public class BoardDetailActivity extends AppCompatActivity {
         txtDescription.setText(board.getDescription());
 
         // Patterns
-        patternAdapter = new PatternAdapter(this, board.getPatterns());
+        patternAdapter = new PatternAdapter(this, board.getPatterns(), boardId);
         rvPatterns.setAdapter(patternAdapter);
 
         // Feed posts (projects)
         String loggedInUser = SessionManager.getInstance().getLoggedInUsername();
-        projectAdapter = new FeedAdapter(this, board.getProjects(), "boards", loggedInUser);
+        projectAdapter = new FeedAdapter(
+                this,
+                board.getProjects(),
+                "boards",
+                loggedInUser,
+                boardId
+        );
         rvProjects.setAdapter(projectAdapter);
 
-        // Tutorials
-        tutorialAdapter = new TutorialAdapter(this, board.getTutorials(), item -> {
-            // open details if needed
-            Intent intent = new Intent(this, TutorialDetailActivity.class);
-            intent.putExtra("id", item.getId());
-            startActivity(intent);
-        });
+        /// Tutorials
+        tutorialAdapter = new TutorialAdapter(
+                this,
+                board.getTutorials(),
+                boardId   // enable remove mode
+        );
         rvTutorials.setAdapter(tutorialAdapter);
     }
 

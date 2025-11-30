@@ -12,8 +12,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.android.volley.Request;
+import com.android.volley.toolbox.JsonObjectRequest;
+
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -23,14 +28,27 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
 
     private final Context context;
     private final List<FeedItem> feedList;
-    private final String fromScreen;
+    private final String fromScreen; // "boards" or default feed
     private final String loggedInUser;
+    private long boardId = -1; // for Saved Boards mode
 
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
+
+    // Constructor for normal feed
     public FeedAdapter(Context context, List<FeedItem> feedList, String fromScreen, String loggedInUser) {
         this.context = context;
         this.feedList = feedList;
         this.fromScreen = fromScreen;
         this.loggedInUser = loggedInUser;
+    }
+
+    // Constructor for board screen (with boardId)
+    public FeedAdapter(Context context, List<FeedItem> feedList, String fromScreen, String loggedInUser, long boardId) {
+        this.context = context;
+        this.feedList = feedList;
+        this.fromScreen = fromScreen;
+        this.loggedInUser = loggedInUser;
+        this.boardId = boardId;
     }
 
     @NonNull
@@ -50,7 +68,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         holder.projectType.setText(item.getProjectType());
         holder.visibility.setText(item.getVisibility());
 
-        // Load image manually
+        // Load images manually
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
@@ -70,8 +88,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
         }
 
-        // 🔹 Show Edit/Delete buttons only for own posts
-        if (item.getUsername().equalsIgnoreCase(loggedInUser)) {
+        // Show Edit/Delete for owner posts only (normal feed)
+        if (!fromScreen.equals("boards") && item.getUsername().equalsIgnoreCase(loggedInUser)) {
             holder.buttonEdit.setVisibility(View.VISIBLE);
             holder.buttonDelete.setVisibility(View.VISIBLE);
         } else {
@@ -79,7 +97,17 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             holder.buttonDelete.setVisibility(View.GONE);
         }
 
-        // 🔹 Edit post
+        // Show REMOVE FROM BOARD button only in Saved Boards screen
+        if (fromScreen.equals("boards")) {
+            holder.buttonRemoveFromBoard.setVisibility(View.VISIBLE);
+            holder.buttonRemoveFromBoard.setOnClickListener(v -> {
+                removeProjectFromBoard(item.getUsername(), item.getProjectName(), position);
+            });
+        } else {
+            holder.buttonRemoveFromBoard.setVisibility(View.GONE);
+        }
+
+        // Edit post
         holder.buttonEdit.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedCRUDActivity.class);
             intent.putExtra("mode", "edit");
@@ -92,7 +120,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             context.startActivity(intent);
         });
 
-        // 🔹 Delete post
+        // Delete post
         holder.buttonDelete.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedCRUDActivity.class);
             intent.putExtra("mode", "delete");
@@ -105,7 +133,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             context.startActivity(intent);
         });
 
-        // 🔹 View details
+        // Open detail view
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedDetailActivity.class);
             intent.putExtra("username", item.getUsername());
@@ -121,6 +149,25 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         });
     }
 
+    private void removeProjectFromBoard(String owner, String projectName, int position) {
+        if (boardId == -1) return;
+
+        String url = BASE_URL + "/board/" + boardId + "/project/" + owner + "/" + projectName + "/delete";
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                response -> {
+                    feedList.remove(position);
+                    notifyItemRemoved(position);
+                },
+                error -> Log.e("FeedAdapter", "Remove project failed: " + error)
+        );
+
+        VolleySingleton.getInstance(context).addToRequestQueue(request);
+    }
+
     @Override
     public int getItemCount() {
         return feedList.size();
@@ -129,7 +176,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView projectName, username, projectDesc, projectType, visibility;
         ImageView projectImage;
-        Button buttonEdit, buttonDelete;
+        Button buttonEdit, buttonDelete, buttonRemoveFromBoard;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -141,6 +188,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             projectImage = itemView.findViewById(R.id.imageProject);
             buttonEdit = itemView.findViewById(R.id.buttonEdit);
             buttonDelete = itemView.findViewById(R.id.buttonDelete);
+            buttonRemoveFromBoard = itemView.findViewById(R.id.buttonRemoveFromBoard);
         }
     }
 }
