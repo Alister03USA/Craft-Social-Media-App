@@ -37,7 +37,6 @@ public class Feed {
     private String projectType;
     private String supplies;
     private String projectDesc;
-    private String projectPic;
 
     @Column(name = "visibility", nullable = false)
     private String visibility;
@@ -99,14 +98,6 @@ public class Feed {
 
     public void setProjectDesc(String projectDesc) {
         this.projectDesc = projectDesc;
-    }
-
-    public String getProjectPic() {
-        return projectPic;
-    }
-
-    public void setProjectPic(String projectPic) {
-        this.projectPic = projectPic;
     }
 
     public String getVisibility() {
