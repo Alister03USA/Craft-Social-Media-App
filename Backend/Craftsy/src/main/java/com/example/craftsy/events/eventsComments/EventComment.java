@@ -1,5 +1,6 @@
 package com.example.craftsy.events.eventsComments;
 
+import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.events.Event;
 import com.example.craftsy.patterns.Patterns;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -22,6 +23,14 @@ public class EventComment {
     )
     @JsonBackReference
     private Event event;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            referencedColumnName = "id"
+    )
+    private Users user;
 
     private String text;
 
@@ -77,6 +86,14 @@ public class EventComment {
 
     public void setDate(LocalDateTime date) {
         this.date = date;
+    }
+
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
     }
 
     public void addLike(){
