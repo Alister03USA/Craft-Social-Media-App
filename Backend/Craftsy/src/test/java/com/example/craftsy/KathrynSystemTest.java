@@ -8,6 +8,10 @@ import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
 import com.example.craftsy.Tutorial.Repository.TutorialRepository;
+import com.example.craftsy.messages.Message;
+import com.example.craftsy.messages.MessageRepository;
+import com.example.craftsy.messages.conversations.DirectConversation;
+import com.example.craftsy.messages.conversations.DirectConversationRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
@@ -45,6 +49,12 @@ public class KathrynSystemTest {
 
     @Autowired
     FollowRepository followRepo;
+
+    @Autowired
+    DirectConversationRepository directConvoRepo;
+
+    @Autowired
+    MessageRepository messageRepo;
 
     @BeforeEach
     public void setUp() {
@@ -528,7 +538,7 @@ public class KathrynSystemTest {
 
         //add comment
         int commentID = given().contentType("application/json").body("test comment").when()
-                .post("/event/{eventID}/comment", eventID)
+                .post("/event/{eventID}/{username}/comment", eventID, testUser.getUsername())
                 .then().statusCode(200).extract().path("comments[0].id");
 
         //like comment
@@ -866,7 +876,307 @@ public class KathrynSystemTest {
                 .statusCode(200);
     }
 
-    // ---------------- messagesController tests ----------------
+    // ---------------- ConversationController tests ----------------
+    @Test
+    public void createGroupConvoAddRemoveUser(){
+        //create group
+        String requestBody = """
+                ["kkeckTestUser", "Kkeck"]
+                """;
+
+        String groupID = given().contentType("application/json").body(requestBody).when()
+                .post("/messages/group")
+                .then().statusCode(200).extract().path("id");
+
+        //update group pic
+        requestBody = """
+        {
+            "id": 1,
+            "filePath": "/fake/path/group-pic.jpg"
+        }
+        """;
+        given()
+                .contentType("application/json")
+                .body(requestBody)
+                .when()
+                .put("/messages/{groupId}/pic", groupID)
+                .then()
+                .statusCode(200)
+                .body("groupPic.id", equalTo(1))
+                .body("groupPic.filePath", equalTo("/fake/path/group-pic.jpg"));
+
+        //remove user from group
+        RestAssured.when()
+                .put("/messages/{groupId}/remove/{username}", groupID, "Kkeck")
+                .then()
+                .statusCode(200);
+
+        //confirm user removed
+        RestAssured.when()
+                .get("/messages/{convoId}", groupID)
+                .then()
+                .statusCode(200)
+                .body("members.size()", equalTo(1));
+
+        //add user to group
+        RestAssured.when()
+                .put("/messages/{groupId}/add/{username}", groupID, "Kkeck")
+                .then()
+                .statusCode(200);
+
+        //confirm user added
+        RestAssured.when()
+                .get("/messages/{convoId}", groupID)
+                .then()
+                .statusCode(200)
+                .body("members.size()", equalTo(2));
+
+        //delete convo
+        RestAssured.when()
+                .delete("/messages/convo/{convoId}", groupID)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    public void directConvosGetUserConvosDeleteMessage(){
+        //create convos
+        String convo1 = RestAssured.when()
+                .post("/messages/create/{sender}/{receiver}", testUser.getUsername(), "Kkeck")
+                .then()
+                .statusCode(200).extract().path("id");
+
+        String convo2 = RestAssured.when()
+                .post("/messages/create/{sender}/{receiver}", testUser.getUsername(), "kkeckOtherTestUser")
+                .then()
+                .statusCode(200).extract().path("id");
+
+        //get all user convos
+        RestAssured.when()
+                .get("/messages/convos/{username}", testUser.getUsername())
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(2));
+
+        //add message
+        DirectConversation convo = directConvoRepo.findById(convo1).orElseThrow();
+        Message message = new Message(testUser.getUsername(), "test message", convo);
+        messageRepo.save(message);
+
+        //confirm message is added
+        RestAssured.when()
+                .get("/messages/{convoId}", convo1)
+                .then()
+                .statusCode(200)
+                .body("messages.size()", equalTo(1));
+
+        //delete message
+        RestAssured.when()
+                .delete("/messages/{messageId}", message.getId())
+                .then()
+                .statusCode(200);
+
+        //confirm message is deleted
+        RestAssured.when()
+                .get("/messages/{convoId}", convo1)
+                .then()
+                .statusCode(200)
+                .body("messages.size()", equalTo(0));
+
+        //delete convos
+        RestAssured.when()
+                .delete("/messages/convo/{convoId}", convo1)
+                .then()
+                .statusCode(200);
+
+        RestAssured.when()
+                .delete("/messages/convo/{convoId}", convo2)
+                .then()
+                .statusCode(200);
+    }
 
     // ---------------- patternsController tests ----------------
+    @Test
+    public void postPatternUpdateDescription(){
+        //create Patterns
+        String requestBody = """
+                {
+                    "patternName": "test pattern 1",
+                    "patternType": "test"
+                }
+                """;
+        String patternName1 = given().contentType("application/json").body(requestBody).when()
+                .post("/patterns/{username}", testUser.getUsername())
+                .then().statusCode(200).extract().path("patternName");
+
+        requestBody = """
+                {
+                    "patternName": "test pattern 2",
+                    "patternType": "test"
+                }
+                """;
+        String patternName2 = given().contentType("application/json").body(requestBody).when()
+                .post("/patterns/{username}", testUser.getUsername())
+                .then().statusCode(200).extract().path("patternName");
+
+        //get user patterns
+        RestAssured.when()
+                .get("/patterns/author/{username}", testUser.getUsername())
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(2));
+
+        //update pattern description
+        given().contentType("application/json").body("updated pattern description").when()
+                .put("/patterns/{username}/{patternName}", testUser.getUsername(), patternName1)
+                .then()
+                .statusCode(200);
+
+        //confirm description update
+        RestAssured.when()
+                .get("/patterns/{username}/{patternName}", testUser.getUsername(), patternName1)
+                .then()
+                .statusCode(200)
+                .body("description", equalTo("updated pattern description"));
+
+        //delete patterns
+        RestAssured.when()
+                .delete("/patterns/{username}/{patternName}", testUser.getUsername(), patternName1)
+                .then()
+                .statusCode(200);
+
+        RestAssured.when()
+                .delete("/patterns/{username}/{patternName}", testUser.getUsername(), patternName2)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    public void followersPatternsSearch(){
+        //create new user
+        if (userRepo.findByUsername("kkeckOtherTestUser").isEmpty()) {
+            Users u = new Users();
+            u.setUsername("kkeckOtherTestUser");
+            u.setDisplayName("katie other test user");
+            u.setPassword("password123");
+            userRepo.save(u);
+        }
+        Users otherUser = userRepo.findByUsername("kkeckOtherTestUser").orElseThrow();
+
+        if(!followRepo.existsByFollowerAndFollowing(testUser, otherUser)) {
+            Follow follow = new Follow(testUser, otherUser, true);
+            followRepo.save(follow);
+        }
+        //create Patterns
+        String requestBody = """
+                {
+                    "patternName": "test pattern 1 specific title so easily searched",
+                    "patternType": "test"
+                }
+                """;
+        String patternName1 = given().contentType("application/json").body(requestBody).when()
+                .post("/patterns/{username}", otherUser.getUsername())
+                .then().statusCode(200).extract().path("patternName");
+
+        requestBody = """
+                {
+                    "patternName": "test pattern 2 specific title so easily searched",
+                    "patternType": "test"
+                }
+                """;
+        String patternName2 = given().contentType("application/json").body(requestBody).when()
+                .post("/patterns/{username}", otherUser.getUsername())
+                .then().statusCode(200).extract().path("patternName");
+
+        //get followers patterns
+        RestAssured.when()
+                .get("/patterns/{username}", testUser.getUsername())
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(2));
+
+        //search patterns
+        RestAssured.when()
+                .get("/patterns/title/{search}", "specific title so easily searched")
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(2));
+
+        //delete patterns
+        RestAssured.when()
+                .delete("/patterns/{username}/{patternName}", otherUser.getUsername(), patternName1)
+                .then()
+                .statusCode(200);
+
+        RestAssured.when()
+                .delete("/patterns/{username}/{patternName}", otherUser.getUsername(), patternName2)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    public void patternComments(){
+        //create Pattern
+        String requestBody = """
+                {
+                    "patternName": "test pattern",
+                    "patternType": "test"
+                }
+                """;
+        String patternName = given().contentType("application/json").body(requestBody).when()
+                .post("/patterns/{username}", testUser.getUsername())
+                .then().statusCode(200).extract().path("patternName");
+
+        //add comment
+        requestBody = """
+                {
+                    "text":"test comment",
+                    "rating": 4
+                }
+                """;
+        int commentID = given().contentType("application/json").body(requestBody).when()
+                .post("/patterns/{username}/{patternName}/comment", testUser.getUsername(), patternName)
+                .then().statusCode(200).extract().path("comments[0].id");
+
+        //like comment
+        RestAssured.when()
+                .put("/patterns/{username}/{patternName}/{id}/like", testUser.getUsername(), patternName, commentID)
+                .then()
+                .statusCode(200);
+
+        //confirm liked
+        RestAssured.when()
+                .get("/patterns/{username}/{patternName}", testUser.getUsername(), patternName)
+                .then().statusCode(200).assertThat()
+                .body("comments[0].likes", equalTo(1));
+
+        //update comment
+        given().contentType("application/json").body("update comment text").when()
+                .put("patterns/{username}/{patternName}/{id}", testUser.getUsername(), patternName, commentID)
+                .then()
+                .statusCode(200);
+
+        //confirm update
+        RestAssured.when()
+                .get("/patterns/{username}/{patternName}", testUser.getUsername(), patternName)
+                .then().statusCode(200).assertThat()
+                .body("comments[0].text", equalTo("update comment text"));
+
+        //delete comment
+        RestAssured.when()
+                .delete("/patterns/{username}/{patternName}/{id}", testUser.getUsername(), patternName, commentID)
+                .then().statusCode(200);
+
+        //confirm comment deleted
+        RestAssured.when()
+                .get("/patterns/{username}/{patternName}", testUser.getUsername(), patternName)
+                .then().statusCode(200).assertThat()
+                .body("comments.size()", equalTo(0));
+
+        //delete pattern
+        RestAssured.when()
+                .delete("/patterns/{username}/{patternName}", testUser.getUsername(), patternName)
+                .then()
+                .statusCode(200);
+    }
 }
