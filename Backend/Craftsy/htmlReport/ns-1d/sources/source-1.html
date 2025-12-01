@@ -1,0 +1,324 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ChatSocket</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.messages.websocket</a>
+</div>
+
+<h1>Coverage Summary for Class: ChatSocket (com.example.craftsy.messages.websocket)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ChatSocket</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    11.1%
+  </span>
+  <span class="absValue">
+    (2/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/24)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    7.1%
+  </span>
+  <span class="absValue">
+    (6/85)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.messages.websocket;
+&nbsp;
+&nbsp;import com.example.craftsy.Notification.Entity.Notification;
+&nbsp;import com.example.craftsy.Notification.NotificationWebSocket;
+&nbsp;import com.example.craftsy.Notification.Repository.NotificationRepository;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+&nbsp;import com.example.craftsy.messages.Message;
+&nbsp;import com.example.craftsy.messages.MessageRepository;
+&nbsp;import com.example.craftsy.messages.conversations.*;
+&nbsp;import jakarta.websocket.*;
+&nbsp;import jakarta.websocket.server.PathParam;
+&nbsp;import jakarta.websocket.server.ServerEndpoint;
+&nbsp;import org.slf4j.Logger;
+&nbsp;import org.slf4j.LoggerFactory;
+&nbsp;import org.springframework.stereotype.Controller;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.util.Date;
+&nbsp;import java.util.Hashtable;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Controller
+&nbsp;@ServerEndpoint(value = &quot;/chat/{convoId}/{username}&quot;, configurator = SpringConfigurator.class)
+&nbsp;public class ChatSocket {
+<b class="fc">&nbsp;    private static final Logger logger = LoggerFactory.getLogger(ChatSocket.class);</b>
+&nbsp;
+<b class="fc">&nbsp;    private static Map&lt;Session, String&gt; sessionUsernameMap = new Hashtable&lt;&gt;();</b>
+<b class="fc">&nbsp;    private static Map&lt;String, Session&gt; usernameSessionMap = new Hashtable&lt;&gt;();</b>
+<b class="fc">&nbsp;    private static Map&lt;Session, Conversation&gt; sessionConvoMap = new Hashtable&lt;&gt;();</b>
+<b class="fc">&nbsp;    private static Map&lt;Session, String&gt; sessionConvoTypeMap = new Hashtable&lt;&gt;();</b>
+&nbsp;
+&nbsp;    private MessageService messageService;
+&nbsp;    private UserRepository userRepo;
+&nbsp;    private MessageRepository msgRepo;
+&nbsp;    private GroupConversationRepository groupConvoRepo;
+&nbsp;    private DirectConversationRepository directConvoRepo;
+&nbsp;    private NotificationRepository notificationRepository;
+&nbsp;
+<b class="fc">&nbsp;    public ChatSocket() {}</b>
+&nbsp;
+<b class="nc">&nbsp;    public void setGroupConvoRepo(GroupConversationRepository repo) { this.groupConvoRepo = repo; }</b>
+<b class="nc">&nbsp;    public void setDirectConvoRepo(DirectConversationRepository repo) { this.directConvoRepo = repo; }</b>
+<b class="nc">&nbsp;    public void setMsgRepo(MessageRepository repo) { this.msgRepo = repo; }</b>
+<b class="nc">&nbsp;    public void setUserRepo(UserRepository repo) { this.userRepo = repo; }</b>
+<b class="nc">&nbsp;    public void setMessageService(MessageService service) { this.messageService = service; }</b>
+<b class="nc">&nbsp;    public void setNotificationRepository(NotificationRepository repo) { this.notificationRepository = repo; }  // ✅ Add setter</b>
+&nbsp;
+&nbsp;    @OnOpen
+&nbsp;    public void onOpen(Session session, @PathParam(&quot;convoId&quot;) String convoId, @PathParam(&quot;username&quot;) String username) {
+<b class="nc">&nbsp;        sessionUsernameMap.put(session, username);</b>
+<b class="nc">&nbsp;        usernameSessionMap.put(username, session);</b>
+&nbsp;
+&nbsp;        Conversation convo;
+<b class="nc">&nbsp;        if (convoId.startsWith(&quot;D-&quot;)) {</b>
+<b class="nc">&nbsp;            convo = directConvoRepo.findByIdWithMembers(convoId)</b>
+<b class="nc">&nbsp;                    .orElseThrow(() -&gt; new RuntimeException(&quot;Direct conversation not found&quot;));</b>
+<b class="nc">&nbsp;        } else if (convoId.startsWith(&quot;G-&quot;)) {</b>
+<b class="nc">&nbsp;            convo = groupConvoRepo.findByIdWithMembers(convoId)</b>
+<b class="nc">&nbsp;                    .orElseThrow(() -&gt; new RuntimeException(&quot;Group conversation not found&quot;));</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            throw new RuntimeException(&quot;Invalid conversation ID format&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        sessionConvoMap.put(session, convo);</b>
+<b class="nc">&nbsp;        sessionConvoTypeMap.put(session, convoId.startsWith(&quot;G-&quot;) ? &quot;GROUP&quot; : &quot;DIRECT&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        boolean inConversation = convo.getMembers()</b>
+<b class="nc">&nbsp;                .stream()</b>
+<b class="nc">&nbsp;                .anyMatch(member -&gt; member.getUsername().equals(username));</b>
+&nbsp;
+<b class="nc">&nbsp;        if (!inConversation) {</b>
+<b class="nc">&nbsp;            throw new RuntimeException(&quot;User not in conversation&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        logger.info(&quot;[ChatSocket] &quot; + username + &quot; connected to conversation &quot; + convoId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @OnMessage
+&nbsp;    public void onMessage(Session session, String text) throws IOException {
+<b class="nc">&nbsp;        logger.info(&quot;[ChatSocket] Got Message: &quot; + text);</b>
+&nbsp;
+<b class="nc">&nbsp;        String senderUsername = sessionUsernameMap.get(session);</b>
+<b class="nc">&nbsp;        Conversation convo = sessionConvoMap.get(session);</b>
+<b class="nc">&nbsp;        String convoType = sessionConvoTypeMap.get(session);</b>
+<b class="nc">&nbsp;        String convoId = convo.getId();</b>
+&nbsp;
+&nbsp;        // Handle reactions
+<b class="nc">&nbsp;        if (text.startsWith(&quot;#react:&quot;)) {</b>
+<b class="nc">&nbsp;            broadcast(messageService.react(text));</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+&nbsp;        // Handle replies
+<b class="nc">&nbsp;        if (text.startsWith(&quot;#reply:&quot;)) {</b>
+<b class="nc">&nbsp;            broadcast(messageService.reply(text, senderUsername, convoId));</b>
+<b class="nc">&nbsp;            sendNotificationsToOthers(convo, senderUsername, &quot;replied to a message&quot;, convoType);</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+&nbsp;        // Handle remove reaction
+<b class="nc">&nbsp;        if (text.startsWith(&quot;#!react:&quot;)) {</b>
+<b class="nc">&nbsp;            broadcast(messageService.removeReaction(text));</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+&nbsp;        // Standard message
+<b class="nc">&nbsp;        Message message = new Message(senderUsername, text, convo);</b>
+<b class="nc">&nbsp;        messageService.saveMessageAndUpdateConversation(convo.getId(), message);</b>
+&nbsp;
+<b class="nc">&nbsp;        broadcast(senderUsername + &quot;: &quot; + text);</b>
+&nbsp;
+<b class="nc">&nbsp;        sendNotificationsToOthers(convo, senderUsername, &quot;sent a message&quot;, convoType);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @OnClose
+&nbsp;    public void onClose(Session session) throws IOException {
+<b class="nc">&nbsp;        logger.info(&quot;[ChatSocket] Entered into Close&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        String username = sessionUsernameMap.get(session);</b>
+<b class="nc">&nbsp;        sessionUsernameMap.remove(session);</b>
+<b class="nc">&nbsp;        usernameSessionMap.remove(username);</b>
+<b class="nc">&nbsp;        sessionConvoMap.remove(session);</b>
+<b class="nc">&nbsp;        sessionConvoTypeMap.remove(session);</b>
+&nbsp;
+<b class="nc">&nbsp;        logger.info(&quot;[ChatSocket] &quot; + username + &quot; disconnected&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @OnError
+&nbsp;    public void onError(Session session, Throwable throwable) {
+<b class="nc">&nbsp;        logger.error(&quot;[ChatSocket] WebSocket error for session {}: {}&quot;, session.getId(), throwable.getMessage(), throwable);</b>
+<b class="nc">&nbsp;        throwable.printStackTrace();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    private void sendNotificationsToOthers(Conversation convo, String senderUsername, String action, String convoType) {
+&nbsp;        try {
+&nbsp;            // Get sender user object
+<b class="nc">&nbsp;            Users sender = userRepo.findByUsername(senderUsername).orElse(null);</b>
+<b class="nc">&nbsp;            if (sender == null) {</b>
+<b class="nc">&nbsp;                logger.error(&quot;[ChatSocket] Sender not found: &quot; + senderUsername);</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String convoTypeText = convoType.equals(&quot;GROUP&quot;) ? &quot;group chat&quot; : &quot;direct message&quot;;</b>
+&nbsp;
+&nbsp;            // Send notification to all members EXCEPT sender
+<b class="nc">&nbsp;            convo.getMembers().stream()</b>
+<b class="nc">&nbsp;                    .filter(member -&gt; !member.getId().equals(sender.getId()))</b>
+<b class="nc">&nbsp;                    .forEach(member -&gt; {</b>
+&nbsp;                        try {
+&nbsp;                            // Create notification
+<b class="nc">&nbsp;                            Notification notif = new Notification();</b>
+<b class="nc">&nbsp;                            notif.setUser(member);</b>
+<b class="nc">&nbsp;                            notif.setTitle(&quot;New Message&quot;);</b>
+<b class="nc">&nbsp;                            notif.setMessage(senderUsername + &quot; &quot; + action + &quot; in &quot; + convoTypeText);</b>
+<b class="nc">&nbsp;                            notif.setCreatedAt(new Date());</b>
+<b class="nc">&nbsp;                            notif.setIsRead(false);</b>
+&nbsp;
+&nbsp;                            // Save to database
+<b class="nc">&nbsp;                            notificationRepository.save(notif);</b>
+&nbsp;
+&nbsp;                            // Push real-time notification via NotificationWebSocket
+<b class="nc">&nbsp;                            NotificationWebSocket.pushNotification(member.getUsername(), notif);</b>
+&nbsp;
+<b class="nc">&nbsp;                            logger.info(&quot;[ChatSocket] Notification sent to &quot; + member.getUsername());</b>
+&nbsp;                        } catch (Exception e) {
+<b class="nc">&nbsp;                            logger.error(&quot;[ChatSocket] Error sending notification to &quot; + member.getUsername(), e);</b>
+&nbsp;                        }
+&nbsp;                    });
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            logger.error(&quot;[ChatSocket] Error in sendNotificationsToOthers&quot;, e);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void sendMessageToParticularUser(String username, String message) {
+&nbsp;        try {
+<b class="nc">&nbsp;            usernameSessionMap.get(username).getBasicRemote().sendText(message);</b>
+&nbsp;        } catch (IOException e) {
+<b class="nc">&nbsp;            logger.error(&quot;[ChatSocket] Exception: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            e.printStackTrace();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void broadcast(String message) {
+<b class="nc">&nbsp;        sessionUsernameMap.forEach((session, username) -&gt; {</b>
+&nbsp;            try {
+<b class="nc">&nbsp;                session.getBasicRemote().sendText(message);</b>
+&nbsp;            } catch (IOException e) {
+<b class="nc">&nbsp;                logger.error(&quot;[ChatSocket] Exception: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;                e.printStackTrace();</b>
+&nbsp;            }
+&nbsp;        });
+&nbsp;    }
+&nbsp;
+&nbsp;    private String getChatHistory() {
+<b class="nc">&nbsp;        List&lt;Message&gt; messages = msgRepo.findAll();</b>
+&nbsp;
+<b class="nc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
+<b class="nc">&nbsp;        if (messages != null &amp;&amp; messages.size() != 0) {</b>
+<b class="nc">&nbsp;            for (Message message : messages) {</b>
+<b class="nc">&nbsp;                sb.append(message.getSender() + &quot;: &quot; + message.getText() + &quot;\n&quot;);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;        return sb.toString();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-11-29 22:14</div>
+</div>
+</body>
+</html>

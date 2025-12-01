@@ -1,0 +1,84 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > FollowRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.FollowingFollowers.Repository</a>
+</div>
+
+<h1>Coverage Summary for Class: FollowRepository (com.example.craftsy.FollowingFollowers.Repository)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+</tr>
+<tr>
+  <td class="name">FollowRepository</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.FollowingFollowers.Repository;
+&nbsp;import com.example.craftsy.FollowingFollowers.Entity.Follow;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;
+&nbsp;// Gives ready made CRUD operations
+&nbsp;public interface FollowRepository extends JpaRepository&lt;Follow, Long&gt; {
+&nbsp;    List&lt;Follow&gt;findByFollower(Users follower); // Finds all follow relationships where a specific user is the follower.
+&nbsp;    List&lt;Follow&gt;findByFollowing(Users following); // Finds all follow relationships where a specific user is being followed.
+&nbsp;    Optional&lt;Follow&gt; findByFollowerAndFollowing(Users follower, Users following); // Finds a specific follow relationship between two users.
+&nbsp;    boolean existsByFollowerAndFollowing(Users follower, Users following); // Check if a follow relationship already exists
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-11-29 22:14</div>
+</div>
+</body>
+</html>

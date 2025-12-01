@@ -88,9 +88,6 @@ public class Tutorial {
     }
 
 
-    public String getFileName() {
-        return fileName;
-    }
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
@@ -104,9 +101,6 @@ public class Tutorial {
         this.filePath = filePath;
     }
 
-    public String getFileType() {
-        return fileType;
-    }
 
     public void setFileType(String fileType) {
         this.fileType = fileType;

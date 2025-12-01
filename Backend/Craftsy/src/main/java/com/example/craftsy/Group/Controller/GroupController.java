@@ -2,7 +2,9 @@ package com.example.craftsy.Group.Controller;
 
 import com.example.craftsy.Group.Entity.Group;
 import com.example.craftsy.Group.Entity.GroupJoinRequest;
+import com.example.craftsy.Group.Entity.GroupMessage;
 import com.example.craftsy.Group.Repository.GroupJoinRequestRepository;
+import com.example.craftsy.Group.Repository.GroupMessageRepository;
 import com.example.craftsy.Group.Repository.GroupRepository;
 import com.example.craftsy.Notification.Entity.Notification;
 import com.example.craftsy.Notification.NotificationWebSocket;
@@ -39,6 +41,11 @@ public class GroupController {
     @Autowired
     private PointsService pointsService;
 
+    @Autowired
+    private GroupMessageRepository groupMessageRepository;
+
+
+
 
     /**
      * POST /{adminUsername}/create/
@@ -66,19 +73,19 @@ public class GroupController {
 
         Users admin = adminOpt.get();
 
-        var pointsInfo = pointsService.getUserPoints(admin);
-        if (pointsInfo == null) {
-            return ResponseEntity.status(500).body(Map.of("message", "User points info unavailable"));
-        }
-
-        // Get user tier
-        String adminTier = pointsService.getUserPoints(admin).getCurrentTier();
-
-        // Only allow EXPERT or CHAMPION users to upload
-        if (!(adminTier.equals("EXPERT") || adminTier.equals("CHAMPION"))) {
-            return ResponseEntity.status(403).body(Map.of("message", "You must be EXPERT level or higher to upload tutorials."));
-
-        }
+//        var pointsInfo = pointsService.getUserPoints(admin);
+//        if (pointsInfo == null) {
+//            return ResponseEntity.status(500).body(Map.of("message", "User points info unavailable"));
+//        }
+//
+//        // Get user tier
+//        String adminTier = pointsService.getUserPoints(admin).getCurrentTier();
+//
+//        // Only allow EXPERT or CHAMPION users to upload
+//        if (!(adminTier.equals("EXPERT") || adminTier.equals("CHAMPION"))) {
+//            return ResponseEntity.status(403).body(Map.of("message", "You must be EXPERT level or higher to upload tutorials."));
+//
+//        }
 
         // Check if a group with the same name already exists
         if (groupRepository.findByGroupName(groupRequest.getGroupName()).isPresent()) {
@@ -90,7 +97,7 @@ public class GroupController {
         group.setGroupName(groupRequest.getGroupName());
         group.setGroupAdmin(admin); // Admin is the creator
         group.setDescription(groupRequest.getDescription());
-        group.setPrivate(groupRequest.isPrivate());
+        group.setisPrivate(groupRequest.isPrivate());
         group.setCraft(groupRequest.getCraft());
         group.setMembers(new HashSet<>());
 
@@ -616,6 +623,17 @@ public class GroupController {
             NotificationWebSocket.pushNotification(member.getUsername(), notif);
         }
 
+        List<GroupMessage> messages = groupMessageRepository.findByGroupOrderByCreatedAtAsc(group);
+        groupMessageRepository.deleteAll(messages);
+
+        if (group.isPrivate()){
+            groupJoinRequestRepository.deleteAllByGroup(group);
+
+        }
+
+        group.getMembers().clear();
+        groupRepository.save(group);
+
         groupRepository.delete(group);
 
         return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
@@ -645,7 +663,7 @@ public class GroupController {
         Optional<Users> userOpt = userRepository.findByUsername(username);
         Optional<Users> adminOpt = userRepository.findByUsername(admin);
 
-        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {  // ✅ Check admin exists
+        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Group or user not found"));
         }
 

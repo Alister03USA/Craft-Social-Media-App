@@ -12,4 +12,7 @@ public interface GroupJoinRequestRepository extends JpaRepository<GroupJoinReque
 
     // Check if request is already sent
     Optional<GroupJoinRequest> findByGroupAndUser(Group group, Users user);
+
+    // Delete all join requests for a group
+    void deleteAllByGroup(Group group);
 }

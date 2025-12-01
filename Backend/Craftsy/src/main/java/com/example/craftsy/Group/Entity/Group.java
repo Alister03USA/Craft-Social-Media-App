@@ -1,6 +1,7 @@
 package com.example.craftsy.Group.Entity;
 
 import com.example.craftsy.SignUpDelete.Entity.Users;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -28,6 +29,7 @@ public class Group {
 
     private String description;
 
+    @JsonProperty("isPrivate")
     @Column(name = "is_private")
     private boolean isPrivate = false;
 
@@ -71,7 +73,7 @@ public class Group {
     public void setDescription(String description) { this.description = description; }
 
     public boolean isPrivate() { return isPrivate; }
-    public void setPrivate(boolean aPrivate) { isPrivate = aPrivate; }
+    public void setisPrivate(boolean aPrivate) { isPrivate = aPrivate; }
 
     public String getCraft() { return craft; }
     public void setCraft(String craft) { this.craft = craft; }

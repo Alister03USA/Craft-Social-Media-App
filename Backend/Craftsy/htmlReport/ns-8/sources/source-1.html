@@ -1,0 +1,223 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Group</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.Group.Entity</a>
+</div>
+
+<h1>Coverage Summary for Class: Group (com.example.craftsy.Group.Entity)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Group</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (16/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    67.9%
+  </span>
+  <span class="absValue">
+    (19/28)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">Group$HibernateInstantiator</td>
+  </tr>
+  <tr>
+    <td class="name">Group$HibernateProxy</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (16/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    67.9%
+  </span>
+  <span class="absValue">
+    (19/28)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Group.Entity;
+&nbsp;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.fasterxml.jackson.annotation.JsonProperty;
+&nbsp;import jakarta.persistence.*;
+&nbsp;
+&nbsp;import java.util.HashSet;
+&nbsp;import java.util.Set;
+&nbsp;
+&nbsp;/**
+&nbsp; * Represents a user-created group.
+&nbsp; */
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;groups&quot;)
+&nbsp;public class Group {
+&nbsp;
+&nbsp;    @Id
+&nbsp;    @GeneratedValue(strategy = GenerationType.IDENTITY)
+&nbsp;    private Long id;
+&nbsp;
+&nbsp;
+&nbsp;    @Column(nullable = false, unique = true) // no null and no duplicates
+&nbsp;    private String groupName;
+&nbsp;
+&nbsp;    @ManyToOne //Each group has one admin, but one user can be admin of many groups.
+&nbsp;    @JoinColumn(name = &quot;group_admin_id&quot;, nullable = false) // foreign key
+&nbsp;    private Users groupAdmin;
+&nbsp;
+&nbsp;
+&nbsp;    private String description;
+&nbsp;
+<b class="fc">&nbsp;    @JsonProperty(&quot;isPrivate&quot;)</b>
+&nbsp;    @Column(name = &quot;is_private&quot;)
+&nbsp;    private boolean isPrivate = false;
+&nbsp;
+&nbsp;    private String craft;
+&nbsp;
+<b class="fc">&nbsp;    @ManyToMany</b>
+&nbsp;    @JoinTable( //Creates a join table to manage the many-to-many relationship.
+&nbsp;            name = &quot;group_members&quot;,
+&nbsp;            joinColumns = @JoinColumn(name = &quot;group_id&quot;),
+&nbsp;            inverseJoinColumns = @JoinColumn(name = &quot;user_id&quot;)
+&nbsp;    )
+&nbsp;    private Set&lt;Users&gt; members = new HashSet&lt;&gt;(); //Stores the group members as a set. Initialized to avoid null pointer issues.
+&nbsp;
+<b class="fc">&nbsp;    @Column(name = &quot;member_count&quot;, nullable = false)</b>
+&nbsp;    private int memberCount  = 0;
+&nbsp;
+<b class="fc">&nbsp;    public Group() {</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Group(Long id, String groupName, Users groupAdmin, String description,
+<b class="nc">&nbsp;                 boolean isPrivate, String craft, Set&lt;Users&gt; members) {</b>
+<b class="nc">&nbsp;        this.id = id;</b>
+<b class="nc">&nbsp;        this.groupName = groupName;</b>
+<b class="nc">&nbsp;        this.groupAdmin = groupAdmin;</b>
+<b class="nc">&nbsp;        this.description = description;</b>
+<b class="nc">&nbsp;        this.isPrivate = isPrivate;</b>
+<b class="nc">&nbsp;        this.craft = craft;</b>
+<b class="nc">&nbsp;        this.members = members != null ? members : new HashSet&lt;&gt;();</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    public Long getId() { return id; }</b>
+<b class="nc">&nbsp;    public void setId(Long id) { this.id = id; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public String getGroupName() { return groupName; }</b>
+<b class="fc">&nbsp;    public void setGroupName(String groupName) { this.groupName = groupName; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public Users getGroupAdmin() { return groupAdmin; }</b>
+<b class="fc">&nbsp;    public void setGroupAdmin(Users groupAdmin) { this.groupAdmin = groupAdmin; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public String getDescription() { return description; }</b>
+<b class="fc">&nbsp;    public void setDescription(String description) { this.description = description; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public boolean isPrivate() { return isPrivate; }</b>
+<b class="fc">&nbsp;    public void setisPrivate(boolean aPrivate) { isPrivate = aPrivate; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public String getCraft() { return craft; }</b>
+<b class="fc">&nbsp;    public void setCraft(String craft) { this.craft = craft; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public Set&lt;Users&gt; getMembers() { return members; }</b>
+<b class="fc">&nbsp;    public void setMembers(Set&lt;Users&gt; members) { this.members = members; }</b>
+&nbsp;
+<b class="fc">&nbsp;    public int getMemberCount() { return memberCount; }</b>
+<b class="fc">&nbsp;    public void setMemberCount() { this.memberCount = this.members.size(); }</b>
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-11-29 22:14</div>
+</div>
+</body>
+</html>
