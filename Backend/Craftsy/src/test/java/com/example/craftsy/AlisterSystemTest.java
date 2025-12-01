@@ -90,7 +90,7 @@ public class AlisterSystemTest {
                 .body(containsString("deleted successfully"));
 
 
-        // Missing username → your controller will still save user → expect 200
+        // Missing username
         String userJson2 = """
 {
     "displayName": "Test Display",
@@ -306,10 +306,10 @@ public class AlisterSystemTest {
         String member = "Fuji";        // existing member
         String extraMember = "Extra_" + System.currentTimeMillis();
 
-        // 1. Create extra member
+        // Create extra member
         createUser(extraMember, "Extra User", "Password123");
 
-        // 2. Create group
+        //  Create group
         String groupName = "SystemTestGroup_" + System.currentTimeMillis();
         String groupJson = """
     {
@@ -329,7 +329,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Group created successfully"));
 
-        // 3. Get group ID
+        //  Get group ID
         String groupId = given()
                 .when()
                 .get("/groupId/" + groupName)
@@ -339,7 +339,7 @@ public class AlisterSystemTest {
                 .path("groupId")
                 .toString();
 
-        // 4. Member joins group (PUBLIC)
+        //  Member joins group (PUBLIC)
         given()
                 .when()
                 .post("/" + member + "/join/" + groupId)
@@ -347,7 +347,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("User added successfully"));
 
-        // 4A. Verify notification created for admin
+        //  Verify notification created for admin
         given()
                 .when()
                 .get("/notifications/" + admin)
@@ -355,7 +355,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("size()", greaterThanOrEqualTo(1));
 
-        // 5. Admin adds extra member
+        //  Admin adds extra member
         given()
                 .when()
                 .post("/" + groupId + "/" + admin + "/add-member/" + extraMember)
@@ -363,7 +363,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Member added successfully"));
 
-        // 5A. Verify notification for extraMember
+        //  Verify notification for extraMember
         given()
                 .when()
                 .get("/notifications/" + extraMember)
@@ -371,7 +371,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("size()", greaterThanOrEqualTo(0));
 
-        // 6. Verify members list (member count logic)
+        //  Verify members list
         given()
                 .when()
                 .get("/" + groupId + "/members")
@@ -380,7 +380,7 @@ public class AlisterSystemTest {
                 .body("totalMembers", equalTo(3))
                 .body("members.username", hasItems(admin, member, extraMember));
 
-        // 7. Update group by admin
+        //  Update group by admin
         String updateJson = """
     {
         "description": "Updated description by admin"
@@ -396,7 +396,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Group updated successfully"));
 
-        // 8. Transfer admin to Fuji
+        //  Transfer admin to Fuji
         given()
                 .when()
                 .put("/" + admin + "/" + groupId + "/transfer-admin/" + member)
@@ -404,7 +404,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Admin transferred successfully"));
 
-        // 8A. Verify notification for new admin (Fuji)
+        //  Verify notification for new admin (Fuji)
         given()
                 .when()
                 .get("/notifications/" + member)
@@ -412,7 +412,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("size()", greaterThanOrEqualTo(1));
 
-        // 9. Update group as new admin
+        //  Update group as new admin
         String updateJson2 = """
     {
         "description": "Updated description by new admin"
@@ -428,7 +428,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Group updated successfully"));
 
-        // 10. Extra member leaves group
+        //  Extra member leaves group
         given()
                 .when()
                 .delete("/" + extraMember + "/leave/" + groupId)
@@ -436,7 +436,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("You have left the group successfully"));
 
-        // 10A. Verify member count now 2
+        //  Verify member count now 2
         given()
                 .when()
                 .get("/" + groupId + "/members")
@@ -444,14 +444,14 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("totalMembers", equalTo(2));
 
-        // 11. New admin tries to remove themselves → should fail
+        // New admin tries to remove themselves → should fail
         given()
                 .when()
                 .delete("/" + groupId + "/" + member + "/removeMember/" + member)
                 .then()
                 .statusCode(400);
 
-        // 12. New admin removes previous admin (alister_gan)
+        //  New admin removes previous admin (alister_gan)
         given()
                 .when()
                 .delete("/" + groupId + "/" + member + "/removeMember/" + admin)
@@ -459,7 +459,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Member removed successfully"));
 
-        // 12A. Verify member count = 1
+        // Verify member count = 1
         given()
                 .when()
                 .get("/" + groupId + "/members")
@@ -467,7 +467,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("totalMembers", equalTo(1));
 
-        // 13. Delete group
+        // Delete group
         given()
                 .when()
                 .delete("/" + member + "/delete/" + groupId)
@@ -483,10 +483,10 @@ public class AlisterSystemTest {
         String member = "Fuji";
         String extraMember = "Extra_" + System.currentTimeMillis();
 
-        // 1. Create the extra member
+        //  Create the extra member
         createUser(extraMember, "Extra User", "Password123");
 
-        // 2. Create a private group
+        //  Create a private group
         String groupName = "PrivateGroupTest_" + System.currentTimeMillis();
         String groupJson = """
     {
@@ -506,7 +506,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Group created successfully"));
 
-        // 3. Get Group ID
+        //  Get Group ID
         String groupId = given()
                 .when()
                 .get("/groupId/" + groupName)
@@ -516,7 +516,7 @@ public class AlisterSystemTest {
                 .path("groupId")
                 .toString();
 
-        // 4. Member sends join request to private group
+        //  Member sends join request to private group
         String requestId = given()
                 .when()
                 .post("/" + member + "/join/" + groupId)
@@ -528,7 +528,7 @@ public class AlisterSystemTest {
                 .path("requestId")
                 .toString();
 
-        // 5. Admin accepts the join request
+        //  Admin accepts the join request
         given()
                 .when()
                 .put("/joinRequest/" + requestId + "/true")
@@ -536,7 +536,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("User added to group"));
 
-        // 6. Verify member list now contains the new member
+        //  Verify member list now contains the new member
         given()
                 .when()
                 .get("/" + groupId + "/members")
@@ -544,13 +544,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("members.username", hasItem(member));
 
-        // 7. delete group
-//        given()
-//                .when()
-//                .delete("/" + admin + "/delete/" + groupId)
-//                .then()
-//                .statusCode(200)
-//                .body("message", equalTo("Group deleted successfully"));
+
     }
 
 
@@ -564,7 +558,7 @@ public class AlisterSystemTest {
         String admin = "alister_gan";
         String member = "Fuji";
 
-        // 1. Create a group for messaging
+        //  Create a group for messaging
         String groupName = "SystemTestMessageGroup_" + System.currentTimeMillis();
         String groupJson = """
         {
@@ -584,7 +578,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("Group created successfully"));
 
-        // 2. Get group ID
+        //  Get group ID
         Long groupId = given()
                 .when()
                 .get("/groupId/" + groupName)
@@ -595,7 +589,7 @@ public class AlisterSystemTest {
                 .getLong("groupId");
 
 
-        // 3. Member joins group
+        // Member joins group
         given()
                 .when()
                 .post("/" + member + "/join/" + groupId)
@@ -603,7 +597,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("message", equalTo("User added successfully"));
 
-        // 4. Upload a media/image message
+        // Upload a media/image message
         File testImage = new File("uploads/tutorials/1760579127952_sculptor-artist-working-with-clay-studio.jpg");
         Long messageId = given()
                 .multiPart("file", testImage, "image/jpg")
@@ -615,7 +609,8 @@ public class AlisterSystemTest {
                 .extract()
                 .jsonPath()
                 .getLong("messageId");
-        // 5. Fetch message history
+
+        // Fetch message history
         given()
                 .when()
                 .get("/groupMessage/" + admin + "/" + groupId + "/history")
@@ -625,7 +620,7 @@ public class AlisterSystemTest {
                 .body("[0].sender.username", equalTo(admin))
                 .body("[0].mediaUrl", notNullValue());
 
-        // 6. Retrieve the uploaded image
+        // Retrieve the uploaded image
         given()
                 .when()
                 .get("/groupMessage/image/" + messageId)
@@ -633,7 +628,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .contentType(startsWith("image/"));
 
-        // 7. Test unauthorized access to history
+        //  Test unauthorized access to history
         String outsider = "Outsider_" + System.currentTimeMillis();
         createUser(outsider, "Outsider User", "Password123");
 
@@ -644,7 +639,7 @@ public class AlisterSystemTest {
                 .statusCode(403)
                 .body("error", containsString("not a member"));
 
-        // 8. Test image retrieval
+        //  Test image retrieval
         given()
                 .when()
                 .get("/groupMessage/image/" + messageId)
@@ -652,7 +647,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .contentType(startsWith("image/"));
 
-        // 9. Test comments extraction
+        //  Test comments extraction
         given()
                 .when()
                 .get("/groupMessage/" + messageId + "/comments")
@@ -661,7 +656,7 @@ public class AlisterSystemTest {
                 .body("$", empty());
 
 
-// 10. Delete group
+        // Delete group
         given()
                 .when()
                 .delete("/" + admin + "/delete/" + groupId)
@@ -727,7 +722,7 @@ public class AlisterSystemTest {
 
     @Test
     public void testSearchProjects() {
-        String query = "Craft Project";
+        String query = "test";
 
         given()
                 .contentType(ContentType.JSON)
@@ -770,7 +765,7 @@ public class AlisterSystemTest {
         String titleFile = "SystemTestTutorial_File_" + System.currentTimeMillis();
 
 
-        // CREATE tutorial (URL upload)
+        // create tutorial (URL upload)
         given()
                 .contentType(ContentType.URLENC)
                 .formParam("username", username)
@@ -784,7 +779,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body(equalTo("Tutorial uploaded successfully with URL!"));
 
-        // SEARCH tutorial to get its ID
+        // Search tutorial to get its ID
         Long id =
                 given()
                         .queryParam("query", title)
@@ -797,7 +792,7 @@ public class AlisterSystemTest {
                         .jsonPath().getLong("[0].id");
 
 
-        // UPDATE tutorial (without file)
+        // update tutorial (without file)
         String updatedTitle = title + "_UPDATED";
         String updatedDescription = "Updated description for system test tutorial";
 
@@ -810,7 +805,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body(equalTo("Tutorial Updated successfully!"));
 
-        // VERIFY tutorial was updated
+        // verify tutorial was updated
         given()
                 .queryParam("query", updatedTitle)
                 .queryParam("username", username)
@@ -821,7 +816,7 @@ public class AlisterSystemTest {
                 .body("title", hasItem(updatedTitle))
                 .body("description", hasItem(updatedDescription));
 
-        // DELETE tutorial
+        // Delete tutorial
         given()
                 .when()
                 .delete("/tutorial/" + id)
@@ -858,7 +853,7 @@ public class AlisterSystemTest {
                 .getLong("[0].id");
 
 
-        // ==================== 3. Fetch local file ====================
+        //  Fetch local file
         given()
                 .when()
                 .get("/tutorial/" + fileTutorialId + "/file")
@@ -884,7 +879,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body(equalTo("Tutorial uploaded successfully with URL!"));
 
-// SEARCH tutorial to get its ID
+        // Search tutorial to get its ID
         Long privateTutorialId = given()
                 .queryParam("query", privateTitle)
                 .queryParam("username", username)
@@ -942,7 +937,7 @@ public class AlisterSystemTest {
         String receiverUsername = "Quinn";
         Long notificationId;
 
-        // 1. CREATE a notification
+        // CREATE a notification
         notificationId = given()
                 .queryParam("receiverUsername", receiverUsername)
                 .queryParam("senderUsername", senderUsername)
@@ -959,7 +954,7 @@ public class AlisterSystemTest {
                 .jsonPath()
                 .getLong("id");
 
-        // 2. GET unread notifications for receiver
+        // GET unread notifications for receiver
         List<Map<String, Object>> unreadNotifications = given()
                 .when()
                 .get("/notifications/" + receiverUsername)
@@ -978,7 +973,7 @@ public class AlisterSystemTest {
         assertNotNull(fetchedNotification);
         assertTrue(fetchedNotification.getIsRead());
 
-        // 3. CREATE another notification for testing markAsRead
+        // CREATE another notification for testing markAsRead
         Long notifToMarkId = given()
                 .queryParam("receiverUsername", receiverUsername)
                 .queryParam("title", "MarkAsRead Test")
@@ -991,7 +986,7 @@ public class AlisterSystemTest {
                 .jsonPath()
                 .getLong("id");
 
-        // 4. MARK the notification as read via PUT
+        // MARK the notification as read via PUT
         given()
                 .when()
                 .put("/notifications/" + notifToMarkId + "/read")
@@ -999,7 +994,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body(equalTo("Notification marked as read"));
 
-        // 5. Verify in repository
+        // Verify in repository
         Notification markedNotification = notificationRepository.findById(notifToMarkId).orElse(null);
         assertNotNull(markedNotification);
         assertTrue(markedNotification.getIsRead());
@@ -1014,7 +1009,7 @@ public class AlisterSystemTest {
 
         String username = "Quinn";
 
-        // 1. GET user's points
+        // GET user's points
         Map<String, Object> pointsResponse =
                 given()
                         .pathParam("username", username)
@@ -1031,7 +1026,7 @@ public class AlisterSystemTest {
 
         Integer initialPoints = (Integer) pointsResponse.get("totalPoints");
 
-        // 2. GET user's points history
+        // GET user's points history
         given()
                 .pathParam("username", username)
                 .when()
@@ -1040,7 +1035,7 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("$", notNullValue());  // List of history events
 
-        // 3. GET leaderboard
+        // GET leaderboard
         given()
                 .when()
                 .get("/points/leaderboard")
@@ -1050,7 +1045,7 @@ public class AlisterSystemTest {
                 .body("[0].username", notNullValue())
                 .body("[0].totalPoints", notNullValue());
 
-        // 4. GET tier information
+        // GET tier information
         given()
                 .when()
                 .get("/points/tiers")
@@ -1101,19 +1096,19 @@ public class AlisterSystemTest {
                 .jsonPath()
                 .getLong("[0].id"); // get ID from JSON search result
 
-// 3. Award points via PointsService for this tutorial
+        // Award points via PointsService for this tutorial
         pointsService.awardPointsForTutorial(user, tutorialId);
 
-        // 4. Award points for a post
+        // Award points for a post
         pointsService.awardPointsForPost(user, 101L);
 
-        // 5. Award points for a comment
+        // Award points for a comment
         pointsService.awardPointsForComment(user, 201L);
 
-        // 6. Award points for a challenge completion
+        // Award points for a challenge completion
         pointsService.awardPointsForChallengeCompletion(user, 301L);
 
-        // 7. GET user's points
+        // GET user's points
         Map<String, Object> userPoints =
                 given()
                         .pathParam("username", username)
@@ -1131,7 +1126,7 @@ public class AlisterSystemTest {
         assertTrue((Integer) userPoints.get("commentsCount") > 0);
         assertNotNull(userPoints.get("currentTier"));
 
-        // 8. GET user's PointsHistory
+        // GET user's PointsHistory
         List<Map<String, Object>> pointsHistory =
                 given()
                         .pathParam("username", username)
@@ -1148,7 +1143,7 @@ public class AlisterSystemTest {
 
 
 
-        // 9. GET leaderboard
+        // GET leaderboard
         given()
                 .when()
                 .get("/points/leaderboard")
@@ -1159,7 +1154,7 @@ public class AlisterSystemTest {
                 .body("[0].totalPoints", notNullValue())
                 .body("[0].tier", notNullValue());
 
-        // 10. GET tier info
+        // GET tier info
         given()
                 .when()
                 .get("/points/tiers")
