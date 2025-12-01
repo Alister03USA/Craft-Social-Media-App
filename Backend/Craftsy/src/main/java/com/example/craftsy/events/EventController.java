@@ -372,13 +372,18 @@ public class EventController {
                     content = @Content(schema = @Schema(implementation = Event.class))),
             @ApiResponse(responseCode = "404", description = "Event not found")
     })
-    @PostMapping("/event/{eventID}/comment")
+    @PostMapping("/event/{eventID}/{username}/comment")
     Event addComment(@Parameter(description = "ID of the event") @PathVariable Long eventID,
+                     @Parameter(description = "username of user commenting") @PathVariable String username,
                      @Parameter(description = "Comment text") @RequestBody String text){
         Event event = eventRepo.findById(eventID)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        Users user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         LocalDateTime time = LocalDateTime.now();
         EventComment comment = new EventComment(text.replaceAll("^\"|\"$", ""), event, time);
+        comment.setUser(user);
         eventCommentRepo.save(comment);
         return event;
     }
