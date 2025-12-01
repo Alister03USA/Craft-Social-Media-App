@@ -232,9 +232,6 @@ public class FeedController {
         if(projectUpdated.getProjectDesc() != null){
             project.setProjectDesc(projectUpdated.getProjectDesc());
         }
-        if(projectUpdated.getProjectPic() != null){
-            project.setProjectPic(projectUpdated.getProjectPic());
-        }
         if(projectUpdated.getProjectType() != null){
             project.setProjectType(projectUpdated.getProjectType());
         }

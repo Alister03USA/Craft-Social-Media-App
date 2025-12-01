@@ -16,11 +16,7 @@ public class FeedComments {
 
 
     @ManyToOne
-    @JoinColumn(
-            name = "projectName", //name of the foreign key column in the 'patternsComments' table
-            nullable = false, //must have username column
-            referencedColumnName = "projectName" //column name in the 'patterns' table to reference
-    )
+    @JoinColumn(name = "feed_id", nullable = false)
     @JsonBackReference
     private Feed feed;
 

@@ -175,7 +175,6 @@ public class SearchController {
             map.put("projectType", p.getProjectType());
             map.put("supplies", p.getSupplies());
             map.put("projectDesc", p.getProjectDesc());
-            map.put("projectPic", p.getProjectPic());
             map.put("visibility", p.getVisibility());
             map.put("date", p.getDate());
             result.add(map);
