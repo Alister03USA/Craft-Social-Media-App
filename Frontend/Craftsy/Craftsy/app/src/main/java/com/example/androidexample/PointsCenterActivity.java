@@ -26,8 +26,17 @@ public class PointsCenterActivity extends AppCompatActivity {
         viewPager.setAdapter(pagerAdapter);
 
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            if (position == 0) tab.setText("Leaderboard");
-            else tab.setText("Tiers");
+            switch (position) {
+                case 0:
+                    tab.setText("Leaderboard");
+                    break;
+                case 1:
+                    tab.setText("Tiers");
+                    break;
+                case 2:
+                    tab.setText("History"); // new tab
+                    break;
+            }
         }).attach();
     }
 }

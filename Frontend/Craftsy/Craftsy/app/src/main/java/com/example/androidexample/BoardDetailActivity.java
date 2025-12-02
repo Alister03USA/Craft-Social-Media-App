@@ -11,7 +11,11 @@ import android.widget.TextView;
 import android.widget.ImageButton;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+
 import android.content.Intent;
+import android.widget.Toast;
+
 import org.json.JSONObject;
 
 public class BoardDetailActivity extends AppCompatActivity {
@@ -103,21 +107,26 @@ public class BoardDetailActivity extends AppCompatActivity {
     private void saveDescription() {
         String url = BASE_URL + "/board/" + boardId + "/description";
 
-        String body = txtDescription.getText().toString();
+        String description = txtDescription.getText().toString();
 
-        JsonObjectRequest request;
-        try {
-            request = new JsonObjectRequest(
-                    Request.Method.PUT,
-                    url,
-                    new org.json.JSONObject().put("description", body),
-                    response -> System.out.println("Updated"),
-                    error -> System.out.println("Error updating description")
-            );
-        } catch (org.json.JSONException e) {
-            System.out.println("Error creating JSON body: " + e.getMessage());
-            return;
-        }
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                response -> System.out.println("Updated"),
+                error -> System.out.println("Error updating description")
+        ) {
+            @Override
+            public byte[] getBody() {
+                // JSON string literal must include surrounding quotes
+                return ("\"" + description + "\"").getBytes();
+            }
+
+            @Override
+            public String getBodyContentType() {
+                return "application/json";
+            }
+        };
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
@@ -125,12 +134,17 @@ public class BoardDetailActivity extends AppCompatActivity {
     private void deleteBoard() {
         String url = BASE_URL + "/board/" + boardId;
 
-        JsonObjectRequest request = new JsonObjectRequest(
+        StringRequest request = new StringRequest(
                 Request.Method.DELETE,
                 url,
-                null,
-                response -> finish(),
-                error -> System.out.println("Error deleting board")
+                response -> {
+                    Toast.makeText(this, "Board deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                },
+                error -> {
+                    System.out.println("Error deleting board: " + error);
+                    Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show();
+                }
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);

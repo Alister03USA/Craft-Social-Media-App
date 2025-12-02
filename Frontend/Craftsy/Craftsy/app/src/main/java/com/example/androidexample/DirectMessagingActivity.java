@@ -103,10 +103,6 @@ public class DirectMessagingActivity extends AppCompatActivity implements Messag
         chatName = getIntent().getStringExtra("chatName");
         currentUser = getIntent().getStringExtra("username");
 
-        if (currentUser == null || currentUser.isEmpty()) {
-            currentUser = "Fuji";
-            Toast.makeText(this, "No active user detected. Using fallback Fuji", Toast.LENGTH_SHORT).show();
-        }
 
         tvTitle = findViewById(R.id.tvTitle);
         etInput = findViewById(R.id.etInput);

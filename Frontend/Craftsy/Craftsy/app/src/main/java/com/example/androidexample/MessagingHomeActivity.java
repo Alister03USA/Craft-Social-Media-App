@@ -66,14 +66,10 @@ public class MessagingHomeActivity extends AppCompatActivity {
         rvGroups.setAdapter(groupAdapter);
 
         currentUsername = getIntent().getStringExtra("username");
-        if (currentUsername == null || currentUsername.isEmpty()) {
-            currentUsername = "Fuji";
-            Toast.makeText(this, "⚠️ No user passed, using default 'Fuji'", Toast.LENGTH_SHORT).show();
-        }
-        Log.d(TAG, "👤 Active user: " + currentUsername);
+        Log.d(TAG, " Active user: " + currentUsername);
 
         newChatBtn.setOnClickListener(v -> {
-            Log.d(TAG, "🟢 Opening NewChatActivity for " + currentUsername);
+            Log.d(TAG, " Opening NewChatActivity for " + currentUsername);
             Intent i = new Intent(this, NewChatActivity.class);
             i.putExtra("username", currentUsername);
             startActivity(i);
@@ -111,7 +107,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
     private void fetchConversations() {
         progressBar.setVisibility(View.VISIBLE);
         String url = BASE_URL + "/messages/convos/" + currentUsername;
-        Log.d(TAG, "🌍 GET " + url);
+        Log.d(TAG, "GET " + url);
 
         JsonArrayRequest req = new JsonArrayRequest(Request.Method.GET, url, null,
                 res -> {
@@ -120,7 +116,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
                 },
                 err -> {
                     progressBar.setVisibility(View.GONE);
-                    Log.e(TAG, "❌ JSON request failed, trying fallback", err);
+                    Log.e(TAG, " JSON request failed, trying fallback", err);
                     fallbackStringRequest(url);
                 });
 
@@ -179,7 +175,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
                 if (item.isGroup()) groups.add(item); else direct.add(item);
 
             } catch (JSONException e) {
-                Log.e(TAG, "⚠️ Parse error", e);
+                Log.e(TAG, " Parse error", e);
             }
         }
 
@@ -189,7 +185,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
 
     /* ==================== OPEN CHAT ==================== */
     private void openConversation(ConversationItem item) {
-        Log.d(TAG, "💬 Opening conversation: " + item.getConvoId());
+        Log.d(TAG, " Opening conversation: " + item.getConvoId());
         Intent i = new Intent(this, DirectMessagingActivity.class);
         i.putExtra("convoId", item.getConvoId());
         i.putExtra("chatName", item.getName());
@@ -215,7 +211,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
                                 groupAdapter.notifyDataSetChanged();
                             },
                             err -> {
-                                Log.e(TAG, "❌ Failed to delete conversation", err);
+                                Log.e(TAG, " Failed to delete conversation", err);
                                 Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
                             });
                     VolleySingleton.getInstance(this).addToRequestQueue(req);

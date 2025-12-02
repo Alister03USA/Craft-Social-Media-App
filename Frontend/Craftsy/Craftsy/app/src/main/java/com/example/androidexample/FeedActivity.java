@@ -40,11 +40,8 @@ public class FeedActivity extends BaseActivity {
         recyclerViewFeed.setLayoutManager(new LinearLayoutManager(this));
 
         loggedInUsername = getIntent().getStringExtra("username");
-        if (loggedInUsername == null || loggedInUsername.trim().isEmpty()) {
-            loggedInUsername = "Fuji"; // fallback
-        }
 
-        // ✅ Add Post Button
+        //  Add Post Button
         findViewById(R.id.btnAddPost).setOnClickListener(v -> {
             Intent intent = new Intent(this, FeedCRUDActivity.class);
             intent.putExtra("mode", "add");
@@ -52,7 +49,7 @@ public class FeedActivity extends BaseActivity {
             startActivity(intent);
         });
 
-        // ✅ New Messages Button
+        //  New Messages Button
         findViewById(R.id.btnMessages).setOnClickListener(v -> {
             Intent intent = new Intent(this, MessagingHomeActivity.class);
             intent.putExtra("username", loggedInUsername);
