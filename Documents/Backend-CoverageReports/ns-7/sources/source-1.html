@@ -1,0 +1,825 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > GroupController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.Group.Controller</a>
+</div>
+
+<h1>Coverage Summary for Class: GroupController (com.example.craftsy.Group.Controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">GroupController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    61.6%
+  </span>
+  <span class="absValue">
+    (53/86)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    85.4%
+  </span>
+  <span class="absValue">
+    (234/274)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Group.Controller;
+&nbsp;
+&nbsp;import com.example.craftsy.Group.Entity.Group;
+&nbsp;import com.example.craftsy.Group.Entity.GroupJoinRequest;
+&nbsp;import com.example.craftsy.Group.Entity.GroupMessage;
+&nbsp;import com.example.craftsy.Group.Repository.GroupJoinRequestRepository;
+&nbsp;import com.example.craftsy.Group.Repository.GroupMessageRepository;
+&nbsp;import com.example.craftsy.Group.Repository.GroupRepository;
+&nbsp;import com.example.craftsy.Notification.Entity.Notification;
+&nbsp;import com.example.craftsy.Notification.NotificationWebSocket;
+&nbsp;import com.example.craftsy.Notification.Repository.NotificationRepository;
+&nbsp;import com.example.craftsy.PointsSystem.PointsService;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponse;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponses;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;import java.net.URLDecoder;
+&nbsp;import java.nio.charset.StandardCharsets;
+&nbsp;import java.util.*;
+&nbsp;
+&nbsp;@RestController
+<b class="fc">&nbsp;public class GroupController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private GroupRepository groupRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private UserRepository userRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private GroupJoinRequestRepository groupJoinRequestRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private NotificationRepository notificationRepository;
+&nbsp;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private PointsService pointsService;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private GroupMessageRepository groupMessageRepository;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * POST /{adminUsername}/create/
+&nbsp;     * This endpoint lets a user create a new group.
+&nbsp;     * The user who creates the group becomes the admin automatically.
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Create a new group&quot;,
+&nbsp;            description = &quot;Allows a user to create a new group. The creator becomes the group admin automatically. Only EXPERT or CHAMPION users can create groups.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Group created successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Admin not found or group name already exists&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;User tier too low to create a group&quot;)
+&nbsp;    })
+&nbsp;    @PostMapping(&quot;/{adminUsername}/create&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; createGroup(
+&nbsp;            @PathVariable String adminUsername, // takes value from url path to the parameter
+&nbsp;            @RequestBody Group groupRequest) { // convert the json body from client to Group object
+&nbsp;
+&nbsp;        // Find the user who wants to be the admin
+<b class="fc">&nbsp;        Optional&lt;Users&gt; adminOpt = userRepository.findByUsername(adminUsername);</b>
+<b class="pc">&nbsp;        if (adminOpt.isEmpty()) {</b>
+&nbsp;            // If the user doesn&#39;t exist, we can&#39;t create the group
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Admin not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Users admin = adminOpt.get();</b>
+&nbsp;
+&nbsp;//        var pointsInfo = pointsService.getUserPoints(admin);
+&nbsp;//        if (pointsInfo == null) {
+&nbsp;//            return ResponseEntity.status(500).body(Map.of(&quot;message&quot;, &quot;User points info unavailable&quot;));
+&nbsp;//        }
+&nbsp;//
+&nbsp;//        // Get user tier
+&nbsp;//        String adminTier = pointsService.getUserPoints(admin).getCurrentTier();
+&nbsp;//
+&nbsp;//        // Only allow EXPERT or CHAMPION users to upload
+&nbsp;//        if (!(adminTier.equals(&quot;EXPERT&quot;) || adminTier.equals(&quot;CHAMPION&quot;))) {
+&nbsp;//            return ResponseEntity.status(403).body(Map.of(&quot;message&quot;, &quot;You must be EXPERT level or higher to upload tutorials.&quot;));
+&nbsp;//
+&nbsp;//        }
+&nbsp;
+&nbsp;        // Check if a group with the same name already exists
+<b class="pc">&nbsp;        if (groupRepository.findByGroupName(groupRequest.getGroupName()).isPresent()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group name already exists&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Create the new group object
+<b class="fc">&nbsp;        Group group = new Group();</b>
+<b class="fc">&nbsp;        group.setGroupName(groupRequest.getGroupName());</b>
+<b class="fc">&nbsp;        group.setGroupAdmin(admin); // Admin is the creator</b>
+<b class="fc">&nbsp;        group.setDescription(groupRequest.getDescription());</b>
+<b class="fc">&nbsp;        group.setisPrivate(groupRequest.isPrivate());</b>
+<b class="fc">&nbsp;        group.setCraft(groupRequest.getCraft());</b>
+<b class="fc">&nbsp;        group.setMembers(new HashSet&lt;&gt;());</b>
+&nbsp;
+&nbsp;        // Add the admin as the first member
+<b class="fc">&nbsp;        group.getMembers().add(admin);</b>
+&nbsp;
+&nbsp;        // Save the group to the database
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Group created successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * POST /{groupId}/{admin}/add-member/{username}
+&nbsp;     * @param groupId
+&nbsp;     * @param username
+&nbsp;     * @param admin
+&nbsp;     * @return
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Add member to group&quot;,
+&nbsp;            description = &quot;Allows the group admin to add a new member to the group.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Member added successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Group, user, or admin not found, or user already in group&quot;)
+&nbsp;    })
+&nbsp;    @PostMapping(&quot;/{groupId}/{admin}/add-member/{username}&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; addMember(
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable String username,
+&nbsp;            @PathVariable String admin) {
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;Group&gt; groupOpt = groupRepository.findById(groupId);</b>
+<b class="fc">&nbsp;        Optional&lt;Users&gt; userOpt = userRepository.findByUsername(username);</b>
+<b class="fc">&nbsp;        Optional&lt;Users&gt; adminOpt = userRepository.findByUsername(admin);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group or user not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupOpt.get();</b>
+<b class="fc">&nbsp;        Users user = userOpt.get();</b>
+<b class="fc">&nbsp;        Users currentUser = adminOpt.get();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (!group.getGroupAdmin().equals(currentUser)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Only the group admin can add members&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (group.getMembers().contains(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;User already in group&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        group.getMembers().add(user);</b>
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Member added successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * GET /{groupId}/members
+&nbsp;     * Retrieve all members of a group.
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Get group members&quot;,
+&nbsp;            description = &quot;Retrieve all members of a specific group.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Returns a list of group members&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Group not found&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/{groupId}/members&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; getGroupMembers(@PathVariable Long groupId) {
+<b class="fc">&nbsp;        Optional&lt;Group&gt; groupOpt = groupRepository.findById(groupId);</b>
+<b class="pc">&nbsp;        if (groupOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupOpt.get();</b>
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; membersList = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (Users user : group.getMembers()) {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;id&quot;, user.getId());</b>
+<b class="fc">&nbsp;            map.put(&quot;username&quot;, user.getUsername());</b>
+<b class="fc">&nbsp;            map.put(&quot;email&quot;, user.getEmail());</b>
+<b class="fc">&nbsp;            membersList.add(map);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(</b>
+<b class="fc">&nbsp;                &quot;groupId&quot;, group.getId(),</b>
+<b class="fc">&nbsp;                &quot;groupName&quot;, group.getGroupName(),</b>
+<b class="fc">&nbsp;                &quot;totalMembers&quot;, membersList.size(),</b>
+&nbsp;                &quot;members&quot;, membersList
+&nbsp;        ));
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * GET /groupId/{groupName}
+&nbsp;     * Retrieve the group ID by its name.
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Get group ID by name&quot;,
+&nbsp;            description = &quot;Retrieve a group&#39;s ID using its name.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Returns the group ID and name&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Group not found&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/groupId/{groupName}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; getGroupIdByName(@PathVariable String groupName) {
+&nbsp;        // Decode in case the name has spaces or special characters in the URL
+<b class="fc">&nbsp;        String decodedName = URLDecoder.decode(groupName, StandardCharsets.UTF_8);</b>
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;Group&gt; groupOpt = groupRepository.findByGroupName(decodedName);</b>
+<b class="pc">&nbsp;        if (groupOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupOpt.get();</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(</b>
+<b class="fc">&nbsp;                &quot;groupId&quot;, group.getId(),</b>
+<b class="fc">&nbsp;                &quot;groupName&quot;, group.getGroupName()</b>
+&nbsp;        ));
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * POST  /{username}/join/{groupId}
+&nbsp;     * Public Group - Join directly
+&nbsp;     * Private Group - Sent request (only can be accepted/Declined by Admin)
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Join a group&quot;,
+&nbsp;            description = &quot;Allows a user to join a group. Public groups are joined directly; private groups require admin approval.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User joined successfully or request sent&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Group or user not found, or user already in group/request exists&quot;)
+&nbsp;    })
+&nbsp;    @PostMapping(&quot;/{username}/join/{groupId}&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; joinGroup(
+&nbsp;            @PathVariable String username,
+&nbsp;            @PathVariable Long groupId) {
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;Group&gt; groupOpt = groupRepository.findById(groupId);</b>
+<b class="fc">&nbsp;        Optional&lt;Users&gt; userOpt = userRepository.findByUsername(username);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (groupOpt.isEmpty() || userOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group or user not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupOpt.get();</b>
+<b class="fc">&nbsp;        Users user = userOpt.get();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (group.getMembers().contains(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;User already in group&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;        if (!group.isPrivate()) {</b>
+<b class="fc">&nbsp;            group.getMembers().add(user);</b>
+<b class="fc">&nbsp;            group.setMemberCount();</b>
+<b class="fc">&nbsp;            groupRepository.save(group);</b>
+&nbsp;
+<b class="fc">&nbsp;            for (Users member : group.getMembers()) {</b>
+<b class="fc">&nbsp;                if (member.equals(user)) continue;</b>
+<b class="fc">&nbsp;                Notification notif = new Notification();</b>
+<b class="fc">&nbsp;                notif.setUser(member);</b>
+<b class="fc">&nbsp;                notif.setTitle(&quot;New Member Joined&quot;);</b>
+<b class="fc">&nbsp;                notif.setReferenceId(group.getId());</b>
+<b class="fc">&nbsp;                notif.setMessage(user.getUsername() + &quot; joined &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;                notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;                notif.setIsRead(false);</b>
+<b class="fc">&nbsp;                notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;                NotificationWebSocket.pushNotification(member.getUsername(), notif);</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;User added successfully&quot;));</b>
+&nbsp;        } else {
+<b class="pc">&nbsp;            if (groupJoinRequestRepository.findByGroupAndUser(group, user).isPresent()) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Request already sent&quot;));</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            GroupJoinRequest request = new GroupJoinRequest();</b>
+<b class="fc">&nbsp;            request.setGroup(group);</b>
+<b class="fc">&nbsp;            request.setUser(user);</b>
+<b class="fc">&nbsp;            groupJoinRequestRepository.save(request);</b>
+&nbsp;
+<b class="fc">&nbsp;            Notification notif = new Notification();</b>
+<b class="fc">&nbsp;            notif.setUser(group.getGroupAdmin());</b>
+<b class="fc">&nbsp;            notif.setTitle(&quot;New Join Request&quot;);</b>
+<b class="fc">&nbsp;            notif.setMessage(user.getUsername() + &quot; wants to join &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;            notif.setReferenceId(request.getId());</b>
+<b class="fc">&nbsp;            notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;            notif.setIsRead(false);</b>
+<b class="fc">&nbsp;            notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;            NotificationWebSocket.pushNotification(group.getGroupAdmin().getUsername(), notif);</b>
+&nbsp;
+<b class="fc">&nbsp;            return ResponseEntity.ok(Map.of(</b>
+&nbsp;                    &quot;message&quot;, &quot;Join request sent&quot;,
+<b class="fc">&nbsp;                    &quot;requestId&quot;, request.getId().toString() ));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * PUT - /joinRequest/{requestId}/{accepted}
+&nbsp;     * Private Group only - Admin to accept or decline the join request
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Handle join request&quot;,
+&nbsp;            description = &quot;Admin can accept or decline a join request for private groups.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Request handled successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Request not found&quot;)
+&nbsp;    })
+&nbsp;    @PutMapping(&quot;/joinRequest/{requestId}/{accepted}&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; handleJoinRequest(
+&nbsp;            @PathVariable Long requestId,
+&nbsp;            @PathVariable boolean accepted) {
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;GroupJoinRequest&gt; requestOpt = groupJoinRequestRepository.findById(requestId);</b>
+<b class="pc">&nbsp;        if (requestOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Join request not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        GroupJoinRequest request = requestOpt.get();</b>
+<b class="fc">&nbsp;        Group group = request.getGroup();</b>
+<b class="fc">&nbsp;        Users user = request.getUser();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (accepted) {</b>
+<b class="fc">&nbsp;            group.getMembers().add(user);</b>
+<b class="fc">&nbsp;            group.setMemberCount();</b>
+<b class="fc">&nbsp;            groupRepository.save(group);</b>
+<b class="fc">&nbsp;            request.setAccepted(true);</b>
+<b class="fc">&nbsp;            groupJoinRequestRepository.save(request);</b>
+&nbsp;
+&nbsp;            // Notify the new user
+<b class="fc">&nbsp;            Notification userNotif = new Notification();</b>
+<b class="fc">&nbsp;            userNotif.setUser(user);</b>
+<b class="fc">&nbsp;            userNotif.setTitle(&quot;Join Request Accepted&quot;);</b>
+<b class="fc">&nbsp;            userNotif.setMessage(&quot;You have been added to group: &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;            userNotif.setReferenceId(group.getId());</b>
+<b class="fc">&nbsp;            userNotif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;            userNotif.setIsRead(false);</b>
+<b class="fc">&nbsp;            notificationRepository.save(userNotif);</b>
+<b class="fc">&nbsp;            NotificationWebSocket.pushNotification(user.getUsername(), userNotif);</b>
+&nbsp;
+&nbsp;            // Notify all other group members
+<b class="fc">&nbsp;            for (Users member : group.getMembers()) {</b>
+<b class="fc">&nbsp;                if (member.equals(user)) continue; // skip the new user</b>
+&nbsp;
+<b class="fc">&nbsp;                Notification notif = new Notification();</b>
+<b class="fc">&nbsp;                notif.setUser(member);</b>
+<b class="fc">&nbsp;                notif.setTitle(&quot;New Member Joined&quot;);</b>
+<b class="fc">&nbsp;                notif.setMessage(user.getUsername() + &quot; has joined &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;                notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;                notif.setIsRead(false);</b>
+<b class="fc">&nbsp;                notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;                NotificationWebSocket.pushNotification(member.getUsername(), notif);</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;User added to group&quot;));</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            groupJoinRequestRepository.delete(request);</b>
+&nbsp;
+<b class="nc">&nbsp;            Notification notif = new Notification();</b>
+<b class="nc">&nbsp;            notif.setUser(user);</b>
+<b class="nc">&nbsp;            notif.setTitle(&quot;Join Request Declined&quot;);</b>
+<b class="nc">&nbsp;            notif.setMessage(&quot;Your request to join &quot; + group.getGroupName() + &quot; was declined&quot;);</b>
+<b class="nc">&nbsp;            notif.setReferenceId(group.getId());</b>
+<b class="nc">&nbsp;            notif.setCreatedAt(new Date());</b>
+<b class="nc">&nbsp;            notif.setIsRead(false);</b>
+&nbsp;
+<b class="nc">&nbsp;            notificationRepository.save(notif);</b>
+<b class="nc">&nbsp;            NotificationWebSocket.pushNotification(user.getUsername(), notif);</b>
+&nbsp;
+<b class="nc">&nbsp;            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Join request declined&quot;));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * PUT {username}/update/{groupId}
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Update group details&quot;,
+&nbsp;            description = &quot;Allows the admin to update group name, description, and craft.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Group updated successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Only admin can update group&quot;)
+&nbsp;    })
+&nbsp;    @PutMapping(&quot;/{username}/update/{groupId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; updateGroup(
+&nbsp;            @PathVariable String username,
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @RequestBody Map&lt;String, Object&gt; updates) {
+&nbsp;
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+&nbsp;        // Check if user is admin
+<b class="pc">&nbsp;        if (!group.getGroupAdmin().equals(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                    .body(Map.of(&quot;error&quot;, &quot;Only admin can update group&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Update fields
+<b class="pc">&nbsp;        if (updates.containsKey(&quot;groupName&quot;)) {</b>
+<b class="nc">&nbsp;            group.setGroupName((String) updates.get(&quot;groupName&quot;));</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (updates.containsKey(&quot;description&quot;)) {</b>
+<b class="fc">&nbsp;            group.setDescription((String) updates.get(&quot;description&quot;));</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (updates.containsKey(&quot;craft&quot;)) {</b>
+<b class="nc">&nbsp;            group.setCraft((String) updates.get(&quot;craft&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Group updated successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * GET /{username}/groups
+&nbsp;     * Retrieve all groups that a user is a member of.
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Get all groups of a user&quot;,
+&nbsp;            description = &quot;Retrieve all groups that a user is a member of.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;List of groups returned&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;User not found&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/{username}/groups&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; getUserGroups(@PathVariable String username) {
+&nbsp;        // Find the user
+<b class="fc">&nbsp;        Optional&lt;Users&gt; userOpt = userRepository.findByUsername(username);</b>
+<b class="pc">&nbsp;        if (userOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;User not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Users user = userOpt.get();</b>
+&nbsp;
+&nbsp;        // Find all groups the user is a member of
+<b class="fc">&nbsp;        List&lt;Group&gt; userGroups = groupRepository.findAll()</b>
+<b class="fc">&nbsp;                .stream()</b>
+<b class="fc">&nbsp;                .filter(g -&gt; g.getMembers().contains(user))</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; groupList = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (Group group : userGroups) {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;id&quot;, group.getId());</b>
+<b class="fc">&nbsp;            map.put(&quot;groupName&quot;, group.getGroupName());</b>
+<b class="fc">&nbsp;            map.put(&quot;description&quot;, group.getDescription());</b>
+<b class="fc">&nbsp;            map.put(&quot;isPrivate&quot;, group.isPrivate());</b>
+<b class="fc">&nbsp;            map.put(&quot;craft&quot;, group.getCraft());</b>
+<b class="fc">&nbsp;            map.put(&quot;memberCount&quot;, group.getMembers().size());</b>
+<b class="fc">&nbsp;            map.put(&quot;admin&quot;, group.getGroupAdmin().getUsername());</b>
+<b class="fc">&nbsp;            groupList.add(map);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(</b>
+&nbsp;                &quot;username&quot;, username,
+<b class="fc">&nbsp;                &quot;totalGroups&quot;, groupList.size(),</b>
+&nbsp;                &quot;groups&quot;, groupList
+&nbsp;        ));
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * PUT /{currentAdmin}/{groupId}/transfer-admin/{newAdmin}
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Transfer group admin rights&quot;,
+&nbsp;            description = &quot;Allows the current admin to transfer admin rights to another member.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Admin transferred successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Only current admin can transfer rights or new admin must be a member&quot;)
+&nbsp;    })
+&nbsp;    @PutMapping(&quot;/{currentAdmin}/{groupId}/transfer-admin/{newAdmin}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; transferAdmin(
+&nbsp;            @PathVariable String currentAdmin,
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable String newAdmin) {
+&nbsp;
+<b class="fc">&nbsp;        Users currentUser = userRepository.findByUsername(currentAdmin)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Current admin not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Users newUser = userRepository.findByUsername(newAdmin)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;New admin not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+&nbsp;        // Check if current user is admin
+<b class="pc">&nbsp;        if (!group.getGroupAdmin().equals(currentUser)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                    .body(Map.of(&quot;error&quot;, &quot;Only current admin can transfer admin rights&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Check if new admin is a member
+<b class="pc">&nbsp;        if (!group.getMembers().contains(newUser)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                    .body(Map.of(&quot;error&quot;, &quot;New admin must be a group member&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        group.setGroupAdmin(newUser);</b>
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+&nbsp;        // Notify new admin
+<b class="fc">&nbsp;        Notification notif = new Notification();</b>
+<b class="fc">&nbsp;        notif.setUser(newUser);</b>
+<b class="fc">&nbsp;        notif.setTitle(&quot;Admin Rights Transferred&quot;);</b>
+<b class="fc">&nbsp;        notif.setMessage(&quot;You are now the admin of &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;        notif.setReferenceId(groupId);</b>
+<b class="fc">&nbsp;        notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;        notif.setIsRead(false);</b>
+<b class="fc">&nbsp;        notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;        NotificationWebSocket.pushNotification(newUser.getUsername(), notif);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Admin transferred successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * DELETE /{username}/leave/{groupId}
+&nbsp;     * Allows a member to leave a group voluntarily.
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Leave a group&quot;,
+&nbsp;            description = &quot;Allows a member to voluntarily leave a group. Admin cannot leave their own group.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User left successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Group/user not found, or admin cannot leave&quot;)
+&nbsp;    })
+&nbsp;    @DeleteMapping(&quot;/{username}/leave/{groupId}&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; leaveGroup(
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable String username) {
+&nbsp;
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;Group&gt; groupOpt = groupRepository.findById(groupId);</b>
+<b class="fc">&nbsp;        Optional&lt;Users&gt; userOpt = userRepository.findByUsername(username);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (groupOpt.isEmpty() || userOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group or user not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupOpt.get();</b>
+<b class="fc">&nbsp;        Users user = userOpt.get();</b>
+&nbsp;
+&nbsp;        // Check if user is actually a member
+<b class="pc">&nbsp;        if (!group.getMembers().contains(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;User is not a member of this group&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Prevent the admin from leaving their own group
+<b class="pc">&nbsp;        if (group.getGroupAdmin().equals(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Admin cannot leave their own group. Transfer admin role or delete the group.&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Remove the user from the group
+<b class="fc">&nbsp;        group.getMembers().remove(user);</b>
+<b class="fc">&nbsp;        group.setMemberCount();</b>
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+&nbsp;        // Notify all remaining members
+<b class="fc">&nbsp;        for (Users member : group.getMembers()) {</b>
+<b class="fc">&nbsp;            Notification notif = new Notification();</b>
+<b class="fc">&nbsp;            notif.setUser(member);</b>
+<b class="fc">&nbsp;            notif.setTitle(&quot;Member Left&quot;);</b>
+<b class="fc">&nbsp;            notif.setReferenceId(group.getId());</b>
+<b class="fc">&nbsp;            notif.setMessage(user.getUsername() + &quot; has left &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;            notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;            notif.setIsRead(false);</b>
+&nbsp;
+<b class="fc">&nbsp;            notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;            NotificationWebSocket.pushNotification(member.getUsername(), notif);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;You have left the group successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * DELETE /{username}/delete/{groupId}
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Delete a group&quot;,
+&nbsp;            description = &quot;Allows the admin to delete a group. All members are notified.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Group deleted successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Only admin can delete group&quot;)
+&nbsp;    })
+&nbsp;    @DeleteMapping(&quot;/{username}/delete/{groupId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; deleteGroup(
+&nbsp;            @PathVariable String username,
+&nbsp;            @PathVariable Long groupId) {
+&nbsp;
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+&nbsp;        // Check if user is admin
+<b class="pc">&nbsp;        if (!group.getGroupAdmin().equals(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                    .body(Map.of(&quot;error&quot;, &quot;Only admin can delete group&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Notify all members before deleting
+<b class="fc">&nbsp;        for (Users member : group.getMembers()) {</b>
+<b class="fc">&nbsp;            Notification notif = new Notification();</b>
+<b class="fc">&nbsp;            notif.setUser(member);</b>
+<b class="fc">&nbsp;            notif.setTitle(&quot;Group Deleted&quot;);</b>
+<b class="fc">&nbsp;            notif.setMessage(group.getGroupName() + &quot; has been deleted by the admin&quot;);</b>
+<b class="fc">&nbsp;            notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;            notif.setIsRead(false);</b>
+<b class="fc">&nbsp;            notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;            NotificationWebSocket.pushNotification(member.getUsername(), notif);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;GroupMessage&gt; messages = groupMessageRepository.findByGroupOrderByCreatedAtAsc(group);</b>
+<b class="fc">&nbsp;        groupMessageRepository.deleteAll(messages);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (group.isPrivate()){</b>
+<b class="nc">&nbsp;            groupJoinRequestRepository.deleteAllByGroup(group);</b>
+&nbsp;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        group.getMembers().clear();</b>
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+<b class="fc">&nbsp;        groupRepository.delete(group);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Group deleted successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * DELETE /{groupId}/{admin}/removeMember/{username}
+&nbsp;     * Remove a user from a group. Only admins can do this.
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Remove a member from a group&quot;,
+&nbsp;            description = &quot;Allows the admin to remove a member from the group.&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Member removed successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Only admin can remove member or member not found&quot;)
+&nbsp;    })
+&nbsp;
+&nbsp;    @DeleteMapping(&quot;/{groupId}/{admin}/removeMember/{username}&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; removeMember(
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable String username,
+&nbsp;            @PathVariable String admin) {
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;Group&gt; groupOpt = groupRepository.findById(groupId);</b>
+<b class="fc">&nbsp;        Optional&lt;Users&gt; userOpt = userRepository.findByUsername(username);</b>
+<b class="fc">&nbsp;        Optional&lt;Users&gt; adminOpt = userRepository.findByUsername(admin);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (groupOpt.isEmpty() || userOpt.isEmpty() || adminOpt.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Group or user not found&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupOpt.get();</b>
+<b class="fc">&nbsp;        Users user = userOpt.get();</b>
+<b class="fc">&nbsp;        Users adminUser = adminOpt.get();</b>
+&nbsp;
+&nbsp;        // Check admin - compare Users to Users
+<b class="pc">&nbsp;        if (!group.getGroupAdmin().equals(adminUser)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Only the group admin can remove members&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Check if the user is actually in the group
+<b class="pc">&nbsp;        if (!group.getMembers().contains(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;User is not in this group&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Prevent removing the group admin
+<b class="fc">&nbsp;        if (group.getGroupAdmin().equals(user)) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, &quot;Cannot remove group admin&quot;));</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Remove the user and save the group
+<b class="fc">&nbsp;        group.getMembers().remove(user);</b>
+<b class="fc">&nbsp;        group.setMemberCount();</b>
+<b class="fc">&nbsp;        groupRepository.save(group);</b>
+&nbsp;
+&nbsp;        // Create notification
+<b class="fc">&nbsp;        Notification notif = new Notification();</b>
+<b class="fc">&nbsp;        notif.setUser(user);</b>
+<b class="fc">&nbsp;        notif.setTitle(&quot;Removed from Group&quot;);</b>
+<b class="fc">&nbsp;        notif.setMessage(&quot;You have been removed from &quot; + group.getGroupName());</b>
+<b class="fc">&nbsp;        notif.setReferenceId(groupId);  // Add reference to group</b>
+<b class="fc">&nbsp;        notif.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;        notif.setIsRead(false);</b>
+&nbsp;
+<b class="fc">&nbsp;        notificationRepository.save(notif);</b>
+<b class="fc">&nbsp;        NotificationWebSocket.pushNotification(user.getUsername(), notif);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Member removed successfully&quot;));</b>
+&nbsp;    }
+&nbsp;}
+&nbsp;
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 10:40</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NotificationController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.Notification.Controller</a>
+</div>
+
+<h1>Coverage Summary for Class: NotificationController (com.example.craftsy.Notification.Controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NotificationController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (32/32)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Notification.Controller;
+&nbsp;
+&nbsp;import com.example.craftsy.Notification.NotificationWebSocket;
+&nbsp;import com.example.craftsy.Notification.Repository.NotificationRepository;
+&nbsp;import com.example.craftsy.Notification.Entity.Notification;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponse;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponses;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.Date;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/notifications&quot;)
+<b class="fc">&nbsp;public class NotificationController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private NotificationRepository notificationRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private UserRepository userRepository;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * PUT /notifications/{id}/read
+&nbsp;     * Mark a notification as read
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Mark a notification as read&quot;,
+&nbsp;            description = &quot;Updates the notification to read and removes it from the active notification list via WebSocket&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Notification marked as read&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Notification not found&quot;)
+&nbsp;    })
+&nbsp;    @PutMapping(&quot;/{id}/read&quot;)
+&nbsp;    public ResponseEntity&lt;String&gt; markAsRead(@PathVariable Long id) {
+<b class="fc">&nbsp;        Notification notification = notificationRepository.findById(id)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Notification not found&quot;));</b>
+<b class="fc">&nbsp;        notification.setIsRead(true);</b>
+<b class="fc">&nbsp;        notificationRepository.save(notification);</b>
+&nbsp;
+<b class="fc">&nbsp;        NotificationWebSocket.pushRemoveNotification(</b>
+<b class="fc">&nbsp;                notification.getUser().getUsername(),</b>
+<b class="fc">&nbsp;                notification.getId()</b>
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(&quot;Notification marked as read&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * POST /notifications
+&nbsp;     * Create a new notification and push it via WebSocket
+&nbsp;     */
+&nbsp;    @Operation(summary = &quot;Create a new notification&quot;,
+&nbsp;            description = &quot;Creates a notification for a receiver and pushes it via WebSocket&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Notification created successfully&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Receiver not found&quot;)
+&nbsp;    })
+&nbsp;    @PostMapping
+&nbsp;    public ResponseEntity&lt;Notification&gt; createNotification(
+&nbsp;            @RequestParam String receiverUsername,
+&nbsp;            @RequestParam(required = false) String senderUsername,
+&nbsp;            @RequestParam String title,
+&nbsp;            @RequestParam String message,
+&nbsp;            @RequestParam(required = false) Long referenceId
+&nbsp;    ) {
+<b class="fc">&nbsp;        Users receiver = userRepository.findByUsername(receiverUsername)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Receiver not found&quot;));</b>
+<b class="fc">&nbsp;        Users sender = senderUsername != null</b>
+<b class="fc">&nbsp;                ? userRepository.findByUsername(senderUsername).orElse(null)</b>
+<b class="fc">&nbsp;                : null;</b>
+&nbsp;
+<b class="fc">&nbsp;        Notification notification = new Notification();</b>
+<b class="fc">&nbsp;        notification.setUser(receiver);</b>
+<b class="fc">&nbsp;        notification.setTitle(title);</b>
+<b class="fc">&nbsp;        notification.setMessage(message);</b>
+<b class="fc">&nbsp;        notification.setReferenceId(referenceId);</b>
+<b class="fc">&nbsp;        notification.setCreatedAt(new Date());</b>
+<b class="fc">&nbsp;        notification.setIsRead(false);</b>
+&nbsp;
+<b class="fc">&nbsp;        Notification saved = notificationRepository.save(notification);</b>
+&nbsp;
+&nbsp;        // Push notification via WebSocket
+<b class="fc">&nbsp;        NotificationWebSocket.pushNotification(receiverUsername, saved);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Get all the notifications from a user
+&nbsp;    @GetMapping(&quot;/{username}&quot;)
+&nbsp;    @Operation(summary = &quot;Get unread notifications for a user&quot;,
+&nbsp;            description = &quot;Fetches all unread notifications for the specified username and marks them as read&quot;)
+&nbsp;    @ApiResponses(value = {
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;List of unread notifications returned&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Username not found&quot;)
+&nbsp;    })
+&nbsp;    public ResponseEntity&lt;List&lt;Notification&gt;&gt; getNotification(@PathVariable String username) {
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Username not found&quot;));</b>
+&nbsp;
+&nbsp;        // Fetch all unread notifications
+<b class="fc">&nbsp;        List&lt;Notification&gt; unreadNotifications = notificationRepository</b>
+<b class="fc">&nbsp;                .findByUserAndIsReadFalseOrderByCreatedAtDesc(user);</b>
+&nbsp;
+&nbsp;        // Mark all fetched notifications as read
+<b class="fc">&nbsp;        for (Notification notif : unreadNotifications) {</b>
+<b class="fc">&nbsp;            notif.setIsRead(true);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        notificationRepository.saveAll(unreadNotifications); // batch save</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(unreadNotifications);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 10:40</div>
+</div>
+</body>
+</html>

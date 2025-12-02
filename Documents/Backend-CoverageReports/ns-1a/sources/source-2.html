@@ -1,0 +1,234 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > LoginEditUserController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.loginEditUser</a>
+</div>
+
+<h1>Coverage Summary for Class: LoginEditUserController (com.example.craftsy.loginEditUser)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">LoginEditUserController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (11/22)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90.6%
+  </span>
+  <span class="absValue">
+    (29/32)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.loginEditUser;
+&nbsp;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.Parameter;
+&nbsp;import io.swagger.v3.oas.annotations.media.Content;
+&nbsp;import io.swagger.v3.oas.annotations.media.Schema;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponse;
+&nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponses;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;@RestController
+<b class="fc">&nbsp;public class LoginEditUserController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    LoginEditUserRepository loginEditUserRepository;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Updates the user information
+&nbsp;     * @param username username of profile to update. Comes from path.
+&nbsp;     * @param update The updated user information. Comes from body.
+&nbsp;     * @return the updated user information
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;Updates the user information&quot;,
+&nbsp;            description = &quot;Updates fields of a user&#39;s profile. Only the non-null fields in the request body will be updated.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully updated user information&quot;,
+&nbsp;                    content = @Content(schema = @Schema(implementation = LoginEditUser.class))),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Password not strong enough&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+&nbsp;    })
+&nbsp;    @PutMapping(&quot;/user/{username}&quot;)
+&nbsp;    LoginEditUser editUser(
+&nbsp;            @Parameter(description = &quot;Username of profile to update&quot;, required = true) @PathVariable String username,
+&nbsp;            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+&nbsp;                    description = &quot;Updated user information&quot;,
+&nbsp;                    required = true,
+&nbsp;                    content = @Content(schema = @Schema(implementation = LoginEditUser.class))
+&nbsp;            )@RequestBody LoginEditUser update){
+&nbsp;
+<b class="fc">&nbsp;        LoginEditUser user = loginEditUserRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+<b class="pc">&nbsp;        if(update.getUsername() != null) {</b>
+<b class="fc">&nbsp;            user.setUsername(update.getUsername());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getBio() != null) {</b>
+<b class="fc">&nbsp;            user.setBio(update.getBio());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getPassword() != null){</b>
+<b class="pc">&nbsp;            if(!isPasswordStrong(update.getPassword())){</b>
+<b class="nc">&nbsp;                throw new RuntimeException(&quot;Password not strong enough&quot;);</b>
+&nbsp;            }
+<b class="fc">&nbsp;            user.setPassword(update.getPassword());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getFollowers() != null){</b>
+<b class="fc">&nbsp;            user.setFollowers(update.getFollowers());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getFollowing() != null){</b>
+<b class="fc">&nbsp;            user.setFollowing(update.getFollowing());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getDisplayName() != null){</b>
+<b class="fc">&nbsp;            user.setDisplayName(update.getDisplayName());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getEmail() != null){</b>
+<b class="fc">&nbsp;            user.setEmail(update.getEmail());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getCraftSpecialties() != null){</b>
+<b class="fc">&nbsp;            user.setCraftSpecialties(update.getCraftSpecialties());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if(update.getImage() != null){</b>
+<b class="nc">&nbsp;            user.setImage(update.getImage());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        loginEditUserRepository.save(user);</b>
+<b class="fc">&nbsp;        return user;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * private class that confirms if password has at least 8 characters, one uppercase, and one number
+&nbsp;     * @param password
+&nbsp;     * @return
+&nbsp;     */
+&nbsp;    private boolean isPasswordStrong(String password) {
+&nbsp;        // Example rules: at least 8 chars, one uppercase, one lowercase, one number
+<b class="fc">&nbsp;        String pattern = &quot;^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$&quot;;</b>
+<b class="fc">&nbsp;        return password.matches(pattern);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Logins user with username and password
+&nbsp;     * @param username username for user
+&nbsp;     * @param password password for user
+&nbsp;     * @return User not found, {username} succesfully logged in, Incorrect password
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;Login user with username and password&quot;,
+&nbsp;            description = &quot;Validates credentials and returns user information if successful.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully logged in&quot;,
+&nbsp;                    content = @Content(schema = @Schema(implementation = LoginEditUser.class))),
+&nbsp;            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Incorrect password&quot;),
+&nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+&nbsp;    })
+&nbsp;    @GetMapping(&quot;/login/{username}/{password}&quot;)
+&nbsp;    LoginEditUser login(@Parameter(description = &quot;Username of the user&quot;) @PathVariable String username,
+&nbsp;                        @Parameter(description = &quot;Password of the user&quot;) @PathVariable String password){
+<b class="fc">&nbsp;        LoginEditUser user = loginEditUserRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+<b class="pc">&nbsp;        if(!user.getPassword().equals(password)) {</b>
+<b class="nc">&nbsp;            throw new RuntimeException(&quot;Wrong password!&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return user;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-02 10:40</div>
+</div>
+</body>
+</html>
