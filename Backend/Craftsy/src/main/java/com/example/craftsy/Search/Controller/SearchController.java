@@ -48,68 +48,68 @@ public class SearchController {
      * GET /search/user?query=abc
      * Search for users by username
      */
-//    @Operation(
-//            summary = "Search for users",
-//            description = "Search for users whose username contains the query string. "
-//                    + "If viewerUsername is provided, relationship status (isFollowing, isPending) "
-//                    + "will be included."
-//    )
-//    @ApiResponses({
-//            @ApiResponse(
-//                    responseCode = "200",
-//                    description = "Search results returned successfully",
-//                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Users.class)))
-//            ),
-//            @ApiResponse(responseCode = "400", description = "Invalid query parameter"),
-//            @ApiResponse(responseCode = "500", description = "Server error")
-//    })
-//
-//    @GetMapping("/user")
-//    public ResponseEntity<List<Map<String, Object>>> searchUsers(@RequestParam String query,
-//                                                                 @RequestParam(required = false) String viewerUsername // who is searching
-//                                                               ) { // Look for a parameter and pass its value to the method
-//        List<Users> users = userRepository.findByUsernameContainingIgnoreCase(query);
-//        List<Map<String, Object>> result = new ArrayList<>();
-//
-//        // If viewer exists, fetch their info once
-//        Optional<Users> viewerOpt = viewerUsername != null ? userRepository.findByUsername(viewerUsername) : Optional.empty();
-//        Users viewer = viewerOpt.orElse(null);
-//
-//        for (Users u : users) {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("id", u.getId());
-//            map.put("username", u.getUsername());
-//            map.put("displayName", u.getDisplayName());
-//            map.put("bio", u.getBio());
-//            map.put("followers", u.getFollowers());
-//            map.put("following", u.getFollowing());
-//            map.put("craftSpecialties", u.getCraftSpecialties());
-//
-//
-//            // Relationship status
-//            boolean isFollowing = false;
-//            boolean isPending = false;
-//
-//            if (viewer != null && !viewer.getUsername().equals(u.getUsername())) {
-//                Optional<Follow> followOpt = followRepository.findByFollowerAndFollowing(viewer, u);
-//                if (followOpt.isPresent()) {
-//                    Follow f = followOpt.get();
-//                    if (f.isAccepted()) {
-//                        isFollowing = true;
-//                    } else {
-//                        isPending = true;
-//                    }
-//                }
-//            }
-//
-//            map.put("isFollowing", isFollowing);
-//            map.put("isPending", isPending);
-//            result.add(map);
-//        }
-//
-//
-//        return ResponseEntity.ok(result);
-//    }
+    @Operation(
+            summary = "Search for users",
+            description = "Search for users whose username contains the query string. "
+                    + "If viewerUsername is provided, relationship status (isFollowing, isPending) "
+                    + "will be included."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Search results returned successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Users.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
+
+    @GetMapping("/user")
+    public ResponseEntity<List<Map<String, Object>>> searchUsers(@RequestParam String query,
+                                                                 @RequestParam(required = false) String viewerUsername // who is searching
+                                                               ) { // Look for a parameter and pass its value to the method
+        List<Users> users = userRepository.findByUsernameContainingIgnoreCase(query);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        // If viewer exists, fetch their info once
+        Optional<Users> viewerOpt = viewerUsername != null ? userRepository.findByUsername(viewerUsername) : Optional.empty();
+        Users viewer = viewerOpt.orElse(null);
+
+        for (Users u : users) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", u.getId());
+            map.put("username", u.getUsername());
+            map.put("displayName", u.getDisplayName());
+            map.put("bio", u.getBio());
+            map.put("followers", u.getFollowers());
+            map.put("following", u.getFollowing());
+            map.put("craftSpecialties", u.getCraftSpecialties());
+
+
+            // Relationship status
+            boolean isFollowing = false;
+            boolean isPending = false;
+
+            if (viewer != null && !viewer.getUsername().equals(u.getUsername())) {
+                Optional<Follow> followOpt = followRepository.findByFollowerAndFollowing(viewer, u);
+                if (followOpt.isPresent()) {
+                    Follow f = followOpt.get();
+                    if (f.isAccepted()) {
+                        isFollowing = true;
+                    } else {
+                        isPending = true;
+                    }
+                }
+            }
+
+            map.put("isFollowing", isFollowing);
+            map.put("isPending", isPending);
+            result.add(map);
+        }
+
+
+        return ResponseEntity.ok(result);
+    }
 
     /**
      * GET /search/group?query=abc
