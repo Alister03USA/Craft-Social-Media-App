@@ -1,5 +1,6 @@
 package com.example.craftsy.patterns.patternsComments;
 
+import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.patterns.Patterns;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,4 +9,5 @@ import java.util.Optional;
 
 public interface PatternsCommentsRepository extends JpaRepository<PatternsComments, Long> {
     List<PatternsComments> findByPatternOrderByLikesDesc(Patterns pattern);
+    Optional<List<PatternsComments>> findByUserOrderByDateDesc(Users user);
 }

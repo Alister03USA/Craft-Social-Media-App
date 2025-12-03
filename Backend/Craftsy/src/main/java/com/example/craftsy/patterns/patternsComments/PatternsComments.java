@@ -3,6 +3,8 @@ package com.example.craftsy.patterns.patternsComments;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.patterns.Patterns;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "patternsComments")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class PatternsComments {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,12 +20,7 @@ public class PatternsComments {
 
 
     @ManyToOne
-    @JoinColumn(
-            name = "patternId", //name of the foreign key column in the 'patternsComments' table
-            nullable = false, //must have username column
-            referencedColumnName = "patternName" //column name in the 'patterns' table to reference
-    )
-    @JsonBackReference
+    @JoinColumn(name = "patterns_id", nullable = false)
     private Patterns pattern;
 
     private String text;
@@ -33,6 +31,14 @@ public class PatternsComments {
     private LocalDateTime date;
 
     private Integer rating;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            referencedColumnName = "id"
+    )
+    private Users user;
 
     public PatternsComments() {
     }
@@ -79,5 +85,17 @@ public class PatternsComments {
 
     public void setRating(int rating) {
         this.rating = rating;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
     }
 }

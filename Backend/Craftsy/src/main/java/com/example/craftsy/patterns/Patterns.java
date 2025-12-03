@@ -3,8 +3,10 @@ package com.example.craftsy.patterns;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.images.Image;
 import com.example.craftsy.patterns.patternsComments.PatternsComments;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.util.List;
         uniqueConstraints = { //ensure projectName must be unique for each username
                 @UniqueConstraint(columnNames = {"username", "patternName"}, name = "UK_pattern_name_username")
         })
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Patterns {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +53,6 @@ public class Patterns {
 
     @OneToMany(mappedBy = "pattern")
     @OrderBy("likes DESC")
-    @JsonManagedReference
     private List<PatternsComments> comments;
 
     private int numRatings;
@@ -164,6 +166,14 @@ public class Patterns {
 
     public void setImages(List<Image> images) {
         this.images = images;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @JsonProperty("username")

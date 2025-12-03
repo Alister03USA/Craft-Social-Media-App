@@ -275,6 +275,18 @@ public class PatternsController {
         return patternName + " deleted";
     }
 
+    @GetMapping("/patterns/{username}/ratings")
+    List<PatternsComments> usersRatings(@PathVariable String username){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<List<PatternsComments>> optList = patternsCommentsRepository.findByUserOrderByDateDesc(user);
+        List<PatternsComments> ratings = new ArrayList<>();
+        if(optList.isPresent()){
+            ratings = optList.orElseThrow();
+        }
+        return ratings;
+    }
+
     /**
      * adds a comment to a pattern
      * @param username user who posted pattern
@@ -292,21 +304,25 @@ public class PatternsController {
                     content = @Content(schema = @Schema(implementation = Patterns.class))),
             @ApiResponse(responseCode = "404", description = "User or pattern not found")
     })
-    @PostMapping("/patterns/{username}/{patternName}/comment")
+    @PostMapping("/patterns/{username}/{patternName}/comment/{commentUsername}")
     Patterns addComment(@Parameter(description = "Username") @PathVariable String username,
                         @Parameter(description = "Pattern name") @PathVariable String patternName,
+                        @Parameter(description = "commenting username") @PathVariable String commentUsername,
                         @io.swagger.v3.oas.annotations.parameters.RequestBody(
                                 description = "Comment contents",
                                 required = true,
                                 content = @Content(schema = @Schema(implementation = PatternsComments.class))
                         )
                         @RequestBody PatternsComments comment){
-        Users user = userRepository.findByUsername(username)
+        Users postingUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)
+        Patterns pattern = patternsRepository.findByUserAndPatternName(postingUser,patternName)
                 .orElseThrow(() -> new RuntimeException("Pattern not found"));
+        Users commentUser = userRepository.findByUsername(commentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         comment.setDate(LocalDateTime.now());
         comment.setPattern(pattern);
+        comment.setUser(commentUser);
         patternsCommentsRepository.save(comment);
         if(comment.getRating() != null){
             addRating(pattern, comment.getRating());
@@ -412,6 +428,40 @@ public class PatternsController {
 
         comment.setText(updatedComment.replaceAll("^\"|\"$", ""));
 
+        patternsCommentsRepository.save(comment);
+        return pattern;
+    }
+
+    /**
+     * unlike a comment
+     * @param username
+     * @param patternName
+     * @param id
+     * @return updated pattern contents
+     */
+    @Operation(
+            summary = "unlike a comment",
+            description = "decreases the like count on a comment by 1."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comment unliked",
+                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+            @ApiResponse(responseCode = "404", description = "User, pattern, or comment not found")
+    })
+    @PutMapping("/patterns/{username}/{patternName}/{id}/unlike")
+    Patterns unlikeComment(@Parameter(description = "Username") @PathVariable String username,
+                         @Parameter(description = "Pattern name") @PathVariable String patternName,
+                         @Parameter(description = "Comment ID") @PathVariable Long id){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)
+                .orElseThrow(() -> new RuntimeException("Pattern not found"));
+        PatternsComments comment = patternsCommentsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if(comment.getLikes() > 0){
+            comment.setLikes(comment.getLikes()-1);
+        }
         patternsCommentsRepository.save(comment);
         return pattern;
     }

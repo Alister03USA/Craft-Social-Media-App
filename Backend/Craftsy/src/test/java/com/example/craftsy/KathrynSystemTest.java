@@ -1135,7 +1135,8 @@ public class KathrynSystemTest {
                 }
                 """;
         int commentID = given().contentType("application/json").body(requestBody).when()
-                .post("/patterns/{username}/{patternName}/comment", testUser.getUsername(), patternName)
+                .post("/patterns/{username}/{patternName}/comment/{commentUsername}"
+                        , testUser.getUsername(), patternName, testUser.getUsername())
                 .then().statusCode(200).extract().path("comments[0].id");
 
         //like comment
@@ -1161,6 +1162,12 @@ public class KathrynSystemTest {
                 .get("/patterns/{username}/{patternName}", testUser.getUsername(), patternName)
                 .then().statusCode(200).assertThat()
                 .body("comments[0].text", equalTo("update comment text"));
+
+        //get all comments user has posted
+        RestAssured.when()
+                .get("/patterns/{username}/ratings", testUser.getUsername())
+                .then().statusCode(200).assertThat()
+                .body("size()", equalTo(1));
 
         //delete comment
         RestAssured.when()
