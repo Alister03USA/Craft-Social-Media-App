@@ -1026,6 +1026,32 @@ public class KathrynSystemTest {
                 .statusCode(200)
                 .body("size()", equalTo(2));
 
+        //like pattern
+        int id1 = RestAssured.when()
+                .put("/patterns/{username}/{patternName}/like", testUser.getUsername(), patternName1)
+                .then()
+                .statusCode(200).extract().path("id");
+
+        //check pattern liked
+        RestAssured.when()
+                .get("/patterns/id/{id}", id1)
+                .then()
+                .statusCode(200)
+                .body("numLikes", equalTo(1));
+
+        //unlike pattern
+        RestAssured.when()
+                .put("/patterns/{username}/{patternName}/unlike", testUser.getUsername(), patternName1)
+                .then()
+                .statusCode(200);
+
+        //check pattern unliked
+        RestAssured.when()
+                .get("/patterns/id/{id}", id1)
+                .then()
+                .statusCode(200)
+                .body("numLikes", equalTo(0));
+
         //update pattern description
         given().contentType("application/json").body("updated pattern description").when()
                 .put("/patterns/{username}/{patternName}", testUser.getUsername(), patternName1)
@@ -1135,7 +1161,8 @@ public class KathrynSystemTest {
                 }
                 """;
         int commentID = given().contentType("application/json").body(requestBody).when()
-                .post("/patterns/{username}/{patternName}/comment", testUser.getUsername(), patternName)
+                .post("/patterns/{username}/{patternName}/comment/{commentUsername}"
+                        , testUser.getUsername(), patternName, testUser.getUsername())
                 .then().statusCode(200).extract().path("comments[0].id");
 
         //like comment
@@ -1161,6 +1188,12 @@ public class KathrynSystemTest {
                 .get("/patterns/{username}/{patternName}", testUser.getUsername(), patternName)
                 .then().statusCode(200).assertThat()
                 .body("comments[0].text", equalTo("update comment text"));
+
+        //get all comments user has posted
+        RestAssured.when()
+                .get("/patterns/{username}/ratings", testUser.getUsername())
+                .then().statusCode(200).assertThat()
+                .body("size()", equalTo(1));
 
         //delete comment
         RestAssured.when()
