@@ -474,6 +474,13 @@ public class AlisterSystemTest {
                 .then()
                 .statusCode(200)
                 .body("message", equalTo("Group deleted successfully"));
+
+        // Get all groups a user is in
+        given()
+                .when()
+                .get("/alister_gan/groups")
+                .then()
+                .statusCode(200);
     }
 
 
@@ -543,6 +550,7 @@ public class AlisterSystemTest {
                 .then()
                 .statusCode(200)
                 .body("members.username", hasItem(member));
+
 
 
     }
@@ -663,6 +671,13 @@ public class AlisterSystemTest {
                 .then()
                 .statusCode(200)
                 .body("message", equalTo("Group deleted successfully"));
+
+        // Get all group chat history
+        given()
+                .when()
+                .get("/groupMessage/Quinn/1/history")
+                .then()
+                .statusCode(200);
     }
 
     // ==================== HELPER METHODS ====================
@@ -924,6 +939,14 @@ public class AlisterSystemTest {
                 .post("/tutorial/uploadUrl")
                 .then()
                 .statusCode(403);
+
+
+        given()
+                .queryParam("viewer", "alister_gan")
+                .when()
+                .get("/tutorial/user/alister_gan")
+                .then()
+                .statusCode(200);
 
     }
 
@@ -1206,6 +1229,14 @@ public class AlisterSystemTest {
                 .getLong("challengeId");
 
 
+        // GET all active challenges
+        given()
+                .when()
+                .get("/challenge/active")
+                .then()
+                .statusCode(200);
+
+
         // PARTICIPATE in challenge as normal user
         given()
                 .when()
@@ -1273,6 +1304,8 @@ public class AlisterSystemTest {
                 .statusCode(200)
                 .body("[0].comment", equalTo("Great post!"))
                 .body("[0].user.username", equalTo(championUsername));
+
+
 
         // COMPLETE challenge
         given()
