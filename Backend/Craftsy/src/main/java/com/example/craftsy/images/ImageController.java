@@ -73,7 +73,8 @@ public class ImageController {
             }
 
             // Save the uploaded file to the directory
-            File destinationFile = new File(uploadDir, imageFile.getOriginalFilename());
+            String uniqueName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
+            File destinationFile = new File(uploadDir, uniqueName);
             imageFile.transferTo(destinationFile);
 
             // Save file info in the database
