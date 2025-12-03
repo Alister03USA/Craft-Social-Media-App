@@ -65,6 +65,8 @@ public class Patterns {
     )
     private List<Image> images = new ArrayList<>();
 
+    private int numLikes;
+
     public Patterns() {
     }
 
@@ -174,6 +176,14 @@ public class Patterns {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public int getNumLikes() {
+        return numLikes;
+    }
+
+    public void setNumLikes(int numLikes) {
+        this.numLikes = numLikes;
     }
 
     @JsonProperty("username")

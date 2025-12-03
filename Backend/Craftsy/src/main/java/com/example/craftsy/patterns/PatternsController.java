@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @RestController
 public class PatternsController {
@@ -224,6 +225,37 @@ public class PatternsController {
         }
         patterns.sort(Comparator.comparing(Patterns::getDate).reversed());
         return patterns;
+    }
+
+    @GetMapping("/patterns/id/{id}")
+    Patterns getPatternById(@PathVariable Long id){
+        Patterns pattern = patternsRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("Following not found"));
+        return pattern;
+    }
+
+    @PutMapping("/patterns/{username}/{patternName}/like")
+    Patterns likePattern(@PathVariable String username, @PathVariable String patternName){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
+                .orElseThrow(()-> new RuntimeException("Pattern not found"));
+        pattern.setNumLikes(pattern.getNumLikes()+1);
+        patternsRepository.save(pattern);
+        return pattern;
+    }
+
+    @PutMapping("/patterns/{username}/{patternName}/unlike")
+    Patterns unlikePattern(@PathVariable String username, @PathVariable String patternName){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)
+                .orElseThrow(()-> new RuntimeException("Pattern not found"));
+        if(pattern.getNumLikes() > 0){
+            pattern.setNumLikes(pattern.getNumLikes()-1);
+            patternsRepository.save(pattern);
+        }
+        return pattern;
     }
 
     /**
