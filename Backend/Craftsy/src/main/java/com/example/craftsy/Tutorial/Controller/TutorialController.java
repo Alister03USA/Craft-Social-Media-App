@@ -8,6 +8,8 @@ import com.example.craftsy.Notification.Repository.NotificationRepository;
 import com.example.craftsy.SignUpDelete.Entity.Users;
 import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 import com.example.craftsy.Tutorial.Entity.Tutorial;
+import com.example.craftsy.Tutorial.Entity.TutorialLikes;
+import com.example.craftsy.Tutorial.Repository.TutorialLikesRepository;
 import com.example.craftsy.Tutorial.Repository.TutorialRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/tutorial")
@@ -42,6 +45,9 @@ public class TutorialController {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private TutorialLikesRepository likesRepository;
 
     @Autowired
     private com.example.craftsy.PointsSystem.PointsService pointsService;
@@ -487,6 +493,97 @@ public class TutorialController {
 
 
     }
+
+
+
+
+    // LIKE features in Tutorials
+
+
+    // add likes
+    @PostMapping("/{username}/like/{tutorialId}")
+    public ResponseEntity<?> likeTutorial(
+            @PathVariable Long tutorialId,
+            @PathVariable String username
+    ) {
+        Tutorial tutorial = tutorialRepository.findById(tutorialId)
+                .orElseThrow(() -> new RuntimeException("Tutorial not found"));
+
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Prevent duplicate likes
+        Optional<TutorialLikes> existing = likesRepository
+                .findByTutorialIdAndUserId(tutorialId, user.getId());
+
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(Map.of("message", "Already liked"));
+        }
+
+        likesRepository.save(new TutorialLikes(tutorial, user));
+
+        return ResponseEntity.ok(Map.of("message", "Liked successfully"));
+    }
+
+
+    // dislike the tutorial
+    @DeleteMapping("/{username}/dislike/{tutorialId}")
+    public ResponseEntity<?> unlikeTutorial(
+            @PathVariable Long tutorialId,
+            @PathVariable String username
+    ) {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        TutorialLikes like = likesRepository
+                .findByTutorialIdAndUserId(tutorialId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Like not found"));
+
+        likesRepository.delete(like);
+
+        return ResponseEntity.ok(Map.of("message", "Unlike successful"));
+    }
+
+
+    // GET like count for a tutorial
+    @GetMapping("/{tutorialId}/totalLikes")
+    public ResponseEntity<?> getTotalLikes(
+            @PathVariable Long tutorialId
+    ) {
+        long count = likesRepository.countByTutorialId(tutorialId);
+        return ResponseEntity.ok(Map.of("tutorialId", tutorialId,"totalLikes", count));
+    }
+
+
+    // leaderboard of top tutorials by likes
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<Map<String, Object>>> getLeaderboard(){
+
+        List<Tutorial> tutorials = tutorialRepository.findAll();
+
+        // for each tutorial, attached its like count
+        List<Map<String, Object>> leaderboard = tutorials.stream()
+                .map(t -> {
+                    long likes = likesRepository.countByTutorialId(t.getId());
+
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", t.getId());
+                    map.put("title", t.getTitle());
+                    map.put("username", t.getUser().getUsername());
+                    map.put("category", t.getCategory());
+                    map.put("likes", likes);
+                    return map;
+                })
+                .sorted((a, b) -> Long.compare((Long) b.get("likes"), (Long) a.get("likes")))
+                .toList();
+
+        return ResponseEntity.ok(leaderboard);
+
+    }
+
+
+
+
 
 
 
