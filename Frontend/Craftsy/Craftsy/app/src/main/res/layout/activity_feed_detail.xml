@@ -121,7 +121,32 @@
                     android:layout_marginTop="4dp"
                     android:textSize="14sp" />
             </LinearLayout>
+            <!-- Like row -->
+            <LinearLayout
+                android:id="@+id/likeRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
 
+                <ImageButton
+                    android:id="@+id/btnLikeFeed"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_heart"
+                    android:contentDescription="Like" />
+
+                <TextView
+                    android:id="@+id/textFeedLikes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 likes"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
             <Button
                 android:id="@+id/btnSaveFeedProject"
                 android:layout_width="wrap_content"

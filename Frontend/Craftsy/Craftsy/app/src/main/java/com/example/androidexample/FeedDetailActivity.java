@@ -14,7 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.androidexample.SelectBoardDialog;
+
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * FeedDetailActivity — identical to feed detail, with comments + like toggle.
+ * FeedDetailActivity — detail screen for feed post, including comments + likes.
  */
 public class FeedDetailActivity extends AppCompatActivity {
 
@@ -42,11 +42,18 @@ public class FeedDetailActivity extends AppCompatActivity {
     private EditText commentInput;
     private Button postCommentButton;
 
-    private String username;
+    private ImageButton btnLikeFeed;
+    private TextView textFeedLikes;
+
+    private boolean isPostLiked = false;
+    private int feedLikeCount = 0;
+
+    private String postOwner;
     private String projectName;
     private long imageId = -1L;
 
     private HashMap<Long, Boolean> likedComments = new HashMap<>();
+    private String loggedInUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,34 +72,51 @@ public class FeedDetailActivity extends AppCompatActivity {
         commentInput = findViewById(R.id.commentInput);
         postCommentButton = findViewById(R.id.postCommentButton);
 
-        username = getIntent().getStringExtra("username");
+        btnLikeFeed = findViewById(R.id.btnLikeFeed);
+        textFeedLikes = findViewById(R.id.textFeedLikes);
+
+        postOwner = getIntent().getStringExtra("username");
         projectName = getIntent().getStringExtra("projectName");
 
-        if (username == null || projectName == null) {
+        loggedInUser = SessionManager.getInstance().getLoggedInUsername();
+
+        if (postOwner == null || projectName == null) {
             Toast.makeText(this, "Missing project data", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        fetchUserFeed(username);
+        fetchUserFeed(postOwner);
 
+        btnLikeFeed.setOnClickListener(v -> toggleFeedLike());
+        Log.d("FeedDetail", "postOwner = " + postOwner + " | projectName = " + projectName);
         postCommentButton.setOnClickListener(v -> {
             String text = commentInput.getText().toString().trim();
             if (!text.isEmpty()) postComment(text);
             else Toast.makeText(this, "Enter a comment", Toast.LENGTH_SHORT).show();
         });
+
         Button btnSave = findViewById(R.id.btnSaveFeedProject);
         btnSave.setOnClickListener(v -> {
-            SelectBoardDialog dialog = new SelectBoardDialog(FeedDetailActivity.this, board -> {
-                addProjectToBoard(board.getId(), projectName);
-            });
+            SelectBoardDialog dialog = new SelectBoardDialog(FeedDetailActivity.this, board ->
+                    addProjectToBoard(board.getId(), projectName));
             dialog.show();
         });
+
         ImageButton btnBack = findViewById(R.id.btnBackFeedDetail);
         btnBack.setOnClickListener(v -> finish());
     }
+
+    private void updateFeedLikeIcon() {
+        if (isPostLiked) {
+            btnLikeFeed.setImageResource(R.drawable.ic_heart_filled);
+        } else {
+            btnLikeFeed.setImageResource(R.drawable.ic_heart_outline);
+        }
+    }
+
     private void addProjectToBoard(long boardId, String projectName) {
-        String url = BASE + "/board/" + boardId + "/project/" + username + "/" + projectName;
+        String url = BASE + "/board/" + boardId + "/project/" + postOwner + "/" + projectName;
 
         JsonObjectRequest req = new JsonObjectRequest(
                 Request.Method.PUT,
@@ -104,60 +128,78 @@ public class FeedDetailActivity extends AppCompatActivity {
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
+
     private void fetchUserFeed(String user) {
         String url = BASE + "/feed/" + user;
+
         JsonArrayRequest req = new JsonArrayRequest(
                 Request.Method.GET, url, null,
                 resp -> {
                     for (int i = 0; i < resp.length(); i++) {
                         JSONObject obj = resp.optJSONObject(i);
                         if (obj != null && projectName.equalsIgnoreCase(obj.optString("projectName", ""))) {
+
+                            feedLikeCount = obj.optInt("numLikes", 0);
+                            textFeedLikes.setText(feedLikeCount + " likes");
+
                             bindPost(obj);
                             bindComments(obj);
                             return;
                         }
                     }
                 },
-                err -> Log.e(TAG, "❌ Feed fetch failed", err)
+                err -> Log.e(TAG, "Feed fetch failed", err)
         );
+
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
     private void bindPost(JSONObject obj) {
         textProjectName.setText(projectName);
-        textUsername.setText("@" + username);
+        textUsername.setText("@" + postOwner);
         textProjectDesc.setText(obj.optString("projectDesc", ""));
         textProjectType.setText("Type: " + obj.optString("projectType", ""));
         textSupplies.setText("Supplies: " + obj.optString("supplies", ""));
         textVisibility.setText("Visibility: " + obj.optString("visibility", ""));
         textDate.setText("Date: " + obj.optString("date", ""));
 
+        feedLikeCount = obj.optInt("numLikes", 0);
+        textFeedLikes.setText(feedLikeCount + " likes");
+
+        updateFeedLikeIcon();
+
         JSONArray images = obj.optJSONArray("images");
         if (images != null && images.length() > 0) {
             JSONObject first = images.optJSONObject(0);
             imageId = first != null ? first.optLong("id", -1) : -1;
         }
+
         if (imageId > 0) fetchImageMetaAndLoad(imageId);
         else imageProject.setImageResource(R.drawable.ic_post_placeholder);
     }
 
     private void fetchImageMetaAndLoad(long id) {
         String metaUrl = BASE + "/images/" + id;
+
         JsonObjectRequest metaReq = new JsonObjectRequest(
                 Request.Method.GET, metaUrl, null,
                 meta -> {
                     String filePath = meta.optString("filePath", "");
                     String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+
                     ArrayList<String> tries = new ArrayList<>();
                     tries.add(BASE + "/uploads/" + fileName);
                     tries.add(BASE + "/images/" + id + "/download");
                     tries.add(BASE + "/images/" + id);
+
                     tryLoadBitmapSequentially(tries, 0);
                 },
                 err -> {
-                    Log.e(TAG, "❌ Image meta fetch failed", err);
+                    Log.e(TAG, "Image meta fetch failed", err);
                     imageProject.setImageResource(R.drawable.ic_post_placeholder);
-                });
+                }
+        );
+
         VolleySingleton.getInstance(this).addToRequestQueue(metaReq);
     }
 
@@ -166,23 +208,32 @@ public class FeedDetailActivity extends AppCompatActivity {
             imageProject.setImageResource(R.drawable.ic_post_placeholder);
             return;
         }
+
         String url = urls.get(idx);
+
         new Thread(() -> {
             Bitmap bmp = null;
+
             try {
                 HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
                 conn.setDoInput(true);
                 conn.connect();
+
                 if (!"application/json".equals(conn.getContentType())) {
                     try (InputStream in = conn.getInputStream()) {
                         bmp = BitmapFactory.decodeStream(in);
                     }
                 }
             } catch (Exception ignored) {}
+
             Bitmap finalBmp = bmp;
+
             runOnUiThread(() -> {
-                if (finalBmp != null) imageProject.setImageBitmap(finalBmp);
-                else tryLoadBitmapSequentially(urls, idx + 1);
+                if (finalBmp != null) {
+                    imageProject.setImageBitmap(finalBmp);
+                } else {
+                    tryLoadBitmapSequentially(urls, idx + 1);
+                }
             });
         }).start();
     }
@@ -190,13 +241,16 @@ public class FeedDetailActivity extends AppCompatActivity {
     private void bindComments(JSONObject post) {
         commentsContainer.removeAllViews();
         likedComments.clear();
+
         JSONArray comments = post.optJSONArray("comments");
+
         if (comments == null || comments.length() == 0) {
             TextView none = new TextView(this);
             none.setText("No comments yet.");
             commentsContainer.addView(none);
             return;
         }
+
         for (int i = 0; i < comments.length(); i++) {
             JSONObject c = comments.optJSONObject(i);
             if (c != null) addCommentRow(c);
@@ -205,46 +259,91 @@ public class FeedDetailActivity extends AppCompatActivity {
 
     private void addCommentRow(JSONObject c) {
         View row = getLayoutInflater().inflate(R.layout.comment_item, commentsContainer, false);
+
         TextView text = row.findViewById(R.id.commentText);
         TextView likes = row.findViewById(R.id.likeCount);
-        Button likeBtn = row.findViewById(R.id.likeButton);
+        ImageButton heart = row.findViewById(R.id.commentLikeIcon);
+        TextView userText = row.findViewById(R.id.commentUser);
+
+        JSONObject userObj = c.optJSONObject("user");
+        String commentUser = userObj != null ? userObj.optString("username", "unknown") : "unknown";
+        userText.setText("@" + commentUser);
 
         long id = c.optLong("id", -1);
         int likeCount = c.optInt("likes", 0);
-        boolean liked = c.optBoolean("liked", false);
+        boolean liked = c.optBoolean("likedByUser", false); // optional from backend
+
+        likedComments.put(id, liked);
 
         text.setText(c.optString("text", ""));
-        likes.setText(likeCount + " likes");
-        likedComments.put(id, liked);
-        likeBtn.setText(liked ? "Unlike" : "Like");
+        likes.setText(String.valueOf(likeCount));
 
-        likeBtn.setOnClickListener(v -> toggleLike(id, likeBtn, likes));
+        heart.setImageResource(liked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+
+        heart.setOnClickListener(v ->
+                toggleLike(id, heart, likes)
+        );
+
         commentsContainer.addView(row);
     }
 
-    /** Backend now handles toggle logic */
-    private void toggleLike(long commentId, Button likeBtn, TextView likesView) {
+    private void toggleLike(long commentId, ImageButton heart, TextView likesView) {
         if (commentId <= 0) return;
+
         boolean currentlyLiked = likedComments.getOrDefault(commentId, false);
-        String action = currentlyLiked ? "unlike" : "like";
-        String url = BASE + "/feed/" + username + "/" + projectName + "/" + commentId;
+
+        String url = currentlyLiked
+                ? BASE + "/feed/" + postOwner + "/" + projectName + "/" + commentId + "/unlike"
+                : BASE + "/feed/" + postOwner + "/" + projectName + "/" + commentId;
+
         JsonObjectRequest req = new JsonObjectRequest(
                 Request.Method.PUT, url, null,
                 r -> {
-                    // Update local like state and UI without refetching entire feed
-                    likedComments.put(commentId, !currentlyLiked);
-                    int currentLikes = 0;
-                    try {
-                        String likesText = likesView.getText().toString();
-                        currentLikes = Integer.parseInt(likesText.split(" ")[0]);
-                    } catch (Exception ignored) {}
-                    int newLikes = currentlyLiked ? currentLikes - 1 : currentLikes + 1;
+                    boolean newState = !currentlyLiked;
+                    likedComments.put(commentId, newState);
+
+                    int currentLikes = Integer.parseInt(likesView.getText().toString());
+                    int newLikes = newState ? currentLikes + 1 : currentLikes - 1;
                     if (newLikes < 0) newLikes = 0;
-                    likesView.setText(newLikes + " likes");
-                    likeBtn.setText(!currentlyLiked ? "Unlike" : "Like");
+
+                    likesView.setText(String.valueOf(newLikes));
+                    heart.setImageResource(newState ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
                 },
-                err -> Log.e(TAG, "❌ Like toggle failed", err)
+                err -> Log.e(TAG, "Comment like toggle failed", err)
         );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    private void toggleFeedLike() {
+
+        String url = isPostLiked
+                ? BASE + "/feed/" + postOwner + "/" + projectName + "/unlike"
+                : BASE + "/feed/" + postOwner + "/" + projectName + "/like";
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                r -> {
+                    isPostLiked = !isPostLiked;
+
+                    // Update count
+                    feedLikeCount = isPostLiked ? feedLikeCount + 1 : feedLikeCount - 1;
+                    if (feedLikeCount < 0) feedLikeCount = 0;
+
+                    textFeedLikes.setText(feedLikeCount + " likes");
+
+                    // Update icon
+                    if (isPostLiked) {
+                        btnLikeFeed.setImageResource(R.drawable.ic_heart_filled);
+                    } else {
+                        btnLikeFeed.setImageResource(R.drawable.ic_heart_outline);
+                    }
+                },
+                err -> Log.e(TAG, "Feed like failed", err)
+        );
+
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
@@ -252,18 +351,22 @@ public class FeedDetailActivity extends AppCompatActivity {
         try {
             JSONObject body = new JSONObject();
             body.put("text", text);
-            String url = BASE + "/feed/" + username + "/" + projectName + "/comment";
+
+            String url = BASE + "/feed/" + postOwner + "/" + projectName + "/comment/" + loggedInUser;
+
             JsonObjectRequest req = new JsonObjectRequest(
                     Request.Method.POST, url, body,
                     r -> {
                         commentInput.setText("");
-                        fetchUserFeed(username);
+                        fetchUserFeed(postOwner);
                     },
-                    err -> Log.e(TAG, "❌ Comment post failed", err)
+                    err -> Log.e(TAG, " Comment post failed", err)
             );
+
             VolleySingleton.getInstance(this).addToRequestQueue(req);
+
         } catch (Exception e) {
-            Log.e(TAG, "❌ JSON build error", e);
+            Log.e(TAG, " JSON build error", e);
         }
     }
 }
