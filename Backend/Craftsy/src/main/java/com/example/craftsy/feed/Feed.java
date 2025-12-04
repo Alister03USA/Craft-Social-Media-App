@@ -37,6 +37,7 @@ public class Feed {
     private String projectType;
     private String supplies;
     private String projectDesc;
+    private int numLikes;
 
     @Column(name = "visibility", nullable = false)
     private String visibility;
@@ -138,6 +139,14 @@ public class Feed {
 
     public Long getId() {
         return id;
+    }
+
+    public int getNumLikes() {
+        return numLikes;
+    }
+
+    public void setNumLikes(int numLikes) {
+        this.numLikes = numLikes;
     }
 
     @JsonProperty("username")

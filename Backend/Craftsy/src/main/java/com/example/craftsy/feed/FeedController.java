@@ -252,6 +252,32 @@ public class FeedController {
         return project;
     }
 
+    @PutMapping("/feed/{username}/{projectName}/like")
+    Feed likeProject(@PathVariable String username, @PathVariable String projectName){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed project = feedRepository.findByUserAndProjectName(user, projectName)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        project.setNumLikes(project.getNumLikes()+1);
+        feedRepository.save(project);
+        return project;
+    }
+
+    @PutMapping("/feed/{username}/{projectName}/unlike")
+    Feed unlikeProject(@PathVariable String username, @PathVariable String projectName){
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Feed project = feedRepository.findByUserAndProjectName(user, projectName)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if(project.getNumLikes() > 0){
+            project.setNumLikes(project.getNumLikes()-1);
+            feedRepository.save(project);
+        }
+        return project;
+    }
+
     /**
      * adds a comment to a pattern
      * @param username user who posted pattern
@@ -268,14 +294,18 @@ public class FeedController {
                     content = @Content(schema = @Schema(implementation = Feed.class))),
             @ApiResponse(responseCode = "404", description = "User or project not found")
     })
-    @PostMapping("/feed/{username}/{projectName}/comment")
+    @PostMapping("/feed/{username}/{projectName}/comment/{commentUsername}")
     Feed addComment(@Parameter(description = "The username of the project owner") @PathVariable String username,
                     @Parameter(description = "The name of the project") @PathVariable String projectName,
+                    @PathVariable String commentUsername,
                     @Parameter(description = "The comment to add") @RequestBody FeedComments comment){
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed project = feedRepository.findByUserAndProjectName(user,projectName)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
+        Users commentUser = userRepository.findByUsername(commentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        comment.setUser(commentUser);
         comment.setDate(LocalDateTime.now());
         comment.setFeed(project);
         feedCommentsRepository.save(comment);
