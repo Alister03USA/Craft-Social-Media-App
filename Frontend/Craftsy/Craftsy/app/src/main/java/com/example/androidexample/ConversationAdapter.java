@@ -55,13 +55,17 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
         h.last.setText(item.getLastMessage());
         h.time.setText(item.getTimestamp());
 
-        if (item.isGroup()) {
-            h.icon.setImageResource(R.drawable.ic_groups);
-        } else {
-            long id = item.getProfileImageId();
+        long imageId = item.getProfileImageId();
 
-            if (id > 0) {
-                activity.loadProfilePic(id, h.icon);
+        // =============================
+        // FIXED: load BOTH groupPic and direct profile image
+        // =============================
+        if (imageId > 0) {
+            activity.loadProfilePic(imageId, h.icon);
+        } else {
+            // fallback depending on conversation type
+            if (item.isGroup()) {
+                h.icon.setImageResource(R.drawable.ic_groups);
             } else {
                 h.icon.setImageResource(R.drawable.profile);
             }

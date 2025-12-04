@@ -20,9 +20,20 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_alignParentStart="true"
-            android:layout_marginStart="8dp"
             android:src="@drawable/ic_arrow_back"
             android:contentDescription="@string/back" />
+
+        <!-- MENU BUTTON (3 dots) -->
+        <ImageButton
+            android:id="@+id/btnMenu"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_more_vert"
+            android:contentDescription="@string/menu"
+            app:tint="@color/dark_text" />
 
         <!-- Group picture -->
         <ImageView
@@ -43,20 +54,10 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/groupIcon"
             android:layout_marginStart="12dp"
+            android:layout_toStartOf="@id/btnMenu"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/dark_text" />
-
-        <!-- MENU BUTTON (visible for group chats only) -->
-        <ImageButton
-            android:id="@+id/btnMenu"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_alignParentEnd="true"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_more_vert"
-            android:contentDescription="@string/menu"
-            app:tint="@color/dark_text"
+            android:textColor="@color/dark_text"
             android:layout_centerVertical="true" />
 
     </RelativeLayout>
@@ -147,14 +148,15 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/message_hint"
             android:background="@drawable/bg_input"
             android:padding="10dp"
+            android:hint="@string/message_hint"
             android:inputType="textMultiLine"
             android:maxLines="4"
             android:minLines="1"
             android:textColor="@color/dark_text"
-            android:textColorHint="@color/text_gray" />
+            android:textColorHint="@color/text_gray"
+            android:completionThreshold="1" />
 
         <ImageButton
             android:id="@+id/btnSend"

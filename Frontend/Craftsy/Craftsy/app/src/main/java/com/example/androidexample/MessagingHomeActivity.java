@@ -218,6 +218,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
                 long profileImageId = -1;
                 String otherUser = "";
 
+                /* ========= DIRECT CONVERSATION IMAGE / NAME ========= */
                 if (!isGroup) {
                     JSONArray members = o.optJSONArray("members");
                     if (members != null) {
@@ -241,18 +242,31 @@ public class MessagingHomeActivity extends AppCompatActivity {
                     }
                 }
 
-                if (isGroup && (displayName == null || displayName.isEmpty() || displayName.equals("null"))) {
-                    JSONArray members = o.optJSONArray("members");
-                    if (members != null) {
-                        StringBuilder sb = new StringBuilder();
-                        for (int m = 0; m < members.length(); m++) {
-                            String uname = members.getJSONObject(m).optString("displayName", "");
-                            if (sb.length() > 0) sb.append(", ");
-                            sb.append(uname);
+                /* ========= GROUP CONVERSATION PICTURE ========= */
+                long groupPicId = -1;
+                if (isGroup) {
+                    JSONObject picObj = o.optJSONObject("groupPic");
+                    if (picObj != null) {
+                        groupPicId = picObj.optLong("id", -1);
+                    }
+
+                    // fallback group name = list members
+                    if (displayName == null || displayName.isEmpty() || displayName.equals("null")) {
+                        JSONArray members = o.optJSONArray("members");
+                        if (members != null) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int m = 0; m < members.length(); m++) {
+                                String uname = members.getJSONObject(m).optString("displayName", "");
+                                if (sb.length() > 0) sb.append(", ");
+                                sb.append(uname);
+                            }
+                            displayName = sb.toString();
                         }
-                        displayName = sb.toString();
                     }
                 }
+
+                /* ========= Final: choose the correct image ========= */
+                long finalImageId = isGroup ? groupPicId : profileImageId;
 
                 ConversationItem item =
                         new ConversationItem(
@@ -261,7 +275,7 @@ public class MessagingHomeActivity extends AppCompatActivity {
                                 otherUser,
                                 last,
                                 "",
-                                profileImageId
+                                finalImageId
                         );
 
                 all.add(item);
@@ -279,12 +293,23 @@ public class MessagingHomeActivity extends AppCompatActivity {
 
     /* ==================== OPEN CHAT ==================== */
     private void openConversation(ConversationItem item) {
-        Intent i = new Intent(this, DirectMessagingActivity.class);
-        i.putExtra("convoId", item.getConvoId());
-        i.putExtra("chatName", item.getDisplayName());
-        i.putExtra("otherUser", item.getUsername());
-        i.putExtra("username", currentUsername);
-        i.putExtra("profileImageId", item.getProfileImageId());
+
+        Intent i;
+
+        if (item.isGroup()) {
+            i = new Intent(this, GroupMessagingActivity.class);
+            i.putExtra("convoId", item.getConvoId());
+            i.putExtra("chatName", item.getDisplayName());
+            i.putExtra("username", currentUsername);
+        } else {
+            i = new Intent(this, DirectMessagingActivity.class);
+            i.putExtra("convoId", item.getConvoId());
+            i.putExtra("chatName", item.getDisplayName());
+            i.putExtra("otherUser", item.getUsername());
+            i.putExtra("username", currentUsername);
+            i.putExtra("profileImageId", item.getProfileImageId());
+        }
+
         startActivity(i);
     }
 

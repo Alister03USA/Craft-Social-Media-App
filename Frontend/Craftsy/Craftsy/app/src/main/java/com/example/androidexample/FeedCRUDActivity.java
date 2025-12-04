@@ -42,7 +42,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
     private Button buttonSave, buttonDelete, buttonBack, btnChooseImage;
     private ImageView imagePreview;
     private Uri selectedImageUri;
-
+    private Spinner spinnerVisibility;
     private String loggedInUsername;
     private String mode;
 
@@ -62,7 +62,16 @@ public class FeedCRUDActivity extends AppCompatActivity {
         editDesc = findViewById(R.id.editDesc);
         editType = findViewById(R.id.editType);
         editSupplies = findViewById(R.id.editSupplies);
-        editVisibility = findViewById(R.id.editVisibility);
+        spinnerVisibility = findViewById(R.id.spinnerVisibility);
+
+        // Load dropdown values
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.visibility_options,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerVisibility.setAdapter(adapter);
         buttonSave = findViewById(R.id.buttonSave);
         buttonDelete = findViewById(R.id.buttonDelete);
         buttonBack = findViewById(R.id.buttonBack);
@@ -85,7 +94,11 @@ public class FeedCRUDActivity extends AppCompatActivity {
             editSupplies.setText(getIntent().getStringExtra("supplies"));
         }
         if (getIntent().hasExtra("visibility")) {
-            editVisibility.setText(getIntent().getStringExtra("visibility"));
+            String vis = getIntent().getStringExtra("visibility");
+            if (vis != null) {
+                int position = adapter.getPosition(vis.toLowerCase());
+                if (position >= 0) spinnerVisibility.setSelection(position);
+            }
         }
 
         buttonBack.setOnClickListener(v -> finish());
@@ -253,7 +266,7 @@ public class FeedCRUDActivity extends AppCompatActivity {
             json.put("projectDesc", editDesc.getText().toString());
             json.put("projectType", editType.getText().toString());
             json.put("supplies", editSupplies.getText().toString());
-            json.put("visibility", editVisibility.getText().toString());
+            json.put("visibility", spinnerVisibility.getSelectedItem().toString());
 
             if (imageId != null) {
                 JSONArray arr = new JSONArray();

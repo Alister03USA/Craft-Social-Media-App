@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -14,6 +15,7 @@ import androidx.annotation.Nullable;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.bumptech.glide.Glide;
 
 import org.json.JSONObject;
 
@@ -22,7 +24,24 @@ import java.util.Map;
 public class GroupMessagingActivity extends BaseMessagingActivity {
 
     private ImageButton btnMenu;
+    @Override
+    protected void fetchHistory() {
+        String url = BASE_URL + "/messages/" + convoId;
 
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                res -> {
+                    parseMembers(res);
+                    loadGroupPicture(res);   // <- NEW
+                    loadHistory(res);
+                },
+                err -> Log.e("GroupHistory", "fail", err)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -197,5 +216,31 @@ public class GroupMessagingActivity extends BaseMessagingActivity {
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+    private void loadGroupPicture(JSONObject convo) {
+        try {
+            JSONObject picObj = convo.optJSONObject("groupPic");
+            if (picObj == null) return;
+
+            long imgId = picObj.optLong("id", -1);
+            String fp = picObj.optString("filePath", "");
+
+            if (imgId == -1 || fp.isEmpty()) return;
+
+            String filename = fp.substring(fp.lastIndexOf("/") + 1);
+            String fullUrl = BASE_URL + "/uploads/" + filename;
+
+            ImageView groupIcon = findViewById(R.id.groupIcon);
+
+            Glide.with(this)
+                    .load(fullUrl)
+                    .placeholder(R.drawable.ic_groups)
+                    .error(R.drawable.ic_groups)
+                    .circleCrop()
+                    .into(groupIcon);
+
+        } catch (Exception e) {
+            Log.e("GroupImage", "load failed", e);
+        }
     }
 }

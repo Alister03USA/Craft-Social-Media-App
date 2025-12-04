@@ -16,6 +16,8 @@
     <color name="text_gray">#777777</color>           <!-- Secondary Info Text -->
     <color name="text_light_gray">#BDBDBD</color>     <!-- Hint / Placeholder Text -->
     <color name="subtle_text">#777777</color>
+    <color name="dark_text_strong">#2E2E2E</color>
+    <color name="medium_text">#4A4A4A</color>
 
     <!-- Structural / Layout Backgrounds -->
     <color name="card_background">#FFFFFF</color>     <!-- Card Background (Feed Items, Tutorials) -->

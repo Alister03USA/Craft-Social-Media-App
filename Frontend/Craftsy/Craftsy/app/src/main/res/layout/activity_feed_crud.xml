@@ -57,12 +57,12 @@
             android:hint="Supplies"
             android:layout_marginTop="8dp" />
 
-        <EditText
-            android:id="@+id/editVisibility"
+        <Spinner
+            android:id="@+id/spinnerVisibility"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Visibility (public/private)"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            android:background="@drawable/rounded_edittext_bg"/>
         <ImageView
             android:id="@+id/imagePreview"
             android:layout_width="match_parent"
