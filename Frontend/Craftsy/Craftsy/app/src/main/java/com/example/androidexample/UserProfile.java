@@ -2,57 +2,42 @@ package com.example.androidexample;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.widget.ImageView;
-import android.widget.Toast;
-import android.widget.ProgressBar;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
-
-import java.io.ByteArrayOutputStream;
-
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 
 public class UserProfile extends BaseActivity {
 
+    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
+
     private EditText displayName, username, bio, email, password, craftSpecialties;
     private ImageView editProfileImage;
-    private byte[] newProfileImageData = null; // holds image bytes if user selects a new image
-
-
-    private static final String BASE_URL = "http://coms-3090-028.class.las.iastate.edu:8080";
+    private byte[] newProfileImageData = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,237 +45,104 @@ public class UserProfile extends BaseActivity {
         showProfileView();
     }
 
-    /**
-     * ------------------- FETCH FOLLOWERS / FOLLOWING COUNTS -------------------
-     **/
-    private void fetchFollowersAndFollowing(String username) {
-        String followersUrl = BASE_URL + "/" + username + "/followers";
-        JsonArrayRequest followersRequest = new JsonArrayRequest(
-                Request.Method.GET, followersUrl, null,
-                response -> {
-                    TextView followersTv = findViewById(R.id.followersCount);
-                    followersTv.setText(response.length() + " Followers");
-                },
-                error -> {
-                    TextView followersTv = findViewById(R.id.followersCount);
-                    followersTv.setText("0 Followers");
-                }
-        );
-        VolleySingleton.getInstance(this).addToRequestQueue(followersRequest);
-
-        String followingUrl = BASE_URL + "/" + username + "/following";
-        JsonArrayRequest followingRequest = new JsonArrayRequest(
-                Request.Method.GET, followingUrl, null,
-                response -> {
-                    TextView followingTv = findViewById(R.id.followingCount);
-                    followingTv.setText(response.length() + " Following");
-                },
-                error -> {
-                    TextView followingTv = findViewById(R.id.followingCount);
-                    followingTv.setText("0 Following");
-                }
-        );
-        VolleySingleton.getInstance(this).addToRequestQueue(followingRequest);
-    }
-
-
-    /**
-     * ------------------- VIEW MODE -------------------
-     **/
+    // ---------------------- VIEW MODE ----------------------
     private void showProfileView() {
         setContentView(R.layout.activity_user_profile);
         setupBottomNavigation(R.id.nav_my_profile);
 
+        SessionManager session = SessionManager.getInstance();
+        String usernameValue = session.getLoggedInUsername();
+        String displayNameValue = session.getDisplayName() != null ? session.getDisplayName() : usernameValue;
+
         TextView usernameTv = findViewById(R.id.username);
         TextView displayNameTv = findViewById(R.id.displayName);
         TextView bioTv = findViewById(R.id.bio);
-        TextView followersTv = findViewById(R.id.followersCount);
-        TextView followingTv = findViewById(R.id.followingCount);
-        TextView craftSpecialtiesTv = findViewById(R.id.CraftSpecialties);
-        ImageView profileImageView = findViewById(R.id.profileImage); // NEW: profile image
-        ImageView tierBadge = findViewById(R.id.tierBadge);
-        TextView pointsText = findViewById(R.id.pointsText);
-        TextView tierText = findViewById(R.id.tierText);
-        ProgressBar tierProgress = findViewById(R.id.tierProgress);
-
-        SessionManager session = SessionManager.getInstance();
-
-        String usernameValue = session.getLoggedInUsername();
-        String displayNameValue = session.getDisplayName();
-        if (displayNameValue == null || displayNameValue.isEmpty())
-            displayNameValue = usernameValue;
+        TextView craftTv = findViewById(R.id.CraftSpecialties);
+        ImageView profileImage = findViewById(R.id.profileImage);
 
         usernameTv.setText(usernameValue);
         displayNameTv.setText(displayNameValue);
 
-        String bio = session.getBio();
-        String craftSpecialties = session.getCraftSpecialties();
-
-        if (bio == null || bio.equals("null") || bio.isEmpty()) {
+        String bioStr = session.getBio();
+        if (bioStr == null || bioStr.isEmpty() || bioStr.equals("null")) {
             bioTv.setVisibility(View.GONE);
         } else {
             bioTv.setVisibility(View.VISIBLE);
-            bioTv.setText(bio);
+            bioTv.setText(bioStr);
         }
 
-        if (craftSpecialties == null || craftSpecialties.equals("null") || craftSpecialties.isEmpty()) {
-            craftSpecialtiesTv.setVisibility(View.GONE);
+        String craftStr = session.getCraftSpecialties();
+        if (craftStr == null || craftStr.isEmpty() || craftStr.equals("null")) {
+            craftTv.setVisibility(View.GONE);
         } else {
-            craftSpecialtiesTv.setVisibility(View.VISIBLE);
-            craftSpecialtiesTv.setText(craftSpecialties);
+            craftTv.setVisibility(View.VISIBLE);
+            craftTv.setText(craftStr);
         }
 
-        // 🔹 NEW: Load profile image from session
-        String profileImageFilename = session.getProfileImageUrl();
-        if (profileImageFilename != null && !profileImageFilename.isEmpty()) {
-            String fullUrl = BASE_URL + "/uploads/" + profileImageFilename;
-            Glide.with(this)
-                    .load(fullUrl)
-                    .placeholder(R.drawable.profile)
-                    .error(R.drawable.profile)
-                    .circleCrop()
-                    .into(profileImageView);
-        } else {
-            profileImageView.setImageResource(R.drawable.profile);
-        }
+        // -------- Corrected image loading using imageId --------
+        long imageId = session.getProfileImageId();
+        Log.d("PROFILE_DEBUG", "showProfileView imageId = " + imageId);
+        loadProfileImage(profileImage, imageId);
 
         fetchFollowersAndFollowing(usernameValue);
         fetchUserPoints(usernameValue);
-
-        // 🔹 NEW: Load posts thumbnails grid for this user
         loadUserPosts(usernameValue);
 
-        Button editButton = findViewById(R.id.editProfile);
-        Button notifButton = findViewById(R.id.notifButton);
-        Button pointsCenterBtn = findViewById(R.id.btnPointsCenter);
-        Button savedBoardsBtn = findViewById(R.id.btnSavedBoards);
-
-        notifButton.setOnClickListener(v -> {
-            Intent intent = new Intent(UserProfile.this, NotificationCenterActivity.class);
-            startActivity(intent);
-        });
-
-        pointsCenterBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(UserProfile.this, PointsCenterActivity.class);
-            startActivity(intent);
-        });
-
-        editButton.setOnClickListener(v -> showEditProfile());
-        savedBoardsBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(UserProfile.this, BoardsListActivity.class);
-            intent.putExtra("username", SessionManager.getInstance().getLoggedInUsername());
-            startActivity(intent);
+        findViewById(R.id.editProfile).setOnClickListener(v -> showEditProfile());
+        findViewById(R.id.notifButton).setOnClickListener(v -> startActivity(new Intent(this, NotificationCenterActivity.class)));
+        findViewById(R.id.btnPointsCenter).setOnClickListener(v -> startActivity(new Intent(this, PointsCenterActivity.class)));
+        findViewById(R.id.btnSavedBoards).setOnClickListener(v -> {
+            Intent i = new Intent(this, BoardsListActivity.class);
+            i.putExtra("username", usernameValue);
+            startActivity(i);
         });
     }
 
-    /**
-     * ------------------- LOAD USER POSTS -------------------
-     **/
-    private void loadUserPosts(String username) {
-        GridLayout postsGrid = findViewById(R.id.postsGrid);
-        postsGrid.removeAllViews();
+    private void loadProfileImage(ImageView profileImage, long imageId) {
+        if (imageId <= 0) {
+            Log.d("PROFILE_DEBUG", "No profile imageId stored. Using default pic.");
+            profileImage.setImageResource(R.drawable.profile);
+            return;
+        }
 
-        String url = BASE_URL + "/feed/home/" + username; // only user's posts
+        String url = BASE_URL + "/images/" + imageId;
 
-        JsonArrayRequest req = new JsonArrayRequest(
-                Request.Method.GET, url, null,
-                response -> {
-                    for (int i = 0; i < response.length(); i++) {
-                        JSONObject post = response.optJSONObject(i);
-                        if (post == null) continue;
-
-                        JSONArray images = post.optJSONArray("images");
-                        if (images == null || images.length() == 0) {
-                            // Skip posts with no images to avoid blank spaces
-                            continue;
-                        }
-
-                        JSONObject img = images.optJSONObject(0);
-                        if (img == null) continue;
-                        long imageId = img.optLong("id", -1);
-                        if (imageId <= 0) continue;
-
-                        // Create ImageView only if there is an image
-                        ImageView imageView = new ImageView(this);
-                        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-                        params.width = getResources().getDisplayMetrics().widthPixels / 3;
-                        params.height = params.width;
-                        imageView.setLayoutParams(params);
-                        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        imageView.setBackgroundColor(getResources().getColor(R.color.blue_background));
-                        postsGrid.addView(imageView);
-                        String projectName = post.optString("projectName", null);
-
-
-                        // Load image
-                        loadImageIntoView(imageView, imageId);
-
-                        // Click listener
-                        imageView.setOnClickListener(v -> {
-
-
-                            // Inside imageView.setOnClickListener(...)
-                            Intent intent = new Intent(UserProfile.this, UserPostsDetailActivity.class);
-                            intent.putExtra("projectName", projectName);
-                            intent.putExtra("username", username); // keep this!
-
-                            startActivity(intent);
-
-
-                        });
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                res -> {
+                    String filePath = res.optString("filePath", "");
+                    if (filePath.isEmpty()) {
+                        profileImage.setImageResource(R.drawable.profile);
+                        return;
                     }
 
-                    // If no posts were added, show a placeholder or message
-                    if (postsGrid.getChildCount() == 0) {
-                        TextView emptyMsg = new TextView(this);
-                        emptyMsg.setText("No posts yet.");
-                        emptyMsg.setTextSize(16f);
-                        emptyMsg.setPadding(0, 24, 0, 24);
-                        postsGrid.addView(emptyMsg);
-                    }
+                    String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
+                    String fullUrl = BASE_URL + "/uploads/" + filename;
 
+                    Log.d("PROFILE_DEBUG", "Loading profile image from: " + fullUrl);
+
+                    Glide.with(this)
+                            .load(fullUrl)
+                            .placeholder(R.drawable.profile)
+                            .circleCrop()
+                            .into(profileImage);
                 },
-                error -> Toast.makeText(this, "Failed to load posts", Toast.LENGTH_SHORT).show()
+                err -> {
+                    Log.e("PROFILE_DEBUG", "Error loading profile pic");
+                    profileImage.setImageResource(R.drawable.profile);
+                }
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-
-    private void loadImageIntoView(ImageView imageView, long imageId) {
-        String url = BASE_URL + "/images/" + imageId; // first get metadata
-
-        JsonObjectRequest metadataRequest = new JsonObjectRequest(
-                Request.Method.GET, url, null,
-                response -> {
-                    String filePath = response.optString("filePath", "");
-                    if (filePath != null && !filePath.isEmpty()) {
-                        String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
-                        String fullUrl = BASE_URL + "/uploads/" + filename;
-
-                        // ✅ Load image with Glide
-                        Glide.with(this)
-                                .load(fullUrl)
-                                .placeholder(R.drawable.ic_post_placeholder)
-                                .error(R.drawable.ic_post_placeholder)
-                                .centerCrop()
-                                .into(imageView);
-                    } else {
-                        imageView.setImageResource(R.drawable.ic_post_placeholder);
-                    }
-                },
-                error -> imageView.setImageResource(R.drawable.ic_post_placeholder)
-        );
-
-        VolleySingleton.getInstance(this).addToRequestQueue(metadataRequest);
-    }
-
-
-    /**
-     * ------------------- EDIT MODE -------------------
-     **/
+    // ---------------------- EDIT MODE ----------------------
     private void showEditProfile() {
         setContentView(R.layout.activity_user_profile_edit);
+
+        SessionManager session = SessionManager.getInstance();
 
         displayName = findViewById(R.id.edit_display_name);
         username = findViewById(R.id.edit_username);
@@ -298,265 +150,312 @@ public class UserProfile extends BaseActivity {
         email = findViewById(R.id.edit_email);
         password = findViewById(R.id.edit_password);
         craftSpecialties = findViewById(R.id.edit_craft_specialties);
+        editProfileImage = findViewById(R.id.editProfileImage);
 
-        SessionManager session = SessionManager.getInstance();
-
-        String usernameValue = session.getLoggedInUsername();
-        String displayNameValue = session.getDisplayName();
-        if (displayNameValue == null || displayNameValue.isEmpty())
-            displayNameValue = usernameValue;
-
-        username.setText(usernameValue);
-        displayName.setText(displayNameValue);
+        username.setText(session.getLoggedInUsername());
+        displayName.setText(session.getDisplayName());
         bio.setText(session.getBio());
         email.setText(session.getEmail());
         password.setText(session.getPassword());
         craftSpecialties.setText(session.getCraftSpecialties());
 
-        Button saveButton = findViewById(R.id.btn_save_profile);
-        saveButton.setOnClickListener(v -> saveProfile());
-        editProfileImage = findViewById(R.id.editProfileImage);
-        Button changeImageButton = findViewById(R.id.btn_change_profile_image);
+        loadProfileImage(editProfileImage, session.getProfileImageId());
 
-// Load current profile image from session or default
-        String currentImageUrl = session.getProfileImageUrl(); // make sure SessionManager has this
-        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(BASE_URL + "/uploads/" + currentImageUrl)
-                    .placeholder(R.drawable.profile)
-                    .into(editProfileImage);
-        } else {
-            editProfileImage.setImageResource(R.drawable.profile);
-        }
-
-// Handle picking new image
-        changeImageButton.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-            startActivityForResult(intent, 101); // 101 = request code
+        findViewById(R.id.btn_change_profile_image).setOnClickListener(v -> {
+            Intent pick = new Intent(Intent.ACTION_PICK);
+            pick.setType("image/*");
+            startActivityForResult(pick, 101);
         });
 
+        findViewById(R.id.btn_save_profile).setOnClickListener(v -> saveProfile());
 
-        Button logout = findViewById(R.id.logout);
-        logout.setOnClickListener(v -> {
+        findViewById(R.id.logout).setOnClickListener(v -> {
             session.logout();
             Intent intent = new Intent(UserProfile.this, Login.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-            finish();
         });
     }
 
-    /**
-     * ------------------- SAVE PROFILE -------------------
-     **/
+    // ------------------ SAVE PROFILE ------------------
     private void saveProfile() {
-        String name = displayName.getText().toString().trim();
-        String user = username.getText().toString().trim();
-        String biography = bio.getText().toString().trim();
-        String mail = email.getText().toString().trim();
-        String pass = password.getText().toString().trim();
-        String craftType = craftSpecialties.getText().toString().trim();
-
-        if (user.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(this, "Username and password are required!", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        JSONObject profileData = new JSONObject();
+        JSONObject data = new JSONObject();
         try {
-            profileData.put("displayName", name);
-            profileData.put("username", user);
-            profileData.put("bio", biography);
-            profileData.put("craftSpecialties", craftType);
-            profileData.put("email", mail);
-            profileData.put("password", pass);
+            data.put("displayName", displayName.getText().toString().trim());
+            data.put("username", username.getText().toString().trim());
+            data.put("bio", bio.getText().toString().trim());
+            data.put("craftSpecialties", craftSpecialties.getText().toString().trim());
+            data.put("email", email.getText().toString().trim());
+            data.put("password", password.getText().toString().trim());
         } catch (JSONException e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error creating profile JSON", Toast.LENGTH_SHORT).show();
-            return;
         }
 
         if (newProfileImageData != null) {
-            MultipartRequest uploadRequest = new MultipartRequest(
-                    Request.Method.POST,
-                    BASE_URL + "/images",
-                    "image",
-                    "profile.jpg",
-                    "image/jpeg",
-                    newProfileImageData,
-                    response -> {
-                        Log.d("UPLOAD_RESPONSE", response);
-                        try {
-                            if (!response.trim().startsWith("{")) {
-                                Toast.makeText(this, "Unexpected response from server", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            JSONObject res = new JSONObject(response);
-                            String filePath = res.getString("filePath");
-                            String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
-                            profileData.put("image", filename);
-                            sendProfileUpdate(profileData); // only once
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Toast.makeText(this, "Failed to parse image upload response", Toast.LENGTH_SHORT).show();
-                        }
-                    },
-                    error -> Toast.makeText(this, "Failed to upload image", Toast.LENGTH_SHORT).show()
-            );
-            VolleySingleton.getInstance(this).addToRequestQueue(uploadRequest);
+            uploadProfileImageThenUpdate(data);
         } else {
-            sendProfileUpdate(profileData); // no image, just send JSON
+            sendProfileUpdate(data);
         }
     }
 
+    private void uploadProfileImageThenUpdate(JSONObject data) {
+        MultipartRequest upload = new MultipartRequest(
+                Request.Method.POST,
+                BASE_URL + "/images",
+                "image",
+                "profile.jpg",
+                "image/jpeg",
+                newProfileImageData,
+                res -> {
+                    try {
+                        JSONObject obj = new JSONObject(res);
+                        long id = obj.getLong("id");
+                        String filePath = obj.getString("filePath");
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+                        JSONObject img = new JSONObject();
+                        img.put("id", id);
+                        img.put("filePath", filePath);
 
-        if (requestCode == 101 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            try {
-                // Get URI of selected image
-                Uri imageUri = data.getData();
+                        data.put("image", img);
+                        sendProfileUpdate(data);
 
-                // Load into ImageView with Glide
-                Glide.with(this)
-                        .asBitmap() // ensures we get a Bitmap if needed later
-                        .load(imageUri)
-                        .placeholder(R.drawable.profile)
-                        .into(editProfileImage);
+                    } catch (Exception ex) {
+                        Toast.makeText(this, "Image upload parse error", Toast.LENGTH_SHORT).show();
+                    }
+                },
+                err -> Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show()
+        );
 
-                // Optional: get byte[] if you need to upload it
-                Glide.with(this)
-                        .asBitmap()
-                        .load(imageUri)
-                        .into(new CustomTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                resource.compress(Bitmap.CompressFormat.JPEG, 90, baos);
-                                newProfileImageData = baos.toByteArray();
-                            }
-
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {
-                            }
-                        });
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
-            }
-        }
+        VolleySingleton.getInstance(this).addToRequestQueue(upload);
     }
 
-    private void sendProfileUpdate(JSONObject profileData) {
-        JSONObject filteredProfileData = new JSONObject();
-        Iterator<String> keys = profileData.keys();
+    private void sendProfileUpdate(JSONObject data) {
+        JSONObject filtered = new JSONObject();
+
+        Iterator<String> keys = data.keys();
         while (keys.hasNext()) {
             String key = keys.next();
-            if (key == null) continue; // skip null keys
-            Object value = profileData.opt(key); // use opt() to preserve type
+            Object value = data.opt(key);
+
+            if (value == null) continue;
+            if (value instanceof String && ((String) value).isEmpty()) continue;
+
             try {
-                if (value == null || value.equals("null") || (value instanceof String && ((String) value).isEmpty())) {
-                    // Skip empty values OR store as JSONObject.NULL if you want
-                    // filteredProfileData.put(key, JSONObject.NULL);
-                    continue;
-                } else {
-                    filteredProfileData.put(key, value);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+                filtered.put(key, value);
+            } catch (JSONException ignored) {}
         }
 
         String url = BASE_URL + "/user/" + SessionManager.getInstance().getLoggedInUsername();
-        JsonObjectRequest request = new JsonObjectRequest(
+
+        JsonObjectRequest req = new JsonObjectRequest(
                 Request.Method.PUT,
                 url,
-                filteredProfileData,
-                response -> {
-                    Toast.makeText(this, "Profile saved successfully!", Toast.LENGTH_SHORT).show();
-                    SessionManager session = SessionManager.getInstance();
-                    session.setLoggedInUsername(filteredProfileData.optString("username"));
-                    session.setDisplayName(filteredProfileData.optString("displayName"));
-                    session.setBio(filteredProfileData.optString("bio"));
-                    session.setEmail(filteredProfileData.optString("email"));
-                    session.setPassword(filteredProfileData.optString("password"));
-                    session.setCraftSpecialties(filteredProfileData.optString("craftSpecialties"));
-                    session.setProfileImageUrl(filteredProfileData.optString("image"));
+                filtered,
+                res -> {
+                    updateSessionData(res);
+                    Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show();
                     showProfileView();
                 },
-                error -> {
-                    String message = "Server error saving profile";
-                    if (error.networkResponse != null && error.networkResponse.data != null) {
-                        message = new String(error.networkResponse.data);
-                    }
-                    Toast.makeText(this, "Error saving profile: " + message, Toast.LENGTH_LONG).show();
-                }
+                err -> Toast.makeText(this, "Update failed", Toast.LENGTH_LONG).show()
         );
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
+    private void updateSessionData(JSONObject res) {
+        SessionManager s = SessionManager.getInstance();
 
-    private void fetchUserPoints(String username) {
-        String url = BASE_URL + "/points/" + username;
+        s.setLoggedInUsername(res.optString("username"));
+        s.setDisplayName(res.optString("displayName"));
+        s.setBio(res.optString("bio"));
+        s.setEmail(res.optString("email"));
+        s.setPassword(res.optString("password"));
+        s.setCraftSpecialties(res.optString("craftSpecialties"));
 
-        JsonObjectRequest request = new JsonObjectRequest(
+        JSONObject img = res.optJSONObject("image");
+        if (img != null) {
+            long id = img.optLong("id", -1);
+            if (id > 0) s.setProfileImageId(id);
+        }
+    }
+
+    // ------------------ IMAGE PICKER ------------------
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 101 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+
+            Glide.with(this)
+                    .load(imageUri)
+                    .placeholder(R.drawable.profile)
+                    .into(editProfileImage);
+
+            Glide.with(this)
+                    .asBitmap()
+                    .load(imageUri)
+                    .into(new CustomTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            resource.compress(Bitmap.CompressFormat.JPEG, 90, baos);
+                            newProfileImageData = baos.toByteArray();
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {}
+                    });
+        }
+    }
+
+    // ---------------------- FOLLOWERS ----------------------
+    private void fetchFollowersAndFollowing(String username) {
+        String followersUrl = BASE_URL + "/" + username + "/followers";
+        String followingUrl = BASE_URL + "/" + username + "/following";
+
+        JsonArrayRequest followersReq = new JsonArrayRequest(
+                Request.Method.GET,
+                followersUrl,
+                null,
+                res -> ((TextView) findViewById(R.id.followersCount)).setText(res.length() + " Followers"),
+                err -> ((TextView) findViewById(R.id.followersCount)).setText("0 Followers")
+        );
+
+        JsonArrayRequest followingReq = new JsonArrayRequest(
+                Request.Method.GET,
+                followingUrl,
+                null,
+                res -> ((TextView) findViewById(R.id.followingCount)).setText(res.length() + " Following"),
+                err -> ((TextView) findViewById(R.id.followingCount)).setText("0 Following")
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(followersReq);
+        VolleySingleton.getInstance(this).addToRequestQueue(followingReq);
+    }
+
+    // ---------------------- POSTS ----------------------
+    private void loadUserPosts(String username) {
+        GridLayout grid = findViewById(R.id.postsGrid);
+        grid.removeAllViews();
+
+        String url = BASE_URL + "/feed/home/" + username;
+
+        JsonArrayRequest req = new JsonArrayRequest(
                 Request.Method.GET,
                 url,
                 null,
-                response -> {
-                    try {
-                        int totalPoints = response.optInt("totalPoints", 0);
-                        String currentTier = response.optString("currentTier", "BEGINNER");
-                        int pointsToNextTier = response.optInt("pointsToNextTier", 0);
+                res -> {
+                    for (int i = 0; i < res.length(); i++) {
 
-                        TextView pointsText = findViewById(R.id.pointsText);
-                        TextView tierText = findViewById(R.id.tierText);
-                        ProgressBar tierProgress = findViewById(R.id.tierProgress);
-                        ImageView tierBadge = findViewById(R.id.tierBadge);
+                        JSONObject post = res.optJSONObject(i);
+                        if (post == null) continue;
 
-                        pointsText.setText("Points: " + totalPoints);
-                        tierText.setText("Tier: " + currentTier);
+                        JSONArray images = post.optJSONArray("images");
+                        if (images == null || images.length() == 0) continue;
 
-                        int progress = 0;
-                        if (currentTier.equals("BEGINNER")) {
-                            progress = (int) ((totalPoints / 100.0) * 100);
-                        } else if (currentTier.equals("INTERMEDIATE")) {
-                            progress = (int) (((totalPoints - 100) / 100.0) * 100);
-                        } else if (currentTier.equals("EXPERT")) {
-                            progress = (int) (((totalPoints - 200) / 100.0) * 100);
-                        } else if (currentTier.equals("CHAMPION")) {
-                            progress = 100;
-                        }
-                        tierProgress.setProgress(progress);
+                        long imageId = images.optJSONObject(0).optLong("id", -1);
+                        if (imageId <= 0) continue;
 
-                        switch (currentTier) {
-                            case "BEGINNER":
-                                tierBadge.setImageResource(R.drawable.badge_beginner);
-                                break;
-                            case "INTERMEDIATE":
-                                tierBadge.setImageResource(R.drawable.badge_intermediate);
-                                break;
-                            case "EXPERT":
-                                tierBadge.setImageResource(R.drawable.badge_expert);
-                                break;
-                            case "CHAMPION":
-                                tierBadge.setImageResource(R.drawable.badge_champion);
-                                break;
-                            default:
-                                tierBadge.setImageResource(R.drawable.badge_beginner);
-                        }
+                        ImageView iv = new ImageView(this);
+                        int size = getResources().getDisplayMetrics().widthPixels / 3;
+                        iv.setLayoutParams(new GridLayout.LayoutParams());
+                        iv.getLayoutParams().width = size;
+                        iv.getLayoutParams().height = size;
+                        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        grid.addView(iv);
+                        loadPostImage(iv, imageId);
+
+                        String projectName = post.optString("projectName", null);
+                        iv.setOnClickListener(v -> {
+                            Intent intent = new Intent(UserProfile.this, UserPostsDetailActivity.class);
+                            intent.putExtra("projectName", projectName);
+                            intent.putExtra("username", username);
+                            startActivity(intent);
+                        });
+                    }
+
+                    if (grid.getChildCount() == 0) {
+                        TextView msg = new TextView(this);
+                        msg.setText("No posts yet.");
+                        msg.setTextSize(16f);
+                        msg.setPadding(0, 24, 0, 24);
+                        grid.addView(msg);
                     }
                 },
-                error -> Log.e("POINTS_ERROR", "Failed to load points", error)
+                err -> Toast.makeText(this, "Failed to load posts", Toast.LENGTH_SHORT).show()
         );
 
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    private void loadPostImage(ImageView iv, long imageId) {
+        String url = BASE_URL + "/images/" + imageId;
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                res -> {
+                    String filePath = res.optString("filePath", "");
+                    if (filePath.isEmpty()) {
+                        iv.setImageResource(R.drawable.ic_post_placeholder);
+                        return;
+                    }
+
+                    String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
+                    String fullUrl = BASE_URL + "/uploads/" + filename;
+
+                    Glide.with(this)
+                            .load(fullUrl)
+                            .centerCrop()
+                            .into(iv);
+                },
+                err -> iv.setImageResource(R.drawable.ic_post_placeholder)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    // ------------------ POINTS ------------------
+    private void fetchUserPoints(String username) {
+        String url = BASE_URL + "/points/" + username;
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                res -> {
+                    try {
+                        int total = res.optInt("totalPoints", 0);
+                        String tier = res.optString("currentTier", "BEGINNER");
+
+                        ((TextView) findViewById(R.id.pointsText)).setText("Points: " + total);
+                        ((TextView) findViewById(R.id.tierText)).setText("Tier: " + tier);
+
+                        ProgressBar bar = findViewById(R.id.tierProgress);
+                        int progress = 0;
+
+                        if (tier.equals("BEGINNER")) progress = (int) (total / 100.0 * 100);
+                        else if (tier.equals("INTERMEDIATE")) progress = (int) ((total - 100) / 100.0 * 100);
+                        else if (tier.equals("EXPERT")) progress = (int) ((total - 200) / 100.0 * 100);
+                        else if (tier.equals("CHAMPION")) progress = 100;
+
+                        bar.setProgress(progress);
+
+                        ImageView badge = findViewById(R.id.tierBadge);
+
+                        if (tier.equals("BEGINNER")) badge.setImageResource(R.drawable.badge_beginner);
+                        else if (tier.equals("INTERMEDIATE")) badge.setImageResource(R.drawable.badge_intermediate);
+                        else if (tier.equals("EXPERT")) badge.setImageResource(R.drawable.badge_expert);
+                        else badge.setImageResource(R.drawable.badge_champion);
+
+                    } catch (Exception ignored) {}
+                },
+                err -> Log.e("POINTS_ERROR", "Failed to load points")
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 }

@@ -1,6 +1,7 @@
 package com.example.androidexample;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -9,7 +10,6 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
 
@@ -33,6 +33,7 @@ public class Login extends AppCompatActivity {
         signupButton = findViewById(R.id.login_signup_btn);
 
         loginButton.setOnClickListener(v -> attemptLogin());
+
         signupButton.setOnClickListener(v -> {
             Intent intent = new Intent(Login.this, SignupActivity.class);
             startActivity(intent);
@@ -56,13 +57,20 @@ public class Login extends AppCompatActivity {
                 null,
                 response -> {
                     try {
-                        // Extract info from JSON
+
                         String displayName = response.optString("displayName", username);
                         String bio = response.optString("bio", "");
                         String email = response.optString("email", "");
                         String craftSpecialties = response.optString("craftSpecialties", "");
 
-                        // Save to singleton
+                        // Extract profile image ID (correct usage)
+                        long profileImageId = -1;
+                        JSONObject imageObj = response.optJSONObject("image");
+                        if (imageObj != null) {
+                            profileImageId = imageObj.optLong("id", -1);
+                        }
+
+                        // Save to session
                         SessionManager session = SessionManager.getInstance();
                         session.setLoggedInUsername(username);
                         session.setDisplayName(displayName);
@@ -71,9 +79,12 @@ public class Login extends AppCompatActivity {
                         session.setCraftSpecialties(craftSpecialties);
                         session.setPassword(password);
 
+                        if (profileImageId > 0) {
+                            session.setProfileImageId(profileImageId);
+                        }
+
                         Toast.makeText(this, "Welcome " + displayName + "!", Toast.LENGTH_SHORT).show();
 
-                        // Navigate to next activity
                         Intent intent = new Intent(Login.this, UserProfile.class);
                         startActivity(intent);
                         finish();
