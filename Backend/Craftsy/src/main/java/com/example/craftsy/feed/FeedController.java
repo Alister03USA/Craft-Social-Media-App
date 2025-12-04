@@ -303,7 +303,7 @@ public class FeedController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Feed project = feedRepository.findByUserAndProjectName(user,projectName)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
-        Users commentUser = userRepository.findByUsername(username)
+        Users commentUser = userRepository.findByUsername(commentUsername)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         comment.setUser(commentUser);
         comment.setDate(LocalDateTime.now());

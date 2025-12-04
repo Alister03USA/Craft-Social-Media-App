@@ -639,6 +639,30 @@ public class KathrynSystemTest {
                 .body("supplies", equalTo("test update supplies"))
                 .body("visibility", equalTo("test update visibility"));
 
+        //like project
+        RestAssured.when()
+                .put("/feed/{username}/{projectName}/like", testUser.getUsername(), projectName1)
+                .then()
+                .statusCode(200);
+
+        //confirm like
+        RestAssured.when()
+                .get("/feed/{username}/{projectName}", testUser.getUsername(), projectName1)
+                .then().statusCode(200).assertThat()
+                .body("numLikes", equalTo(1));
+
+        //unlike project
+        RestAssured.when()
+                .put("/feed/{username}/{projectName}/unlike", testUser.getUsername(), projectName1)
+                .then()
+                .statusCode(200);
+
+        //confirm unlike
+        RestAssured.when()
+                .get("/feed/{username}/{projectName}", testUser.getUsername(), projectName1)
+                .then().statusCode(200).assertThat()
+                .body("numLikes", equalTo(0));
+
         //delete projects
         RestAssured.when()
                 .delete("/feed/{username}/{projectName}", testUser.getUsername(), projectName1)
@@ -730,7 +754,8 @@ public class KathrynSystemTest {
                 }
                 """;
         int commentID = given().contentType("application/json").body(requestBody).when()
-                .post("/feed/{username}/{projectName}/comment", testUser.getUsername(), projectName)
+                .post("/feed/{username}/{projectName}/comment/{commentUsername}"
+                        , testUser.getUsername(), projectName, testUser.getUsername())
                 .then().statusCode(200).extract().path("comments[0].id");
 
         //like comment
