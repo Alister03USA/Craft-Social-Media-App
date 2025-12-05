@@ -4,6 +4,17 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- Back button should be OUTSIDE the ScrollView -->
+    <ImageButton
+        android:id="@+id/btnBackOutside"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="12dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="Back"
+        android:src="@drawable/ic_arrow_back"
+        app:tint="@android:color/black" />
+
     <!-- Scrollable Profile Content -->
     <ScrollView
         android:layout_width="match_parent"

@@ -64,28 +64,37 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
         holder.patternDifficulty.setText("Difficulty: " + pattern.getDifficulty());
         holder.patternRating.setRating(pattern.getRating());
 
-        // backend image loading
-        if (pattern.getPatternImage() != null && !pattern.getPatternImage().isEmpty()) {
-            String imageUrl = pattern.getPatternImage();
-
-            ImageRequest imageRequest = new ImageRequest(
-                    imageUrl,
-                    response -> holder.patternImage.setImageBitmap(response),
-                    0, 0,
-                    ImageView.ScaleType.CENTER_CROP,
-                    Bitmap.Config.RGB_565,
-                    error -> {
-                        Log.e("PatternAdapter", "Image load failed: " + error.getMessage());
-                        holder.patternImage.setImageResource(R.drawable.craftsy_image_placeholder);
-                    }
-            );
-
-            VolleySingleton.getInstance(context).addToRequestQueue(imageRequest);
+    /* =========================
+       HIDE IMAGE IN BOARD MODE
+       ========================= */
+        if (isBoardMode) {
+            holder.patternImage.setVisibility(View.GONE);
         } else {
-            holder.patternImage.setImageResource(R.drawable.craftsy_image_placeholder);
+            holder.patternImage.setVisibility(View.VISIBLE);
+
+            // backend image loading
+            if (pattern.getPatternImage() != null && !pattern.getPatternImage().isEmpty()) {
+                String imageUrl = pattern.getPatternImage();
+
+                ImageRequest imageRequest = new ImageRequest(
+                        imageUrl,
+                        response -> holder.patternImage.setImageBitmap(response),
+                        0, 0,
+                        ImageView.ScaleType.CENTER_CROP,
+                        Bitmap.Config.RGB_565,
+                        error -> {
+                            Log.e("PatternAdapter", "Image load failed: " + error.getMessage());
+                            holder.patternImage.setImageResource(R.drawable.craftsy_image_placeholder);
+                        }
+                );
+
+                VolleySingleton.getInstance(context).addToRequestQueue(imageRequest);
+            } else {
+                holder.patternImage.setImageResource(R.drawable.craftsy_image_placeholder);
+            }
         }
 
-        // normal mode: click to open detail
+        // normal mode: open pattern detail
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, PatternDetailActivity.class);
             intent.putExtra("patternName", pattern.getPatternName());
@@ -93,7 +102,7 @@ public class PatternAdapter extends RecyclerView.Adapter<PatternAdapter.PatternV
             context.startActivity(intent);
         });
 
-        // board mode: show remove button
+        // board mode remove button
         if (isBoardMode) {
             holder.btnRemovePattern.setVisibility(View.VISIBLE);
             holder.btnRemovePattern.setOnClickListener(v -> removePatternFromBoard(pattern, holder.getAdapterPosition()));

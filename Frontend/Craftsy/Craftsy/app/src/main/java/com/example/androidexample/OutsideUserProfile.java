@@ -3,6 +3,7 @@ package com.example.androidexample;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -54,7 +55,8 @@ public class OutsideUserProfile extends BaseActivity {
         TextView pointsText = findViewById(R.id.pointsTextOutside);
         TextView tierText = findViewById(R.id.tierTextOutside);
         ProgressBar tierProgress = findViewById(R.id.tierProgressOutside);
-
+        ImageButton backBtn = findViewById(R.id.btnBackOutside);
+        backBtn.setOnClickListener(v -> finish());
         loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
         if (loggedInUsername == null || loggedInUsername.isEmpty()) {
             Toast.makeText(this, "No logged-in user found", Toast.LENGTH_SHORT).show();
@@ -307,7 +309,10 @@ public class OutsideUserProfile extends BaseActivity {
     private void updateUIWithProfile(JSONObject userJson) {
         if (userJson == null) return;
 
-        String displayName = userJson.optString("displayName", userJson.optString("username", ""));
+        /* ---------------------------------------------
+         * Update text fields FIRST (username, displayName)
+         * --------------------------------------------- */
+        String displayName = userJson.optString("displayName", viewedUsername);
         String username = userJson.optString("username", viewedUsername);
         String bio = userJson.optString("bio", "");
         String craftSpecialties = userJson.optString("craftSpecialties", "");
@@ -315,20 +320,59 @@ public class OutsideUserProfile extends BaseActivity {
         displayNameTv.setText(displayName);
         usernameTv.setText(username);
 
-        if (bio == null || bio.isEmpty() || bio.equals("null")) {
+        if (bio == null || bio.equals("null") || bio.isEmpty()) {
             bioTv.setVisibility(View.GONE);
         } else {
             bioTv.setVisibility(View.VISIBLE);
             bioTv.setText(bio);
         }
 
-        if (craftSpecialties == null || craftSpecialties.isEmpty() || craftSpecialties.equals("null")) {
+        if (craftSpecialties == null || craftSpecialties.equals("null") || craftSpecialties.isEmpty()) {
             craftSpecialtiesTv.setVisibility(View.GONE);
         } else {
             craftSpecialtiesTv.setVisibility(View.VISIBLE);
             craftSpecialtiesTv.setText(craftSpecialties);
         }
 
+        /* ---------------------------------------------
+         * NEW: Preferred image loading via imageURL
+         * --------------------------------------------- */
+        String imageUrl = userJson.optString("imageURL", null);
+
+        if (imageUrl != null && !imageUrl.equals("null")) {
+            String metaUrl = "http://coms-3090-028.class.las.iastate.edu:8080" + imageUrl;
+
+            JsonObjectRequest imgReq = new JsonObjectRequest(
+                    Request.Method.GET,
+                    metaUrl,
+                    null,
+                    res -> {
+                        String filePath = res.optString("filePath", "");
+                        if (filePath.isEmpty()) {
+                            profileImageView.setImageResource(R.drawable.profile);
+                            return;
+                        }
+
+                        String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
+                        String actualUrl = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/" + filename;
+
+                        Glide.with(this)
+                                .load(actualUrl)
+                                .circleCrop()
+                                .placeholder(R.drawable.profile)
+                                .error(R.drawable.profile)
+                                .into(profileImageView);
+                    },
+                    err -> profileImageView.setImageResource(R.drawable.profile)
+            );
+
+            VolleySingleton.getInstance(this).addToRequestQueue(imgReq);
+            return;
+        }
+
+        /* ---------------------------------------------
+         * OLD FALLBACK: Load image via image.id
+         * --------------------------------------------- */
         long imageId = -1;
         JSONObject imgObj = userJson.optJSONObject("image");
         if (imgObj != null) {

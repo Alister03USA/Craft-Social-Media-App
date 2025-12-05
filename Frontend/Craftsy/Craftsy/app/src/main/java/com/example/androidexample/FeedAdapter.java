@@ -68,27 +68,36 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         holder.projectType.setText(item.getProjectType());
         holder.visibility.setText(item.getVisibility());
 
-        // Load images manually
-        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-            try {
-                URL url = new URL(item.getImageUrl());
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setDoInput(true);
-                connection.connect();
-                InputStream input = connection.getInputStream();
-                Bitmap bitmap = BitmapFactory.decodeStream(input);
-                holder.projectImage.setImageBitmap(bitmap);
-            } catch (Exception e) {
-                Log.e("FeedAdapter", "Image load failed: " + e.getMessage());
+    /* =========================
+       HIDE IMAGE IN BOARD MODE
+       ========================= */
+        if (fromScreen.equals("boards")) {
+            holder.projectImage.setVisibility(View.GONE);
+        } else {
+            holder.projectImage.setVisibility(View.VISIBLE);
+
+            // Load normally
+            if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
+                try {
+                    URL url = new URL(item.getImageUrl());
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setDoInput(true);
+                    connection.connect();
+                    InputStream input = connection.getInputStream();
+                    Bitmap bitmap = BitmapFactory.decodeStream(input);
+                    holder.projectImage.setImageBitmap(bitmap);
+                } catch (Exception e) {
+                    Log.e("FeedAdapter", "Image load failed: " + e.getMessage());
+                    holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
+                }
+            } else {
                 holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
             }
-        } else {
-            holder.projectImage.setImageResource(R.drawable.ic_post_placeholder);
         }
 
-        // Show Edit/Delete for owner posts only (normal feed)
+        // Edit/Delete visibility
         if (!fromScreen.equals("boards") && item.getUsername().equalsIgnoreCase(loggedInUser)) {
             holder.buttonEdit.setVisibility(View.VISIBLE);
             holder.buttonDelete.setVisibility(View.VISIBLE);
@@ -97,7 +106,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             holder.buttonDelete.setVisibility(View.GONE);
         }
 
-        // Show REMOVE FROM BOARD button only in Saved Boards screen
+        // REMOVE FROM BOARD button only in board mode
         if (fromScreen.equals("boards")) {
             holder.buttonRemoveFromBoard.setVisibility(View.VISIBLE);
             holder.buttonRemoveFromBoard.setOnClickListener(v -> {
@@ -107,33 +116,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
             holder.buttonRemoveFromBoard.setVisibility(View.GONE);
         }
 
-        // Edit post
-        holder.buttonEdit.setOnClickListener(v -> {
-            Intent intent = new Intent(context, FeedCRUDActivity.class);
-            intent.putExtra("mode", "edit");
-            intent.putExtra("username", loggedInUser);
-            intent.putExtra("projectName", item.getProjectName());
-            intent.putExtra("projectDesc", item.getProjectDesc());
-            intent.putExtra("projectType", item.getProjectType());
-            intent.putExtra("supplies", item.getSupplies());
-            intent.putExtra("visibility", item.getVisibility());
-            context.startActivity(intent);
-        });
-
-        // Delete post
-        holder.buttonDelete.setOnClickListener(v -> {
-            Intent intent = new Intent(context, FeedCRUDActivity.class);
-            intent.putExtra("mode", "delete");
-            intent.putExtra("username", loggedInUser);
-            intent.putExtra("projectName", item.getProjectName());
-            intent.putExtra("projectDesc", item.getProjectDesc());
-            intent.putExtra("projectType", item.getProjectType());
-            intent.putExtra("supplies", item.getSupplies());
-            intent.putExtra("visibility", item.getVisibility());
-            context.startActivity(intent);
-        });
-
-        // Open detail view
+        // Open detail page
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedDetailActivity.class);
             intent.putExtra("username", item.getUsername());
