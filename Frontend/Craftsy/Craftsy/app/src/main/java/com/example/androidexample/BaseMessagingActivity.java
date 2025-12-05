@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.bumptech.glide.Glide;
@@ -81,9 +82,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         super.onCreate(b);
     }
 
-    /* ==========================================================
-     * Shared initialization helper
-     * ========================================================== */
     protected void setupBaseViews() {
         recycler = findViewById(R.id.recycler);
         etInput = findViewById(R.id.etInput);
@@ -123,9 +121,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         });
     }
 
-    /* ==========================================================
-     * WebSocket
-     * ========================================================== */
     protected void connectSocket() {
         try {
             String url = WS_BASE + "/chat/" + convoId + "/" + currentUser;
@@ -144,12 +139,9 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         }
     }
 
-    /* ==========================================================
-     * Parse WebSocket Messages
-     * ========================================================== */
     protected void parseIncomingWs(String text) {
+        Log.d("WS-RAW", "Received WS: " + text);
         try {
-            // Reactions: 123:like:4
             if (text.matches("^\\d+:\\w+:\\d+$")) {
                 String[] p = text.split(":");
                 long id = Long.parseLong(p[0]);
@@ -166,17 +158,14 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
                 return;
             }
 
-            // sender: body
             int idx = text.indexOf(": ");
             String sender = idx > 0 ? text.substring(0, idx) : "unknown";
             String body = idx > 0 ? text.substring(idx + 2) : text;
 
             if (sender.equals(currentUser)) return;
 
-            // Cache sender image
             if (!profileCache.containsKey(sender)) fetchProfile(sender);
 
-            // Handle image
             if (body.startsWith("#image:")) {
                 long imgId = Long.parseLong(body.substring(7).trim());
                 resolveImageIdToUrl(imgId, url -> {
@@ -187,17 +176,20 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
                 return;
             }
 
-            // Handle reply
             if (body.matches("\\d+-.*")) {
                 int cut = body.indexOf("-");
                 long parentId = Long.parseLong(body.substring(0, cut));
                 String replyText = body.substring(cut + 1).trim();
 
-                addLiveMessage(new MessageItem(0, sender, replyText, now(), parentId));
+                MessageItem m = new MessageItem(0, sender, replyText, now(), parentId);
+
+                // >>> WHATSAPP REPLY ENRICHMENT FOR LIVE MESSAGE
+                enrichReplyFields(m);
+
+                addLiveMessage(m);
                 return;
             }
 
-            // Normal message
             addLiveMessage(new MessageItem(
                     0, sender, highlightMentions(body).toString(), now(), null
             ));
@@ -207,9 +199,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         }
     }
 
-    /* ==========================================================
-     * History
-     * ========================================================== */
     protected void fetchHistory() {
         progress.setVisibility(View.VISIBLE);
 
@@ -246,6 +235,11 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
             Log.e(TAG, "History parse error", e);
         }
 
+        // >>> WHATSAPP REPLY ENRICHMENT FOR ALL HISTORY MESSAGES
+        for (MessageItem m : messages) {
+            enrichReplyFields(m);
+        }
+
         Collections.sort(messages, (a, b) -> a.getTimestamp().compareTo(b.getTimestamp()));
         adapter.notifyDataSetChanged();
         recycler.scrollToPosition(messages.size() - 1);
@@ -271,28 +265,8 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
                 }
             }
 
-            // Fallback: "#image:id"
-            if ((imgId == null || imgId == -1) && text.startsWith("#image:")) {
-                imgId = Long.parseLong(text.substring(7).trim());
-
-                final long fId = id;
-                final String fSender = sender;
-                final String fTs = ts;
-                final Long fParent = parent;
-                final Long fImgId = imgId;
-
-                resolveImageIdToUrl(imgId, full -> {
-                    if (full != null) {
-                        messages.add(new MessageItem(fId, fSender, "", fTs, fParent, fImgId, full));
-                        adapter.notifyDataSetChanged();
-                    }
-                });
-                return;
-            }
-
             MessageItem m = new MessageItem(id, sender,
-                    imgId != null ? "" : text,
-                    ts, parent, imgId, imgUrl);
+                    imgId != null ? "" : text, ts, parent, imgId, imgUrl);
 
             JSONObject react = o.optJSONObject("reactions");
             if (react != null) {
@@ -316,25 +290,76 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         }
     }
 
-    /* ==========================================================
-     * Profile Loading
-     * ========================================================== */
-    protected void fetchProfile(String username) {
-        String url = BASE_URL + "/user/" + username;
+    // =====================================================================
+    // WHATSAPP REPLY LOGIC: fill replySender + replySnippet
+    // =====================================================================
+    protected void enrichReplyFields(MessageItem m) {
+        if (m.getReplyTo() == null) return;
 
-        JsonObjectRequest req = new JsonObjectRequest(
+        for (MessageItem parent : messages) {
+            if (parent.getId() == m.getReplyTo()) {
+                m.setReplySender(parent.getSender());
+
+                String original = parent.getContent();
+                if (original == null || original.isEmpty()) original = "(image)";
+
+                String snippet = original.length() > 40
+                        ? original.substring(0, 40) + "..."
+                        : original;
+
+                m.setReplySnippet(snippet);
+                return;
+            }
+        }
+    }
+
+    protected void fetchProfile(String username) {
+        String url = BASE_URL + "/search/user?query=" + username;
+
+        JsonArrayRequest req = new JsonArrayRequest(
                 Request.Method.GET,
                 url,
                 null,
                 res -> {
-                    String fp = res.optString("profileImageUrl", null);
-                    if (fp != null && !fp.equals("null") && !fp.isEmpty()) {
-                        String filename = fp.substring(fp.lastIndexOf("/") + 1);
-                        String full = BASE_URL + "/uploads/" + filename;
-                        profileCache.put(username, full);
+                    try {
+                        JSONObject match = null;
+                        for (int i = 0; i < res.length(); i++) {
+                            JSONObject u = res.getJSONObject(i);
+                            if (username.equalsIgnoreCase(u.optString("username"))) {
+                                match = u;
+                                break;
+                            }
+                        }
+
+                        if (match == null) return;
+
+                        String imgUrl = match.optString("imageURL", null);
+                        if (imgUrl == null || imgUrl.equals("null") || imgUrl.isEmpty()) return;
+
+                        String metaUrl = BASE_URL + imgUrl;
+
+                        JsonObjectRequest metaReq = new JsonObjectRequest(
+                                Request.Method.GET,
+                                metaUrl,
+                                null,
+                                meta -> {
+                                    String fp = meta.optString("filePath", "");
+                                    if (!fp.isEmpty()) {
+                                        String filename = fp.substring(fp.lastIndexOf("/") + 1);
+                                        String full = BASE_URL + "/uploads/" + filename;
+                                        profileCache.put(username, full);
+                                    }
+                                },
+                                err -> Log.e(TAG, "meta fail: " + username)
+                        );
+
+                        VolleySingleton.getInstance(this).addToRequestQueue(metaReq);
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "profile parse", e);
                     }
                 },
-                err -> Log.e(TAG, "profile fail: " + username)
+                err -> Log.e(TAG, "profile fail (search): " + username)
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(req);
@@ -364,21 +389,23 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         void onResolved(String url);
     }
 
-    /* ==========================================================
-     * Sending messages
-     * ========================================================== */
     protected void sendMessage() {
         String txt = etInput.getText().toString().trim();
         if (txt.isEmpty()) return;
 
         if (replyingTo != null)
-            socketSend("#reply:" + replyingTo + ":" + txt);
+            socketSend(replyingTo + "-" + txt);
         else
             socketSend(txt);
 
-        addLiveMessage(new MessageItem(
+        MessageItem m = new MessageItem(
                 0, currentUser, highlightMentions(txt).toString(), now(), replyingTo
-        ));
+        );
+
+        // >>> enrich local echo too
+        enrichReplyFields(m);
+
+        addLiveMessage(m);
 
         etInput.setText("");
         clearReplyPreview();
@@ -398,9 +425,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         }
     }
 
-    /* ==========================================================
-     * Reply
-     * ========================================================== */
     @Override
     public void onReply(MessageItem m) {
         replyingTo = m.getId();
@@ -421,9 +445,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         tvReplyPreview.setText("");
     }
 
-    /* ==========================================================
-     * Reactions
-     * ========================================================== */
     @Override
     public void onReact(MessageItem m, String type) {
         socketSend("#react:" + m.getId() + ":" + type);
@@ -434,9 +455,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         socketSend("#!react:" + m.getId() + ":" + type);
     }
 
-    /* ==========================================================
-     * Delete Message
-     * ========================================================== */
     @Override
     public void onLongPress(MessageItem m) {
         new AlertDialog.Builder(this)
@@ -463,9 +481,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 
-    /* ==========================================================
-     * Mentions
-     * ========================================================== */
     protected void parseMembers(JSONObject convo) {
         memberUsernames.clear();
 
@@ -513,9 +528,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         return s;
     }
 
-    /* ==========================================================
-     * Uploads
-     * ========================================================== */
     protected void openPicker() {
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.setType("*/*");
@@ -564,10 +576,11 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
                                 String name = fp.substring(fp.lastIndexOf("/") + 1);
                                 String imageUrl = BASE_URL + "/uploads/" + name;
 
-                                addLiveMessage(new MessageItem(
+                                MessageItem m = new MessageItem(
                                         0, currentUser, "", now(), null, imgId, imageUrl
-                                ));
+                                );
 
+                                addLiveMessage(m);
                                 socketSend("#image:" + imgId);
                             }
                         } catch (Exception e) {
@@ -623,9 +636,6 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
         return res;
     }
 
-    /* ==========================================================
-     * Misc
-     * ========================================================== */
     protected String now() {
         if (Build.VERSION.SDK_INT >= 26)
             return java.time.LocalDateTime.now().toString();

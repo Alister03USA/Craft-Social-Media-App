@@ -5,7 +5,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -88,44 +87,59 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemCount() { return data.size(); }
 
-    // BASE HOLDER FOR SHARED LOGIC
+    // ============================================================
+    // Base holder with common logic
+    // ============================================================
     abstract class BaseHolder extends RecyclerView.ViewHolder {
 
         TextView tvMsg, tvMeta, tvReply, tvReacts;
         ImageButton btnReact, btnReply;
         ImageView imgContent;
 
-        BaseHolder(@NonNull View v) { super(v); }
+        // NEW: reply preview fields
+        TextView tvReplySender, tvReplySnippet;
+        View replyBox;
+
+        BaseHolder(@NonNull View v) {
+            super(v);
+
+            replyBox = v.findViewById(R.id.replyBox);
+            tvReplySender = v.findViewById(R.id.tvReplySender);
+            tvReplySnippet = v.findViewById(R.id.tvReplySnippet);
+        }
 
         void bindCommon(MessageItem m) {
 
-            // Reset
+            // RESET UI
             tvReply.setText("");
             tvReply.setVisibility(View.GONE);
             tvMsg.setText("");
-            tvMeta.setText("");
+            imgContent.setVisibility(View.GONE);
             tvReacts.setVisibility(View.GONE);
             tvReacts.setText("");
-            imgContent.setVisibility(View.GONE);
-            imgContent.setImageDrawable(null);
+            tvMeta.setText("");
 
-            // Reply preview
-            if (m.getReplyTo() != null) {
-                tvReply.setVisibility(View.VISIBLE);
-                tvReply.setText("Replying...");
+            // -----------------------------------------
+            // WHATSAPP STYLE REPLY PREVIEW
+            // -----------------------------------------
+            if (m.getReplyTo() != null && m.getReplySender() != null) {
+                replyBox.setVisibility(View.VISIBLE);
+                tvReplySender.setText(m.getReplySender());
+                tvReplySnippet.setText(m.getReplySnippet());
+            } else {
+                replyBox.setVisibility(View.GONE);
             }
 
-            // Text content
-            if (!TextUtils.isEmpty(m.getContent()))
+            // Text message
+            if (!TextUtils.isEmpty(m.getContent())) {
                 tvMsg.setText(m.getContent());
+            }
 
-            // Image content
+            // Image message
             if (m.hasImage()) {
                 imgContent.setVisibility(View.VISIBLE);
                 Glide.with(itemView.getContext())
                         .load(m.getImageUrl())
-                        .placeholder(R.drawable.ic_post_placeholder)
-                        .error(R.drawable.ic_post_placeholder)
                         .into(imgContent);
             }
 
@@ -137,6 +151,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             // Reactions
             if (!m.getReactions().isEmpty()) {
                 StringBuilder sb = new StringBuilder();
+
                 for (String key : m.getReactions().keySet()) {
                     String emoji = reactionEmojiMap.getOrDefault(key, key);
                     int count = m.getReactions().get(key);
@@ -145,11 +160,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     if (count > 1) sb.append(" x").append(count);
                     sb.append("  ");
                 }
+
                 tvReacts.setVisibility(View.VISIBLE);
                 tvReacts.setText(sb.toString().trim());
             }
 
-            // Buttons
             btnReact.setOnClickListener(v -> showReactMenu(v, m));
             btnReply.setOnClickListener(v -> actions.onReply(m));
 
@@ -158,7 +173,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 return true;
             });
         }
-
 
         private void showReactMenu(View anchor, MessageItem m) {
             PopupMenu pm = new PopupMenu(anchor.getContext(), anchor);
@@ -184,7 +198,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             pm.show();
         }
 
-
         private String mapMenuItemToType(int id) {
             if (id == R.id.reaction_like) return "like";
             if (id == R.id.reaction_love) return "love";
@@ -196,13 +209,17 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    // LEFT HOLDER (RECEIVED)
+    // ============================================================
+    // RECEIVED MESSAGES HOLDER (LEFT)
+    // ============================================================
     class LeftHolder extends BaseHolder {
 
+        TextView tvSenderName;
 
         LeftHolder(@NonNull View v) {
             super(v);
 
+            tvSenderName = v.findViewById(R.id.tvSenderName);
 
             tvMsg = v.findViewById(R.id.tvMsg);
             tvMeta = v.findViewById(R.id.tvMeta);
@@ -214,11 +231,15 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(MessageItem m) {
+            tvSenderName.setText(m.getSender());
+            tvSenderName.setVisibility(View.VISIBLE);
             bindCommon(m);
         }
     }
 
-    // RIGHT HOLDER (SENT)
+    // ============================================================
+    // SENT MESSAGES HOLDER (RIGHT)
+    // ============================================================
     class RightHolder extends BaseHolder {
 
         RightHolder(@NonNull View v) {
@@ -234,7 +255,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(MessageItem m) {
-            // No profile image for sent messages
             bindCommon(m);
         }
     }
