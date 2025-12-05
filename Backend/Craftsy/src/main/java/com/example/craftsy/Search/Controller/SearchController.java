@@ -85,9 +85,8 @@ public class SearchController {
             map.put("following", u.getFollowing());
             map.put("craftSpecialties", u.getCraftSpecialties());
 
-            // Add image URL/path
             if (u.getImage() != null) {
-                map.put("imageURL", "/images/" + u.getImage().getId()); // Endpoint in ImageController
+                map.put("imageURL", "/images/" + u.getImage().getId());
             } else {
                 map.put("imageURL", null); // No image
             }
