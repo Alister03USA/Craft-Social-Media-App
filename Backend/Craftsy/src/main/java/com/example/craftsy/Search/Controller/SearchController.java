@@ -85,6 +85,12 @@ public class SearchController {
             map.put("following", u.getFollowing());
             map.put("craftSpecialties", u.getCraftSpecialties());
 
+            if (u.getImage() != null) {
+                map.put("imageURL", "/images/" + u.getImage().getId());
+            } else {
+                map.put("imageURL", null); // No image
+            }
+
 
             // Relationship status
             boolean isFollowing = false;
