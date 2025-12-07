@@ -56,26 +56,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    100%
+    94.4%
   </span>
   <span class="absValue">
-    (13/13)
+    (17/18)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    56.2%
+    50%
   </span>
   <span class="absValue">
-    (9/16)
+    (11/22)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    90.2%
+    85.7%
   </span>
   <span class="absValue">
-    (92/102)
+    (120/140)
   </span>
 </td>
 </tr>
@@ -111,6 +111,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;import java.util.Comparator;
 &nbsp;import java.util.List;
 &nbsp;import java.util.Optional;
+&nbsp;import java.util.regex.Pattern;
 &nbsp;
 &nbsp;@RestController
 <b class="fc">&nbsp;public class PatternsController {</b>
@@ -315,6 +316,37 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;        return patterns;</b>
 &nbsp;    }
 &nbsp;
+&nbsp;    @GetMapping(&quot;/patterns/id/{id}&quot;)
+&nbsp;    Patterns getPatternById(@PathVariable Long id){
+<b class="fc">&nbsp;        Patterns pattern = patternsRepository.findById(id)</b>
+<b class="fc">&nbsp;                .orElseThrow(()-&gt; new RuntimeException(&quot;Following not found&quot;));</b>
+<b class="fc">&nbsp;        return pattern;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PutMapping(&quot;/patterns/{username}/{patternName}/like&quot;)
+&nbsp;    Patterns likePattern(@PathVariable String username, @PathVariable String patternName){
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+<b class="fc">&nbsp;        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)</b>
+<b class="fc">&nbsp;                .orElseThrow(()-&gt; new RuntimeException(&quot;Pattern not found&quot;));</b>
+<b class="fc">&nbsp;        pattern.setNumLikes(pattern.getNumLikes()+1);</b>
+<b class="fc">&nbsp;        patternsRepository.save(pattern);</b>
+<b class="fc">&nbsp;        return pattern;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PutMapping(&quot;/patterns/{username}/{patternName}/unlike&quot;)
+&nbsp;    Patterns unlikePattern(@PathVariable String username, @PathVariable String patternName){
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+<b class="fc">&nbsp;        Patterns pattern = patternsRepository.findByUserAndPatternName(user, patternName)</b>
+<b class="fc">&nbsp;                .orElseThrow(()-&gt; new RuntimeException(&quot;Pattern not found&quot;));</b>
+<b class="pc">&nbsp;        if(pattern.getNumLikes() &gt; 0){</b>
+<b class="fc">&nbsp;            pattern.setNumLikes(pattern.getNumLikes()-1);</b>
+<b class="fc">&nbsp;            patternsRepository.save(pattern);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return pattern;</b>
+&nbsp;    }
+&nbsp;
 &nbsp;    /**
 &nbsp;     * private method that adds a rating to a pattern and updates the total rating
 &nbsp;     * @param pattern
@@ -364,6 +396,18 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;        return patternName + &quot; deleted&quot;;</b>
 &nbsp;    }
 &nbsp;
+&nbsp;    @GetMapping(&quot;/patterns/{username}/ratings&quot;)
+&nbsp;    List&lt;PatternsComments&gt; usersRatings(@PathVariable String username){
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+<b class="fc">&nbsp;        Optional&lt;List&lt;PatternsComments&gt;&gt; optList = patternsCommentsRepository.findByUserOrderByDateDesc(user);</b>
+<b class="fc">&nbsp;        List&lt;PatternsComments&gt; ratings = new ArrayList&lt;&gt;();</b>
+<b class="pc">&nbsp;        if(optList.isPresent()){</b>
+<b class="fc">&nbsp;            ratings = optList.orElseThrow();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return ratings;</b>
+&nbsp;    }
+&nbsp;
 &nbsp;    /**
 &nbsp;     * adds a comment to a pattern
 &nbsp;     * @param username user who posted pattern
@@ -381,21 +425,25 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;                    content = @Content(schema = @Schema(implementation = Patterns.class))),
 &nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User or pattern not found&quot;)
 &nbsp;    })
-&nbsp;    @PostMapping(&quot;/patterns/{username}/{patternName}/comment&quot;)
+&nbsp;    @PostMapping(&quot;/patterns/{username}/{patternName}/comment/{commentUsername}&quot;)
 &nbsp;    Patterns addComment(@Parameter(description = &quot;Username&quot;) @PathVariable String username,
 &nbsp;                        @Parameter(description = &quot;Pattern name&quot;) @PathVariable String patternName,
+&nbsp;                        @Parameter(description = &quot;commenting username&quot;) @PathVariable String commentUsername,
 &nbsp;                        @io.swagger.v3.oas.annotations.parameters.RequestBody(
 &nbsp;                                description = &quot;Comment contents&quot;,
 &nbsp;                                required = true,
 &nbsp;                                content = @Content(schema = @Schema(implementation = PatternsComments.class))
 &nbsp;                        )
 &nbsp;                        @RequestBody PatternsComments comment){
-<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;        Users postingUser = userRepository.findByUsername(username)</b>
 <b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
-<b class="fc">&nbsp;        Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)</b>
+<b class="fc">&nbsp;        Patterns pattern = patternsRepository.findByUserAndPatternName(postingUser,patternName)</b>
 <b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Pattern not found&quot;));</b>
+<b class="fc">&nbsp;        Users commentUser = userRepository.findByUsername(commentUsername)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
 <b class="fc">&nbsp;        comment.setDate(LocalDateTime.now());</b>
 <b class="fc">&nbsp;        comment.setPattern(pattern);</b>
+<b class="fc">&nbsp;        comment.setUser(commentUser);</b>
 <b class="fc">&nbsp;        patternsCommentsRepository.save(comment);</b>
 <b class="pc">&nbsp;        if(comment.getRating() != null){</b>
 <b class="fc">&nbsp;            addRating(pattern, comment.getRating());</b>
@@ -504,6 +552,40 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;        patternsCommentsRepository.save(comment);</b>
 <b class="fc">&nbsp;        return pattern;</b>
 &nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * unlike a comment
+&nbsp;     * @param username
+&nbsp;     * @param patternName
+&nbsp;     * @param id
+&nbsp;     * @return updated pattern contents
+&nbsp;     */
+&nbsp;    @Operation(
+&nbsp;            summary = &quot;unlike a comment&quot;,
+&nbsp;            description = &quot;decreases the like count on a comment by 1.&quot;
+&nbsp;    )
+&nbsp;    @ApiResponses({
+&nbsp;            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Comment unliked&quot;,
+&nbsp;                    content = @Content(schema = @Schema(implementation = Patterns.class))),
+&nbsp;            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User, pattern, or comment not found&quot;)
+&nbsp;    })
+&nbsp;    @PutMapping(&quot;/patterns/{username}/{patternName}/{id}/unlike&quot;)
+&nbsp;    Patterns unlikeComment(@Parameter(description = &quot;Username&quot;) @PathVariable String username,
+&nbsp;                         @Parameter(description = &quot;Pattern name&quot;) @PathVariable String patternName,
+&nbsp;                         @Parameter(description = &quot;Comment ID&quot;) @PathVariable Long id){
+<b class="nc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+<b class="nc">&nbsp;        Patterns pattern = patternsRepository.findByUserAndPatternName(user,patternName)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Pattern not found&quot;));</b>
+<b class="nc">&nbsp;        PatternsComments comment = patternsCommentsRepository.findById(id)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Comment not found&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;        if(comment.getLikes() &gt; 0){</b>
+<b class="nc">&nbsp;            comment.setLikes(comment.getLikes()-1);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        patternsCommentsRepository.save(comment);</b>
+<b class="nc">&nbsp;        return pattern;</b>
+&nbsp;    }
 &nbsp;}
 </code>
 </pre>
@@ -528,7 +610,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:43</div>
 </div>
 </body>
 </html>

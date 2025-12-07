@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > ChallengePostCommentRepository</title>
+  <title>Coverage Report > ChallengePostRepository</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.example.craftsy.Challenges.Repository</a>
 </div>
 
-<h1>Coverage Summary for Class: ChallengePostCommentRepository (com.example.craftsy.Challenges.Repository)</h1>
+<h1>Coverage Summary for Class: ChallengePostRepository (com.example.craftsy.Challenges.Repository)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">ChallengePostCommentRepository</td>
+  <td class="name">ChallengePostRepository</td>
 </tr>
 
 </table>
@@ -41,15 +41,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Challenges.Repository;
 &nbsp;
-&nbsp;import com.example.craftsy.Challenges.Entity.ChallengePostComment;
+&nbsp;import com.example.craftsy.Challenges.Entity.ChallengePost;
 &nbsp;import org.springframework.data.jpa.repository.JpaRepository;
-&nbsp;
 &nbsp;import java.util.List;
 &nbsp;
-&nbsp;public interface ChallengePostCommentRepository extends JpaRepository&lt;ChallengePostComment, Long&gt; {
-&nbsp;    List&lt;ChallengePostComment&gt; findByPostIdOrderByCreatedAtDesc(Long postId);
-&nbsp;    Long countByPostId(Long postId);
-&nbsp;
+&nbsp;public interface ChallengePostRepository extends JpaRepository&lt;ChallengePost, Long&gt; {
+&nbsp;    List&lt;ChallengePost&gt; findByChallengeIdOrderByCreatedAtDesc(Long challengeId);
+&nbsp;    List&lt;ChallengePost&gt; findByUserIdOrderByCreatedAtDesc(Long userId);
+&nbsp;    boolean existsByUserIdAndChallengeId(Long userId, Long challengeId);
 &nbsp;}
 </code>
 </pre>
@@ -74,7 +73,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:42</div>
 </div>
 </body>
 </html>

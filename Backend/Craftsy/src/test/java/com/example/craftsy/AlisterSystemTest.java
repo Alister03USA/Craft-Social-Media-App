@@ -702,6 +702,136 @@ public class AlisterSystemTest {
 
 
 
+    // ==================== GROUP MESSAGE REACTION SYSTEM TEST ====================
+    @Test
+    public void testGroupMessageReactionWorkflow() throws Exception {
+
+        String admin = "alister_gan";
+        String member = "Fuji";
+
+        // 1. Create group
+        String groupName = "ReactionTestGroup_" + System.currentTimeMillis();
+        String groupJson = """
+    {
+        "groupName": "%s",
+        "description": "Reaction Test Group",
+        "craft": "Knitting",
+        "is_private": false
+    }
+    """.formatted(groupName);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(groupJson)
+                .when()
+                .post("/" + admin + "/create")
+                .then()
+                .statusCode(200);
+
+        // Fetch groupId
+        Long groupId = given()
+                .when()
+                .get("/groupId/" + groupName)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("groupId");
+
+        // Add member
+        given()
+                .when()
+                .post("/" + member + "/join/" + groupId)
+                .then()
+                .statusCode(200);
+
+
+        // Upload a message image (to attach reactions to)
+        File testImage = new File("uploads/tutorials/1760579127952_sculptor-artist-working-with-clay-studio.jpg");
+        Long messageId = given()
+                .multiPart("file", testImage, "image/jpg")
+                .when()
+                .post("/groupMessage/" + groupId + "/" + admin + "/upload")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("messageId");
+
+
+        // ======================================================================
+        // 🔹 TEST 1 — Add Reaction
+        // ======================================================================
+        given()
+                .queryParam("reactionType", "like")
+                .when()
+                .post("/groupMessageReaction/" + member + "/react/" + groupId + "/" + messageId)
+                .then()
+                .statusCode(200)
+                .body("username", equalTo(member))
+                .body("reactionType", equalTo("like"));
+
+
+        // ======================================================================
+        // 🔹 TEST 2 — Update Reaction (like → love)
+        // ======================================================================
+        given()
+                .queryParam("reactionType", "love")
+                .when()
+                .post("/groupMessageReaction/" + member + "/react/" + groupId + "/" + messageId)
+                .then()
+                .statusCode(200)
+                .body("reactionType", equalTo("love"));
+
+
+        // ======================================================================
+        // 🔹 TEST 3 — Get reactions list
+        // ======================================================================
+        given()
+                .when()
+                .get("/groupMessageReaction/reactions/" + groupId + "/" + messageId)
+                .then()
+                .statusCode(200)
+                .body("$", not(empty()))
+                .body("[0].username", equalTo(member))
+                .body("[0].reactionType", equalTo("love"));
+
+
+        // ======================================================================
+        // 🔹 TEST 4 — Get Reaction Summary (aggregated counts)
+        // ======================================================================
+        given()
+                .when()
+                .get("/groupMessageReaction/summary/" + groupId + "/" + messageId)
+                .then()
+                .statusCode(200)
+                .body("messageId", equalTo(messageId.intValue()))
+                .body("reactionCounts.love", equalTo(1));
+
+
+        // ======================================================================
+        // 🔹 TEST 5 — Remove Reaction
+        // ======================================================================
+        given()
+                .when()
+                .delete("/groupMessageReaction/" + member + "/remove/reaction/" + groupId + "/" + messageId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Reaction removed"));
+
+
+        // Verify reaction list is empty now
+        given()
+                .when()
+                .get("/groupMessageReaction/reactions/" + groupId + "/" + messageId)
+                .then()
+                .statusCode(200)
+                .body("$", empty());
+    }
+
+
+
+
 
     // ==================== Search SYSTEM TEST ====================
     @Test
@@ -947,6 +1077,60 @@ public class AlisterSystemTest {
                 .get("/tutorial/user/alister_gan")
                 .then()
                 .statusCode(200);
+
+
+        String liker = "Kkeck";
+
+        // 1. Like tutorial
+        given()
+                .when()
+                .post("/tutorial/" + liker + "/like/" + fileTutorialId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Liked successfully"));
+
+        //  2. Duplicate like should not add twice
+        given()
+                .when()
+                .post("/tutorial/" + liker + "/like/" + fileTutorialId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Already liked"));
+
+        // 3. Total likes should be 1
+        given()
+                .when()
+                .get("/tutorial/" + fileTutorialId + "/totalLikes")
+                .then()
+                .statusCode(200)
+                .body("tutorialId", equalTo(fileTutorialId.intValue()))
+                .body("totalLikes", equalTo(1));
+
+        //  4. Leaderboard returns list and tutorial appears
+        given()
+                .when()
+                .get("/tutorial/leaderboard")
+                .then()
+                .statusCode(200)
+                .body("$", not(empty()))
+                .body("id", hasItem(fileTutorialId.intValue()))
+                .body("likes", hasItem(1));
+
+        // 5. Unlike tutorial
+        given()
+                .when()
+                .delete("/tutorial/" + liker + "/dislike/" + fileTutorialId)
+                .then()
+                .statusCode(200)
+                .body("message", equalTo("Unlike successful"));
+
+        //  6. Verify like count drops to 0
+        given()
+                .when()
+                .get("/tutorial/" + fileTutorialId + "/totalLikes")
+                .then()
+                .statusCode(200)
+                .body("totalLikes", equalTo(0));
 
     }
 

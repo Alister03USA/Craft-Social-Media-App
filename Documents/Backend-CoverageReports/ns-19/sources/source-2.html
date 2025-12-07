@@ -72,10 +72,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    76.9%
+    77.8%
   </span>
   <span class="absValue">
-    (20/26)
+    (21/27)
   </span>
 </td>
 </tr>
@@ -162,7 +162,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            }
 &nbsp;
 &nbsp;            // Save the uploaded file to the directory
-<b class="fc">&nbsp;            File destinationFile = new File(uploadDir, imageFile.getOriginalFilename());</b>
+<b class="fc">&nbsp;            String uniqueName = System.currentTimeMillis() + &quot;_&quot; + imageFile.getOriginalFilename();</b>
+<b class="fc">&nbsp;            File destinationFile = new File(uploadDir, uniqueName);</b>
 <b class="fc">&nbsp;            imageFile.transferTo(destinationFile);</b>
 &nbsp;
 &nbsp;            // Save file info in the database
@@ -235,7 +236,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:43</div>
 </div>
 </body>
 </html>

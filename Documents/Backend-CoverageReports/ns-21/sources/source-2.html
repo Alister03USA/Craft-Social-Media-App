@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > PointsHistoryRepository</title>
+  <title>Coverage Report > UserPointsRepository</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.example.craftsy.PointsSystem.Repository</a>
 </div>
 
-<h1>Coverage Summary for Class: PointsHistoryRepository (com.example.craftsy.PointsSystem.Repository)</h1>
+<h1>Coverage Summary for Class: UserPointsRepository (com.example.craftsy.PointsSystem.Repository)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">PointsHistoryRepository</td>
+  <td class="name">UserPointsRepository</td>
 </tr>
 
 </table>
@@ -40,18 +40,17 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.PointsSystem.Repository;
-&nbsp;
-&nbsp;import com.example.craftsy.PointsSystem.Entity.PointsHistory;
+&nbsp;import com.example.craftsy.PointsSystem.Entity.UserPoints;
 &nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
 &nbsp;import org.springframework.data.jpa.repository.JpaRepository;
-&nbsp;
+&nbsp;import java.util.Optional;
 &nbsp;import java.util.List;
 &nbsp;
-&nbsp;
-&nbsp;public interface PointsHistoryRepository extends JpaRepository&lt;PointsHistory,Long&gt;{
-&nbsp;    List&lt;PointsHistory&gt; findByUserOrderByCreatedAtDesc(Users user);
-&nbsp;    List&lt;PointsHistory&gt; findByUserIdOrderByCreatedAtDesc(Long userId);
-&nbsp;    List&lt;PointsHistory&gt; findByActionType(String actionType);
+&nbsp;public interface UserPointsRepository extends JpaRepository&lt;UserPoints, Long&gt; {
+&nbsp;    Optional&lt;UserPoints&gt; findByUser(Users user);
+&nbsp;    Optional&lt;UserPoints&gt; findByUserId(Long userId);
+&nbsp;    List&lt;UserPoints&gt; findTop10ByOrderByTotalPointsDesc();  // Leaderboard
+&nbsp;    List&lt;UserPoints&gt; findByCurrentTier(String tier);
 &nbsp;}
 </code>
 </pre>
@@ -76,7 +75,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:42</div>
 </div>
 </body>
 </html>

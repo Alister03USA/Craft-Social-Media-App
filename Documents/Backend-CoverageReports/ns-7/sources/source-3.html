@@ -1,0 +1,260 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > GroupMessageReactionController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.craftsy.Group.Controller</a>
+</div>
+
+<h1>Coverage Summary for Class: GroupMessageReactionController (com.example.craftsy.Group.Controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">GroupMessageReactionController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66.7%
+  </span>
+  <span class="absValue">
+    (4/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    96.5%
+  </span>
+  <span class="absValue">
+    (55/57)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Group.Controller;
+&nbsp;
+&nbsp;import com.example.craftsy.Group.Entity.Group;
+&nbsp;import com.example.craftsy.Group.Entity.GroupMessage;
+&nbsp;import com.example.craftsy.Group.Entity.GroupMessageReaction;
+&nbsp;import com.example.craftsy.Group.Repository.GroupMessageReactionRepository;
+&nbsp;import com.example.craftsy.Group.Repository.GroupMessageRepository;
+&nbsp;import com.example.craftsy.Group.Repository.GroupRepository;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.*;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@RestController
+<b class="fc">&nbsp;public class GroupMessageReactionController {</b>
+&nbsp;
+&nbsp;    @Autowired private GroupMessageReactionRepository reactionRepository;
+&nbsp;    @Autowired private GroupMessageRepository messageRepository;
+&nbsp;    @Autowired private GroupRepository groupRepository;
+&nbsp;    @Autowired private UserRepository userRepository;
+&nbsp;
+&nbsp;    // Add or update a reaction (group-specific)
+&nbsp;    @PostMapping(&quot;/groupMessageReaction/{username}/react/{groupId}/{messageId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; reactToMessage(
+&nbsp;            @PathVariable Long messageId,
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable String username,
+&nbsp;            @RequestParam String reactionType
+&nbsp;    ) {
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+<b class="pc">&nbsp;        if (!group.getMembers().contains(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;User is not a member of this group&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        GroupMessage message = messageRepository.findById(messageId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Message not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Optional&lt;GroupMessageReaction&gt; existingReaction =</b>
+<b class="fc">&nbsp;                reactionRepository.findByMessageIdAndUserId(messageId, user.getId());</b>
+&nbsp;
+&nbsp;        GroupMessageReaction reaction;
+<b class="fc">&nbsp;        if (existingReaction.isPresent()) {</b>
+<b class="fc">&nbsp;            reaction = existingReaction.get();</b>
+<b class="fc">&nbsp;            reaction.setReactionType(reactionType);</b>
+<b class="fc">&nbsp;            reaction.setCreatedAt(new Date());</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            reaction = new GroupMessageReaction();</b>
+<b class="fc">&nbsp;            reaction.setMessage(message);</b>
+<b class="fc">&nbsp;            reaction.setUser(user);</b>
+<b class="fc">&nbsp;            reaction.setReactionType(reactionType);</b>
+<b class="fc">&nbsp;            reaction.setCreatedAt(new Date());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        reactionRepository.save(reaction);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(</b>
+&nbsp;                &quot;messageId&quot;, messageId,
+&nbsp;                &quot;username&quot;, username,
+&nbsp;                &quot;reactionType&quot;, reactionType
+&nbsp;        ));
+&nbsp;    }
+&nbsp;
+&nbsp;    // Remove a reaction
+&nbsp;    @DeleteMapping(&quot;/groupMessageReaction/{username}/remove/reaction/{groupId}/{messageId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; removeReaction(
+&nbsp;            @PathVariable Long messageId,
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable String username
+&nbsp;    ) {
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+<b class="pc">&nbsp;        if (!group.getMembers().contains(user)) {</b>
+<b class="nc">&nbsp;            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;User is not a member of this group&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        GroupMessageReaction reaction = reactionRepository</b>
+<b class="fc">&nbsp;                .findByMessageIdAndUserId(messageId, user.getId())</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Reaction not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        reactionRepository.delete(reaction);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Reaction removed&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Get all reactions for a message (group-specific)
+&nbsp;    @GetMapping(&quot;/groupMessageReaction/reactions/{groupId}/{messageId}&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getReactions(
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable Long messageId
+&nbsp;    ) {
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        GroupMessage message = messageRepository.findById(messageId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Message not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;GroupMessageReaction&gt; reactions = reactionRepository.findByMessageId(messageId);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; response = reactions.stream().map(r -&gt; {</b>
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            map.put(&quot;username&quot;, r.getUser().getUsername());</b>
+<b class="fc">&nbsp;            map.put(&quot;reactionType&quot;, r.getReactionType());</b>
+<b class="fc">&nbsp;            map.put(&quot;createdAt&quot;, r.getCreatedAt());</b>
+<b class="fc">&nbsp;            return map;</b>
+<b class="fc">&nbsp;        }).collect(Collectors.toList());</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(response);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Get aggregated reaction counts for a message (group-specific)
+&nbsp;    @GetMapping(&quot;/groupMessageReaction/summary/{groupId}/{messageId}&quot;)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getReactionSummary(
+&nbsp;            @PathVariable Long groupId,
+&nbsp;            @PathVariable Long messageId
+&nbsp;    ) {
+<b class="fc">&nbsp;        Group group = groupRepository.findById(groupId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Group not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        GroupMessage message = messageRepository.findById(messageId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Message not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;GroupMessageReaction&gt; reactions = reactionRepository.findByMessageId(messageId);</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Long&gt; counts = reactions.stream()</b>
+<b class="fc">&nbsp;                .collect(Collectors.groupingBy(GroupMessageReaction::getReactionType, Collectors.counting()));</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        response.put(&quot;messageId&quot;, messageId);</b>
+<b class="fc">&nbsp;        response.put(&quot;reactionCounts&quot;, counts);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(response);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-12-06 22:42</div>
+</div>
+</body>
+</html>

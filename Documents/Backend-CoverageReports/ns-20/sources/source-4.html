@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > ChallengeRepository</title>
+  <title>Coverage Report > ChallengePostCommentRepository</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.example.craftsy.Challenges.Repository</a>
 </div>
 
-<h1>Coverage Summary for Class: ChallengeRepository (com.example.craftsy.Challenges.Repository)</h1>
+<h1>Coverage Summary for Class: ChallengePostCommentRepository (com.example.craftsy.Challenges.Repository)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">ChallengeRepository</td>
+  <td class="name">ChallengePostCommentRepository</td>
 </tr>
 
 </table>
@@ -41,21 +41,15 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.Challenges.Repository;
 &nbsp;
-&nbsp;import com.example.craftsy.Challenges.Entity.Challenge;
-&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
+&nbsp;import com.example.craftsy.Challenges.Entity.ChallengePostComment;
 &nbsp;import org.springframework.data.jpa.repository.JpaRepository;
 &nbsp;
-&nbsp;import java.time.LocalDate;
 &nbsp;import java.util.List;
 &nbsp;
-&nbsp;public interface ChallengeRepository extends JpaRepository&lt;Challenge, Long&gt; {
-&nbsp;    List&lt;Challenge&gt; findByIsActiveTrue();
+&nbsp;public interface ChallengePostCommentRepository extends JpaRepository&lt;ChallengePostComment, Long&gt; {
+&nbsp;    List&lt;ChallengePostComment&gt; findByPostIdOrderByCreatedAtDesc(Long postId);
+&nbsp;    Long countByPostId(Long postId);
 &nbsp;
-&nbsp;    List&lt;Challenge&gt; findByTypeAndIsActiveTrue(String upperCase);
-&nbsp;
-&nbsp;    List&lt;Challenge&gt; findByCategoryAndIsActiveTrue(String category);
-&nbsp;
-&nbsp;    List&lt;Challenge&gt; findByIsActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(LocalDate today, LocalDate today1);
 &nbsp;}
 </code>
 </pre>
@@ -80,7 +74,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:42</div>
 </div>
 </body>
 </html>

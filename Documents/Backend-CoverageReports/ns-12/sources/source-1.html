@@ -59,23 +59,23 @@ Current scope:     <a href="../../index.html">all classes</a>
     100%
   </span>
   <span class="absValue">
-    (8/8)
+    (13/13)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    59.7%
+    60.8%
   </span>
   <span class="absValue">
-    (43/72)
+    (45/74)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    78.2%
+    82%
   </span>
   <span class="absValue">
-    (122/156)
+    (155/189)
   </span>
 </td>
 </tr>
@@ -97,6 +97,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
 &nbsp;import com.example.craftsy.SignUpDelete.Repository.UserRepository;
 &nbsp;import com.example.craftsy.Tutorial.Entity.Tutorial;
+&nbsp;import com.example.craftsy.Tutorial.Entity.TutorialLikes;
+&nbsp;import com.example.craftsy.Tutorial.Repository.TutorialLikesRepository;
 &nbsp;import com.example.craftsy.Tutorial.Repository.TutorialRepository;
 &nbsp;import io.swagger.v3.oas.annotations.Operation;
 &nbsp;import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -115,6 +117,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;import java.nio.file.Paths;
 &nbsp;import java.nio.file.StandardCopyOption;
 &nbsp;import java.util.*;
+&nbsp;import java.util.stream.Collectors;
 &nbsp;
 &nbsp;@RestController
 &nbsp;@RequestMapping(&quot;/tutorial&quot;)
@@ -131,6 +134,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;    @Autowired
 &nbsp;    private NotificationRepository notificationRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private TutorialLikesRepository likesRepository;
 &nbsp;
 &nbsp;    @Autowired
 &nbsp;    private com.example.craftsy.PointsSystem.PointsService pointsService;
@@ -580,6 +586,97 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;
 &nbsp;
+&nbsp;    // LIKE features in Tutorials
+&nbsp;
+&nbsp;
+&nbsp;    // add likes
+&nbsp;    @PostMapping(&quot;/{username}/like/{tutorialId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; likeTutorial(
+&nbsp;            @PathVariable Long tutorialId,
+&nbsp;            @PathVariable String username
+&nbsp;    ) {
+<b class="fc">&nbsp;        Tutorial tutorial = tutorialRepository.findById(tutorialId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Tutorial not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+&nbsp;
+&nbsp;        // Prevent duplicate likes
+<b class="fc">&nbsp;        Optional&lt;TutorialLikes&gt; existing = likesRepository</b>
+<b class="fc">&nbsp;                .findByTutorialIdAndUserId(tutorialId, user.getId());</b>
+&nbsp;
+<b class="fc">&nbsp;        if (existing.isPresent()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Already liked&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        likesRepository.save(new TutorialLikes(tutorial, user));</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Liked successfully&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    // dislike the tutorial
+&nbsp;    @DeleteMapping(&quot;/{username}/dislike/{tutorialId}&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; unlikeTutorial(
+&nbsp;            @PathVariable Long tutorialId,
+&nbsp;            @PathVariable String username
+&nbsp;    ) {
+<b class="fc">&nbsp;        Users user = userRepository.findByUsername(username)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        TutorialLikes like = likesRepository</b>
+<b class="fc">&nbsp;                .findByTutorialIdAndUserId(tutorialId, user.getId())</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Like not found&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        likesRepository.delete(like);</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Unlike successful&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    // GET like count for a tutorial
+&nbsp;    @GetMapping(&quot;/{tutorialId}/totalLikes&quot;)
+&nbsp;    public ResponseEntity&lt;?&gt; getTotalLikes(
+&nbsp;            @PathVariable Long tutorialId
+&nbsp;    ) {
+<b class="fc">&nbsp;        long count = likesRepository.countByTutorialId(tutorialId);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(Map.of(&quot;tutorialId&quot;, tutorialId,&quot;totalLikes&quot;, count));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    // leaderboard of top tutorials by likes
+&nbsp;    @GetMapping(&quot;/leaderboard&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getLeaderboard(){
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Tutorial&gt; tutorials = tutorialRepository.findAll();</b>
+&nbsp;
+&nbsp;        // for each tutorial, attached its like count
+<b class="fc">&nbsp;        List&lt;Map&lt;String, Object&gt;&gt; leaderboard = tutorials.stream()</b>
+<b class="fc">&nbsp;                .map(t -&gt; {</b>
+<b class="fc">&nbsp;                    long likes = likesRepository.countByTutorialId(t.getId());</b>
+&nbsp;
+<b class="fc">&nbsp;                    Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;                    map.put(&quot;id&quot;, t.getId());</b>
+<b class="fc">&nbsp;                    map.put(&quot;title&quot;, t.getTitle());</b>
+<b class="fc">&nbsp;                    map.put(&quot;username&quot;, t.getUser().getUsername());</b>
+<b class="fc">&nbsp;                    map.put(&quot;category&quot;, t.getCategory());</b>
+<b class="fc">&nbsp;                    map.put(&quot;likes&quot;, likes);</b>
+<b class="fc">&nbsp;                    return map;</b>
+&nbsp;                })
+<b class="fc">&nbsp;                .sorted((a, b) -&gt; Long.compare((Long) b.get(&quot;likes&quot;), (Long) a.get(&quot;likes&quot;)))</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok(leaderboard);</b>
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
 &nbsp;
 &nbsp;
 &nbsp;
@@ -620,7 +717,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:43</div>
 </div>
 </body>
 </html>

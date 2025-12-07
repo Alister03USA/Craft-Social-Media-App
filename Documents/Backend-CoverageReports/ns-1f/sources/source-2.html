@@ -41,6 +41,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.example.craftsy.patterns.patternsComments;
 &nbsp;
+&nbsp;import com.example.craftsy.SignUpDelete.Entity.Users;
 &nbsp;import com.example.craftsy.patterns.Patterns;
 &nbsp;import org.springframework.data.jpa.repository.JpaRepository;
 &nbsp;
@@ -49,6 +50,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;public interface PatternsCommentsRepository extends JpaRepository&lt;PatternsComments, Long&gt; {
 &nbsp;    List&lt;PatternsComments&gt; findByPatternOrderByLikesDesc(Patterns pattern);
+&nbsp;    Optional&lt;List&lt;PatternsComments&gt;&gt; findByUserOrderByDateDesc(Users user);
 &nbsp;}
 </code>
 </pre>
@@ -73,7 +75,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2025-12-02 10:40</div>
+    <div style="float:right;">generated on 2025-12-06 22:43</div>
 </div>
 </body>
 </html>
