@@ -14,15 +14,20 @@ public class PointsPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        if (position == 0) {
-            return new LeaderboardFragment();
-        } else {
-            return new TierInfoFragment();
+        switch (position) {
+            case 0:
+                return new LeaderboardFragment();
+            case 1:
+                return new TierInfoFragment();
+            case 2:
+                return new PointHistoryFragment();
+            default:
+                return new LeaderboardFragment();
         }
     }
 
     @Override
     public int getItemCount() {
-        return 2;  // Leaderboard + Tiers
+        return 3;  // Leaderboard + Tiers + Point History
     }
 }

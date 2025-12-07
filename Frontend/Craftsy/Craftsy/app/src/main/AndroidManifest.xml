@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.androidexample">
 
-    <!-- 🌐 Permissions -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -23,14 +23,14 @@
         android:theme="@style/Theme.Craftsy">
 
 
-        <!-- 🛰 WebSocket Background Service -->
+        <!-- WebSocket Background Service -->
         <service
             android:name=".WebSocketNotificationService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="connectedDevice|dataSync" />
 
-        <!-- 🚀 Login (Launcher) -->
+        <!-- Login (Launcher) -->
         <activity
             android:name=".Login"
             android:exported="true"
@@ -146,6 +146,10 @@
         <activity android:name=".DirectMessagingActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
+        <activity
+            android:name=".GroupMessagingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
         <activity android:name=".NewChatActivity"
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
@@ -153,8 +157,14 @@
             android:exported="false"
             android:theme="@style/Theme.Craftsy"/>
         <activity android:name=".PointsCenterActivity" />
-
-
+        <activity
+            android:name=".BoardsListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
+        <activity
+            android:name=".BoardDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Craftsy" />
 
         <activity
             android:name=".PatternDetailActivity"

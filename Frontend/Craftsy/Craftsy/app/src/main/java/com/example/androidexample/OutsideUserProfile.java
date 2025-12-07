@@ -3,6 +3,7 @@ package com.example.androidexample;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -14,6 +15,7 @@ import androidx.annotation.Nullable;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,9 +31,11 @@ public class OutsideUserProfile extends BaseActivity {
     private enum FollowState { NOT_FOLLOWING, PENDING, FOLLOWING }
     private FollowState currentState = FollowState.NOT_FOLLOWING;
 
-    private String viewedUsername;       // target user
-    private String loggedInUsername;     // from SessionManager
-    @Nullable private JSONObject viewedUserJson; // last known profile info
+    private String viewedUsername;
+    private String loggedInUsername;
+
+    @Nullable
+    private JSONObject viewedUserJson;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +43,6 @@ public class OutsideUserProfile extends BaseActivity {
         setContentView(R.layout.activity_outside_user_profile);
         setupBottomNavigation(R.id.nav_search);
 
-
-        // UI refs
         followButton = findViewById(R.id.btn_follow);
         displayNameTv = findViewById(R.id.displayName);
         usernameTv = findViewById(R.id.username);
@@ -53,8 +55,8 @@ public class OutsideUserProfile extends BaseActivity {
         TextView pointsText = findViewById(R.id.pointsTextOutside);
         TextView tierText = findViewById(R.id.tierTextOutside);
         ProgressBar tierProgress = findViewById(R.id.tierProgressOutside);
-
-        // Logged-in user
+        ImageButton backBtn = findViewById(R.id.btnBackOutside);
+        backBtn.setOnClickListener(v -> finish());
         loggedInUsername = SessionManager.getInstance().getLoggedInUsername();
         if (loggedInUsername == null || loggedInUsername.isEmpty()) {
             Toast.makeText(this, "No logged-in user found", Toast.LENGTH_SHORT).show();
@@ -62,7 +64,6 @@ public class OutsideUserProfile extends BaseActivity {
             return;
         }
 
-        // Pull everything we can from the Intent (sent by UserSearchFragment)
         viewedUsername = getIntent().getStringExtra("username");
         String displayName = getIntent().getStringExtra("displayName");
         String bio = getIntent().getStringExtra("bio");
@@ -76,9 +77,8 @@ public class OutsideUserProfile extends BaseActivity {
             return;
         }
 
-        // Prefer data from Intent (fast, already fetched)
-        boolean hadExtras = (displayName != null) || (bio != null) || (craftSpecialties != null);
-        if (hadExtras) {
+        boolean hasExtras = (displayName != null) || (bio != null) || (craftSpecialties != null);
+        if (hasExtras) {
             JSONObject fromExtras = new JSONObject();
             try {
                 fromExtras.put("username", viewedUsername);
@@ -89,11 +89,12 @@ public class OutsideUserProfile extends BaseActivity {
             viewedUserJson = fromExtras;
             updateUIWithProfile(viewedUserJson);
         } else {
-            // Fallback: query search endpoint and pick the exact match
             fetchProfileViaSearch(viewedUsername);
         }
 
-        // Always fetch relationship + counts
+        // NEW: Always fetch real user profile to get image
+        fetchUserDirect(viewedUsername);
+
         fetchFollowStatus(viewedUsername);
         fetchFollowersAndFollowing(viewedUsername);
         fetchUserPoints(viewedUsername, tierBadge, pointsText, tierText, tierProgress);
@@ -113,9 +114,29 @@ public class OutsideUserProfile extends BaseActivity {
         });
     }
 
-    /** ------------------- FALLBACK PROFILE FETCH VIA SEARCH ------------------- **/
+    /* ========================= NEW: Fetch full profile with image ========================= */
+    private void fetchUserDirect(String username) {
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/user/" + username;
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                res -> {
+                    Log.d(TAG, "Full profile received: " + res);
+                    viewedUserJson = res;
+                    updateUIWithProfile(res);
+                },
+                err -> Log.e(TAG, "Failed to fetch full user profile", err)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    /* ========================= Fallback search (no images) ========================= */
     private void fetchProfileViaSearch(String targetUsername) {
         String url = "http://coms-3090-028.class.las.iastate.edu:8080/search/user?query=" + targetUsername;
+
         JsonArrayRequest request = new JsonArrayRequest(
                 Request.Method.GET,
                 url,
@@ -123,29 +144,70 @@ public class OutsideUserProfile extends BaseActivity {
                 response -> {
                     try {
                         JSONObject best = null;
+
                         for (int i = 0; i < response.length(); i++) {
                             JSONObject obj = response.getJSONObject(i);
                             if (targetUsername.equals(obj.optString("username"))) {
-                                best = obj; break;
+                                best = obj;
+                                break;
                             }
                         }
+
                         if (best == null && response.length() > 0) {
-                            best = response.getJSONObject(0); // fallback to first
+                            best = response.getJSONObject(0);
                         }
+
                         if (best != null) {
                             viewedUserJson = best;
                             updateUIWithProfile(best);
                         }
+
                     } catch (Exception e) {
                         Log.e(TAG, "Profile parse error", e);
                     }
                 },
                 error -> Log.e(TAG, "Profile search fallback failed", error)
         );
+
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-    /** ------------------- RELATIONSHIP / COUNTS ------------------- **/
+    /* ========================= Load image via imageId ========================= */
+    private void loadOutsideProfileImage(ImageView target, long imageId) {
+        if (imageId <= 0) {
+            target.setImageResource(R.drawable.profile);
+            return;
+        }
+
+        String url = "http://coms-3090-028.class.las.iastate.edu:8080/images/" + imageId;
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                res -> {
+                    String path = res.optString("filePath", "");
+                    if (path.isEmpty()) {
+                        target.setImageResource(R.drawable.profile);
+                        return;
+                    }
+
+                    String filename = path.substring(path.lastIndexOf("/") + 1);
+                    String fullUrl = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/" + filename;
+
+                    Glide.with(this)
+                            .load(fullUrl)
+                            .placeholder(R.drawable.profile)
+                            .circleCrop()
+                            .into(target);
+                },
+                err -> target.setImageResource(R.drawable.profile)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    /* ========================= Follow Status ========================= */
     private void fetchFollowStatus(String targetUsername) {
         String statusUrl = "http://coms-3090-028.class.las.iastate.edu:8080/"
                 + loggedInUsername + "/profile/" + targetUsername;
@@ -164,7 +226,6 @@ public class OutsideUserProfile extends BaseActivity {
 
                     updateFollowButton();
 
-                    // refresh UI if we didn’t have extras earlier
                     if (viewedUserJson != null) {
                         updateUIWithProfile(viewedUserJson);
                     }
@@ -175,31 +236,30 @@ public class OutsideUserProfile extends BaseActivity {
         VolleySingleton.getInstance(this).addToRequestQueue(statusRequest);
     }
 
+    /* ========================= Followers / Following ========================= */
     private void fetchFollowersAndFollowing(String targetUsername) {
-        // Followers
         String followersUrl = "http://coms-3090-028.class.las.iastate.edu:8080/" + targetUsername + "/followers";
         JsonArrayRequest followersRequest = new JsonArrayRequest(
                 Request.Method.GET,
                 followersUrl,
                 null,
-                response -> followersTv.setText(response.length() + " Followers"),
-                error -> followersTv.setText("0 Followers")
+                res -> followersTv.setText(res.length() + " Followers"),
+                err -> followersTv.setText("0 Followers")
         );
         VolleySingleton.getInstance(this).addToRequestQueue(followersRequest);
 
-        // Following
         String followingUrl = "http://coms-3090-028.class.las.iastate.edu:8080/" + targetUsername + "/following";
         JsonArrayRequest followingRequest = new JsonArrayRequest(
                 Request.Method.GET,
                 followingUrl,
                 null,
-                response -> followingTv.setText(response.length() + " Following"),
-                error -> followingTv.setText("0 Following")
+                res -> followingTv.setText(res.length() + " Following"),
+                err -> followingTv.setText("0 Following")
         );
         VolleySingleton.getInstance(this).addToRequestQueue(followingRequest);
     }
 
-    /** ------------------- FOLLOW / UNFOLLOW ------------------- **/
+    /* ========================= Follow / Unfollow ========================= */
     private void sendFollowRequest(String followerUsername, String targetUsername) {
         String url = "http://coms-3090-028.class.las.iastate.edu:8080/" + followerUsername + "/follow/" + targetUsername;
 
@@ -210,20 +270,17 @@ public class OutsideUserProfile extends BaseActivity {
                 response -> {
                     String status = response.optString("status", "error");
                     String message = response.optString("message", "Follow request failed");
+
                     Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+
                     if ("success".equals(status)) {
                         currentState = FollowState.PENDING;
                         updateFollowButton();
                     }
                 },
                 error -> {
-                    if (error.networkResponse != null) {
-                        Log.e("FOLLOW_ERROR", "Status: " + error.networkResponse.statusCode);
-                        Log.e("FOLLOW_ERROR", "Body: " + new String(error.networkResponse.data));
-                    } else {
-                        Log.e("FOLLOW_ERROR", "Volley error: ", error);
-                    }
                     Toast.makeText(this, "Error sending follow request", Toast.LENGTH_SHORT).show();
+                    Log.e("FOLLOW_ERROR", "Request failed", error);
                 }
         );
 
@@ -237,47 +294,95 @@ public class OutsideUserProfile extends BaseActivity {
                 Request.Method.DELETE,
                 url,
                 null,
-                response -> {
+                res -> {
                     Toast.makeText(this, "Unfollowed user", Toast.LENGTH_SHORT).show();
                     currentState = FollowState.NOT_FOLLOWING;
                     updateFollowButton();
                 },
-                error -> {
-                    Toast.makeText(this, "Error unfollowing user", Toast.LENGTH_SHORT).show();
-                    error.printStackTrace();
-                }
+                err -> Toast.makeText(this, "Error unfollowing user", Toast.LENGTH_SHORT).show()
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-    /** ------------------- UI ------------------- **/
+    /* ========================= UI Update ========================= */
     private void updateUIWithProfile(JSONObject userJson) {
         if (userJson == null) return;
 
-        String displayName = userJson.optString("displayName", userJson.optString("username", ""));
-        String username = userJson.optString("username", viewedUsername != null ? viewedUsername : "");
+        /* ---------------------------------------------
+         * Update text fields FIRST (username, displayName)
+         * --------------------------------------------- */
+        String displayName = userJson.optString("displayName", viewedUsername);
+        String username = userJson.optString("username", viewedUsername);
         String bio = userJson.optString("bio", "");
         String craftSpecialties = userJson.optString("craftSpecialties", "");
 
         displayNameTv.setText(displayName);
         usernameTv.setText(username);
 
-        if (bio == null || "null".equalsIgnoreCase(bio) || bio.isEmpty()) {
+        if (bio == null || bio.equals("null") || bio.isEmpty()) {
             bioTv.setVisibility(View.GONE);
         } else {
             bioTv.setVisibility(View.VISIBLE);
             bioTv.setText(bio);
         }
 
-        if (craftSpecialties == null || "null".equalsIgnoreCase(craftSpecialties) || craftSpecialties.isEmpty()) {
+        if (craftSpecialties == null || craftSpecialties.equals("null") || craftSpecialties.isEmpty()) {
             craftSpecialtiesTv.setVisibility(View.GONE);
         } else {
             craftSpecialtiesTv.setVisibility(View.VISIBLE);
             craftSpecialtiesTv.setText(craftSpecialties);
         }
+
+        /* ---------------------------------------------
+         * NEW: Preferred image loading via imageURL
+         * --------------------------------------------- */
+        String imageUrl = userJson.optString("imageURL", null);
+
+        if (imageUrl != null && !imageUrl.equals("null")) {
+            String metaUrl = "http://coms-3090-028.class.las.iastate.edu:8080" + imageUrl;
+
+            JsonObjectRequest imgReq = new JsonObjectRequest(
+                    Request.Method.GET,
+                    metaUrl,
+                    null,
+                    res -> {
+                        String filePath = res.optString("filePath", "");
+                        if (filePath.isEmpty()) {
+                            profileImageView.setImageResource(R.drawable.profile);
+                            return;
+                        }
+
+                        String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
+                        String actualUrl = "http://coms-3090-028.class.las.iastate.edu:8080/uploads/" + filename;
+
+                        Glide.with(this)
+                                .load(actualUrl)
+                                .circleCrop()
+                                .placeholder(R.drawable.profile)
+                                .error(R.drawable.profile)
+                                .into(profileImageView);
+                    },
+                    err -> profileImageView.setImageResource(R.drawable.profile)
+            );
+
+            VolleySingleton.getInstance(this).addToRequestQueue(imgReq);
+            return;
+        }
+
+        /* ---------------------------------------------
+         * OLD FALLBACK: Load image via image.id
+         * --------------------------------------------- */
+        long imageId = -1;
+        JSONObject imgObj = userJson.optJSONObject("image");
+        if (imgObj != null) {
+            imageId = imgObj.optLong("id", -1);
+        }
+
+        loadOutsideProfileImage(profileImageView, imageId);
     }
 
+    /* ========================= Follow Button UI ========================= */
     private void updateFollowButton() {
         switch (currentState) {
             case NOT_FOLLOWING:
@@ -285,11 +390,13 @@ public class OutsideUserProfile extends BaseActivity {
                 followButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
                 followButton.setTextColor(getResources().getColor(android.R.color.white));
                 break;
+
             case FOLLOWING:
                 followButton.setText("Unfollow");
                 followButton.setBackgroundColor(getResources().getColor(android.R.color.white));
                 followButton.setTextColor(getResources().getColor(android.R.color.black));
                 break;
+
             case PENDING:
                 followButton.setText("Pending Request");
                 followButton.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
@@ -297,6 +404,8 @@ public class OutsideUserProfile extends BaseActivity {
                 break;
         }
     }
+
+    /* ========================= User Points ========================= */
     private void fetchUserPoints(String username, ImageView badge, TextView pointsTv, TextView tierTv, ProgressBar progressBar) {
         String url = "http://coms-3090-028.class.las.iastate.edu:8080/points/" + username;
 
@@ -304,25 +413,32 @@ public class OutsideUserProfile extends BaseActivity {
                 Request.Method.GET,
                 url,
                 null,
-                response -> {
+                res -> {
                     try {
-                        int totalPoints = response.optInt("totalPoints", 0);
-                        String currentTier = response.optString("currentTier", "BEGINNER");
-                        int pointsToNext = response.optInt("pointsToNextTier", 0);
-                        String nextTier = response.optString("nextTier", "MAX LEVEL");
+                        int totalPoints = res.optInt("totalPoints", 0);
+                        String currentTier = res.optString("currentTier", "BEGINNER");
+                        int pointsToNext = res.optInt("pointsToNextTier", 0);
 
                         pointsTv.setText("Points: " + totalPoints);
                         tierTv.setText("Tier: " + currentTier);
 
                         progressBar.setMax(100);
                         int progressValue;
+
                         if (pointsToNext == 0) {
                             progressValue = 100;
                         } else {
-                            int required = (currentTier.equals("BEGINNER") ? 100 : currentTier.equals("INTERMEDIATE") ? 200 : currentTier.equals("EXPERT") ? 300 : 0);
-                            int lowerBound = (currentTier.equals("BEGINNER") ? 0 : currentTier.equals("INTERMEDIATE") ? 100 : currentTier.equals("EXPERT") ? 200 : 300);
-                            progressValue = (int)((totalPoints - lowerBound) * 100.0 / (required - lowerBound));
+                            int required = currentTier.equals("BEGINNER") ? 100
+                                    : currentTier.equals("INTERMEDIATE") ? 200
+                                    : currentTier.equals("EXPERT") ? 300 : 0;
+
+                            int lower = currentTier.equals("BEGINNER") ? 0
+                                    : currentTier.equals("INTERMEDIATE") ? 100
+                                    : currentTier.equals("EXPERT") ? 200 : 300;
+
+                            progressValue = (int) ((totalPoints - lower) * 100.0 / (required - lower));
                         }
+
                         progressBar.setProgress(progressValue);
 
                         switch (currentTier) {
@@ -338,15 +454,13 @@ public class OutsideUserProfile extends BaseActivity {
                             case "CHAMPION":
                                 badge.setImageResource(R.drawable.badge_champion);
                                 break;
-                            default:
-                                badge.setImageResource(R.drawable.badge_beginner);
                         }
 
                     } catch (Exception e) {
                         Log.e("POINTS", "Parse error", e);
                     }
                 },
-                error -> Log.e("POINTS", "Failed to fetch points", error)
+                err -> Log.e("POINTS", "Failed to fetch points", err)
         );
 
         VolleySingleton.getInstance(this).addToRequestQueue(request);

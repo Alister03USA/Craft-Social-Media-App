@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    namespace = 'com.example.androidexample'
-    compileSdk = 36
+    namespace 'com.example.androidexample'
+    compileSdk 36
 
     defaultConfig {
-        applicationId = "com.example.androidexample"
-        minSdk = 24
-        targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        applicationId "com.example.androidexample"
+        minSdk 24
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -19,7 +19,8 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
         }
     }
 
@@ -30,18 +31,24 @@ android {
 }
 
 dependencies {
+    // Networking
     implementation 'com.android.volley:volley:1.2.1'
     implementation 'org.java-websocket:Java-WebSocket:1.5.6'
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+
+    // Android UI
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
-    implementation fileTree(dir: 'C:\\Users\\qweid\\AppData\\Local\\Android\\Sdk\\platforms\\android-36', include: ['*.aar', '*.jar'], exclude: [])
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
-    implementation 'com.github.bumptech.glide:glide:4.16.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.navigation:navigation-fragment:2.9.5'
     implementation 'androidx.navigation:navigation-ui:2.9.5'
+
+    // Glide for images
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
+
+    // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

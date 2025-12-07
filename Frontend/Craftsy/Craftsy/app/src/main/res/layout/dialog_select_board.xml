@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_rounded_bg"
+    android:gravity="center_horizontal">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/dialogTitle"
+        android:text="Select Board"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:textColor="#222222"
+        android:layout_marginBottom="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- List container with shadow -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:background="@android:color/white"
+        android:padding="8dp"
+        android:elevation="4dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="vertical"
+        android:clipToOutline="true"
+        android:backgroundTint="#FFFFFF">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvDialogBoards"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:overScrollMode="never" />
+    </LinearLayout>
+
+    <!-- Cancel Button -->
+    <Button
+        android:id="@+id/btnCancelBoardSelect"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Cancel"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#CC0000"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+</LinearLayout>

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -18,10 +19,7 @@ import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Handler;
-import android.os.Looper;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -36,10 +34,12 @@ public class NewChatActivity extends AppCompatActivity {
     private AutoCompleteTextView autoUserSearch;
     private TextView tvSelectedUsers;
     private Button btnCreateDirect, btnCreateGroup;
-    private String currentUser = "Fuji";
+
+    private String currentUser;
 
     private ArrayList<String> userList = new ArrayList<>();
     private ArrayList<String> selectedUsers = new ArrayList<>();
+
     private ArrayAdapter<String> userAdapter;
 
     @Override
@@ -52,25 +52,19 @@ public class NewChatActivity extends AppCompatActivity {
         btnCreateDirect = findViewById(R.id.btnCreateDirect);
         btnCreateGroup = findViewById(R.id.btnCreateGroup);
 
-        // Set current user (from intent or fallback)
-        String passedUser = getIntent().getStringExtra("username");
-        if (passedUser != null && !passedUser.isEmpty()) currentUser = passedUser;
-        Log.d(TAG, "👤 Current user (sender): " + currentUser);
+        /* ====================== GET CURRENT USER ====================== */
+        currentUser = getIntent().getStringExtra("username");
+        if (currentUser == null || currentUser.isEmpty()) {
+            currentUser = SessionManager.getInstance().getLoggedInUsername();
+        }
+        Log.d(TAG, "Current logged-in user: " + currentUser);
 
-        // Setup adapter for user search
+        /* ====================== SETUP ADAPTER ====================== */
         userAdapter = new ArrayAdapter<>(this, R.layout.dropdown_item, R.id.dropdown_text, userList);
         autoUserSearch.setAdapter(userAdapter);
-        autoUserSearch.setDropDownBackgroundResource(android.R.color.white);
         autoUserSearch.setThreshold(1);
 
-        // Handle focus to reopen dropdown
-        autoUserSearch.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus && !userList.isEmpty()) {
-                autoUserSearch.showDropDown();
-            }
-        });
-
-        // Text change listener
+        /* ====================== USER SEARCH LISTENER ====================== */
         autoUserSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void afterTextChanged(Editable s) {}
@@ -82,20 +76,22 @@ public class NewChatActivity extends AppCompatActivity {
             }
         });
 
-        // When a username is selected
+        /* ====================== ON USER PICK ====================== */
         autoUserSearch.setOnItemClickListener((parent, view, position, id) -> {
             String selected = userAdapter.getItem(position);
-            if (selected != null && !selectedUsers.contains(selected) && !selected.equals(currentUser)) {
+            if (selected == null) return;
+
+            if (!selected.equals(currentUser) && !selectedUsers.contains(selected)) {
                 selectedUsers.add(selected);
                 updateSelectedUsers();
-                Log.d(TAG, "✅ Added user: " + selected);
+                Log.d(TAG, "Added user: " + selected);
             }
+
             autoUserSearch.setText("");
-            // Delay hiding keyboard slightly to avoid dropdown dismiss issues
-            new Handler(Looper.getMainLooper()).postDelayed(this::hideKeyboard, 100);
+            hideKeyboard();
         });
 
-        // Create direct chat button
+        /* ====================== CREATE DIRECT ====================== */
         btnCreateDirect.setOnClickListener(v -> {
             if (selectedUsers.size() != 1) {
                 Toast.makeText(this, "Select exactly one user for a direct chat", Toast.LENGTH_SHORT).show();
@@ -104,7 +100,7 @@ public class NewChatActivity extends AppCompatActivity {
             createDirectChat(selectedUsers.get(0));
         });
 
-        // Create group chat button
+        /* ====================== CREATE GROUP ====================== */
         btnCreateGroup.setOnClickListener(v -> {
             if (selectedUsers.size() < 2) {
                 Toast.makeText(this, "Select at least 2 users for a group chat", Toast.LENGTH_SHORT).show();
@@ -113,6 +109,8 @@ public class NewChatActivity extends AppCompatActivity {
             createGroupChat(selectedUsers);
         });
     }
+
+    /* ====================== UI HELPERS ====================== */
 
     private void updateSelectedUsers() {
         tvSelectedUsers.setText("Selected: " + String.join(", ", selectedUsers));
@@ -123,13 +121,19 @@ public class NewChatActivity extends AppCompatActivity {
         if (imm != null) imm.hideSoftInputFromWindow(autoUserSearch.getWindowToken(), 0);
     }
 
+    /* ====================== SEARCH USERS ====================== */
+
     private void searchUsers(String query) {
         String url = BASE_URL + "/search/user?query=" + query;
-        Log.d(TAG, "🔍 Searching users: " + url);
+        Log.d(TAG, "Searching users: " + url);
 
-        JsonArrayRequest req = new JsonArrayRequest(Request.Method.GET, url, null,
+        JsonArrayRequest req = new JsonArrayRequest(
+                Request.Method.GET,
+                url,
+                null,
                 res -> {
                     userList.clear();
+
                     for (int i = 0; i < res.length(); i++) {
                         JSONObject obj = res.optJSONObject(i);
                         if (obj != null) {
@@ -140,60 +144,70 @@ public class NewChatActivity extends AppCompatActivity {
                         }
                     }
 
-                    Log.d(TAG, "✅ Found users: " + userList);
-
-                    // ✅ Update dropdown with the usernames found
                     userAdapter.clear();
                     userAdapter.addAll(userList);
                     userAdapter.notifyDataSetChanged();
 
-                    // ✅ Only show dropdown if there’s something to pick
-                    if (!userList.isEmpty()) {
-                        autoUserSearch.showDropDown();
-                    } else {
-                        autoUserSearch.dismissDropDown();
-                    }
+                    if (!userList.isEmpty()) autoUserSearch.showDropDown();
                 },
-                err -> {
-                    Log.e(TAG, "❌ Search error", err);
-                    Toast.makeText(this, "Search failed", Toast.LENGTH_SHORT).show();
-                });
+                err -> Log.e(TAG, "Search error", err)
+        );
 
         Volley.newRequestQueue(this).add(req);
     }
+
+    /* ====================== CREATE DIRECT ====================== */
 
     private void createDirectChat(String otherUser) {
         String url = BASE_URL + "/messages/create/" + currentUser + "/" + otherUser;
-        Log.d(TAG, "🌍 POST " + url);
 
-        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, null,
+        Log.d(TAG, "POST " + url);
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                null,
                 res -> {
                     String convoId = res.optString("id", "");
-                    Log.d(TAG, "✅ Direct chat created: " + convoId);
+                    Log.d(TAG, "Direct chat created: " + convoId);
                     openChat(convoId, otherUser);
                 },
                 err -> {
-                    Log.e(TAG, "❌ Failed to create direct chat", err);
-                    Toast.makeText(this, "Failed to create chat", Toast.LENGTH_SHORT).show();
-                });
+                    Log.e(TAG, "Direct chat creation failed", err);
+                    Toast.makeText(this, "Failed to create direct chat", Toast.LENGTH_SHORT).show();
+                }
+        );
+
         Volley.newRequestQueue(this).add(req);
     }
 
+    /* ====================== CREATE GROUP ====================== */
+
     private void createGroupChat(List<String> members) {
+        // ALWAYS include the creator
+        if (!members.contains(currentUser)) {
+            members.add(currentUser);
+        }
+
         String url = BASE_URL + "/messages/group";
         JSONArray body = new JSONArray(members);
-        Log.d(TAG, "🌍 POST " + url + " with body: " + body);
 
-        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, null,
+        Log.d(TAG, "POST " + url + " Body: " + body);
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                null,
                 res -> {
                     String convoId = res.optString("id", "");
-                    Log.d(TAG, "✅ Group chat created: " + convoId);
+                    Log.d(TAG, "Group chat created: " + convoId);
                     openChat(convoId, "New Group Chat");
                 },
                 err -> {
-                    Log.e(TAG, "❌ Failed to create group chat", err);
-                    Toast.makeText(this, "Group chat creation failed", Toast.LENGTH_SHORT).show();
-                }) {
+                    Log.e(TAG, "Group chat creation failed", err);
+                    Toast.makeText(this, "Failed to create group chat", Toast.LENGTH_SHORT).show();
+                }
+        ) {
             @Override
             public byte[] getBody() {
                 return body.toString().getBytes();
@@ -207,6 +221,8 @@ public class NewChatActivity extends AppCompatActivity {
 
         Volley.newRequestQueue(this).add(req);
     }
+
+    /* ====================== OPEN CHAT ====================== */
 
     private void openChat(String convoId, String chatName) {
         Intent i = new Intent(this, DirectMessagingActivity.class);

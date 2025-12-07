@@ -5,7 +5,35 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- Tabs for Leaderboard | Tiers -->
+    <!-- Header with Back Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/blue_primary"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <ImageButton
+            android:id="@+id/btnBackPoints"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Points Center"
+            android:textColor="@color/text_white"
+            android:textSize="20sp"
+            android:layout_marginStart="12dp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Tabs -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayoutPoints"
         android:layout_width="match_parent"
@@ -14,10 +42,9 @@
         app:tabTextColor="@color/text_white"
         app:tabSelectedTextColor="@color/text_white"
         app:tabIndicatorColor="@color/text_white"
-        app:tabIndicatorHeight="3dp"
-        />
+        app:tabIndicatorHeight="3dp" />
 
-    <!-- ViewPager2 that switches between fragments -->
+    <!-- Pager -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPagerPoints"
         android:layout_width="match_parent"

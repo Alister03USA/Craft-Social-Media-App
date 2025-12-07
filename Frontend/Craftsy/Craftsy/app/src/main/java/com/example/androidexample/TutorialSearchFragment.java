@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,17 +24,17 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Fragment that displays search results for Tutorials inside SearchActivity.
- * Allows opening TutorialDetailActivity and uploading new tutorials.
- */
 public class TutorialSearchFragment extends Fragment implements SearchableTab {
 
     private RecyclerView recyclerView;
     private TutorialAdapter adapter;
     private final List<TutorialItem> tutorialList = new ArrayList<>();
-    private static final String BASE_URL =
+
+    private static final String BASE_SEARCH_URL =
             "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/search?query=";
+
+    private static final String BASE_LEADERBOARD_URL =
+            "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/leaderboard";
 
     @Nullable
     @Override
@@ -42,6 +43,7 @@ public class TutorialSearchFragment extends Fragment implements SearchableTab {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_tutorial_search, container, false);
+
         recyclerView = view.findViewById(R.id.recyclerViewTutorials);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -57,25 +59,28 @@ public class TutorialSearchFragment extends Fragment implements SearchableTab {
         });
         recyclerView.setAdapter(adapter);
 
-        // ✅ Upload button → TutorialUploadActivity
+        // Upload tutorial button
         FloatingActionButton uploadBtn = view.findViewById(R.id.btnUploadTutorial);
         uploadBtn.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), TutorialUploadActivity.class);
             startActivity(intent);
         });
 
+        // Sort by most liked button
+        Button btnSort = view.findViewById(R.id.btnSortMostLiked);
+        btnSort.setOnClickListener(v -> fetchLeaderboard());
+
         return view;
     }
 
+    // Search Refresh
     @Override
     public void refreshResults(String query) {
-        if (query == null) return;
-        if (query.trim().length() == 0) return;  // still blocks whitespace-only
+        if (query == null || query.trim().isEmpty()) return;
 
         String viewer = SessionManager.getInstance().getLoggedInUsername();
-        Log.d("TutorialSearch", "viewer = " + viewer);
+        String url = BASE_SEARCH_URL + query + "&username=" + viewer;
 
-        String url = BASE_URL + query + "&username=" + viewer;
         Log.d("TutorialSearch", "Fetching tutorials from " + url);
 
         JsonArrayRequest request = new JsonArrayRequest(
@@ -89,31 +94,79 @@ public class TutorialSearchFragment extends Fragment implements SearchableTab {
         VolleySingleton.getInstance(requireContext()).addToRequestQueue(request);
     }
 
-    public void updateTutorials(List<TutorialItem> newList) {
-        if (tutorialList == null || adapter == null) return;
-        tutorialList.clear();
-        tutorialList.addAll(newList);
-        adapter.notifyDataSetChanged();
-        Log.d("TutorialSearchFragment", "✅ Updated tutorial list: " + newList.size());
-    }
-
+    // Convert search results into tutorialList
     private void handleResponse(JSONArray response) {
         try {
             tutorialList.clear();
+
             for (int i = 0; i < response.length(); i++) {
                 JSONObject obj = response.getJSONObject(i);
-                long id = obj.optLong("id", -1);
-                String title = obj.optString("title", "Untitled");
-                String description = obj.optString("description", "");
-                String category = obj.optString("category", "");
-                String username = obj.optString("username", "Unknown");
-                String fileUrl = obj.optString("fileURL", "");
-                tutorialList.add(new TutorialItem(id, title, description, category, fileUrl, "", username));
+
+                tutorialList.add(new TutorialItem(
+                        obj.optLong("id", -1),
+                        obj.optString("title", "Untitled"),
+                        obj.optString("description", ""),
+                        obj.optString("category", ""),
+                        obj.optString("fileURL", ""),
+                        "",
+                        obj.optString("username", "Unknown")
+                ));
             }
+
             adapter.notifyDataSetChanged();
-            Log.d("TutorialSearchFragment", "✅ Loaded " + response.length() + " tutorials");
+            Log.d("TutorialSearchFragment", "Loaded " + response.length() + " tutorials");
+
         } catch (Exception e) {
-            Log.e("TutorialSearchFragment", "❌ Error parsing tutorial JSON", e);
+            Log.e("TutorialSearchFragment", "Error parsing search results", e);
         }
+    }
+
+    // Update list externally
+    public void updateTutorials(List<TutorialItem> newList) {
+        tutorialList.clear();
+        tutorialList.addAll(newList);
+        adapter.notifyDataSetChanged();
+    }
+
+    // Fetch leaderboard: tutorials sorted by likes
+    private void fetchLeaderboard() {
+        Log.d("TutorialSearch", "Fetching leaderboard from " + BASE_LEADERBOARD_URL);
+
+        JsonArrayRequest request = new JsonArrayRequest(
+                Request.Method.GET,
+                BASE_LEADERBOARD_URL,
+                null,
+                res -> {
+                    try {
+                        tutorialList.clear();
+
+                        for (int i = 0; i < res.length(); i++) {
+                            JSONObject obj = res.getJSONObject(i);
+
+                            TutorialItem item = new TutorialItem(
+                                    obj.optLong("id"),
+                                    obj.optString("title"),
+                                    "", // leaderboard has no description
+                                    obj.optString("category"),
+                                    null,
+                                    "",
+                                    obj.optString("username")
+                            );
+
+                            item.setLikeCount(obj.optLong("likes"));
+                            tutorialList.add(item);
+                        }
+
+                        adapter.notifyDataSetChanged();
+                        Log.d("TutorialSearch", "Leaderboard loaded: " + tutorialList.size());
+
+                    } catch (Exception e) {
+                        Log.e("TutorialSearch", "Error mapping leaderboard", e);
+                    }
+                },
+                error -> Log.e("TutorialSearch", "Leaderboard fetch error", error)
+        );
+
+        VolleySingleton.getInstance(requireContext()).addToRequestQueue(request);
     }
 }

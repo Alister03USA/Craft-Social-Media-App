@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MessageItem {
+
     private final long id; // message id
     private final String sender;
     private final String content;
@@ -11,7 +12,14 @@ public class MessageItem {
     private final Long replyTo; // nullable (for replies)
     private final Long imageId; // nullable
     private final String imageUrl; // nullable
+
     private final Map<String, Integer> reactions = new HashMap<>();
+
+    // ============================================================
+    // NEW FIELDS FOR WHATSAPP-STYLE INLINE REPLY
+    // ============================================================
+    private String replySender;     // name of user who wrote the original message
+    private String replySnippet;    // short preview of original message text
 
     // Normal text message constructor
     public MessageItem(long id, String sender, String content, String timestamp, Long replyTo) {
@@ -28,6 +36,9 @@ public class MessageItem {
         this.replyTo = replyTo;
         this.imageId = imageId;
         this.imageUrl = imageUrl;
+
+        this.replySender = null;
+        this.replySnippet = null;
     }
 
     public long getId() { return id; }
@@ -41,5 +52,20 @@ public class MessageItem {
 
     public boolean hasImage() {
         return imageId != null && imageUrl != null && !imageUrl.isEmpty();
+    }
+
+    // ============================================================
+    // NEW GETTERS + SETTERS
+    // ============================================================
+    public String getReplySender() { return replySender; }
+
+    public void setReplySender(String replySender) {
+        this.replySender = replySender;
+    }
+
+    public String getReplySnippet() { return replySnippet; }
+
+    public void setReplySnippet(String replySnippet) {
+        this.replySnippet = replySnippet;
     }
 }

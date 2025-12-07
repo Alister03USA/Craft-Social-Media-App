@@ -1,0 +1,58 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/craftsy_background">
+
+    <!-- Header row -->
+    <LinearLayout
+        android:id="@+id/headerContainer"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnBackBoards"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            app:tint="@color/dark_text" />
+
+        <TextView
+            android:id="@+id/txtBoardsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your Boards"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:textColor="@color/dark_text"
+            android:layout_marginStart="12dp" />
+    </LinearLayout>
+
+    <!-- Recycler of Boards -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerBoards"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/headerContainer"
+        android:padding="12dp" />
+
+    <!-- Floating Create Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnCreateBoard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="20dp"
+        app:backgroundTint="@color/button_blue"
+        app:tint="@android:color/white"
+        android:contentDescription="Create Board"
+        app:srcCompat="@drawable/ic_add" />
+
+</RelativeLayout>

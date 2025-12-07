@@ -185,6 +185,16 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <Button
+                android:id="@+id/btnSavedBoards"
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Saved Boards"
+                android:textSize="14sp"
+                android:background="@android:color/holo_blue_dark"
+                android:textColor="@android:color/white" />
+
             <!-- Posts grid -->
             <GridLayout
                 android:id="@+id/postsGrid"

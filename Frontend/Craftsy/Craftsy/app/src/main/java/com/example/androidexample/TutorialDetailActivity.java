@@ -15,12 +15,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 
-/**
- * Displays both YouTube and MP4 tutorials properly in a WebView.
- * Enforces: only the uploader can edit or delete the tutorial.
- */
+import org.json.JSONObject;
+
 public class TutorialDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "TutorialDetailActivity";
@@ -29,12 +28,19 @@ public class TutorialDetailActivity extends AppCompatActivity {
 
     private TextView titleText, descText, categoryText, usernameText;
     private WebView webView;
-    private ImageButton btnBack;
-    private Button btnEdit, btnDelete;
+    private ImageButton btnBack, btnLikeTutorial;
+    private Button btnEdit, btnDelete, btnSave;
     private ProgressDialog progressDialog;
+
+    private TextView textTutorialLikes;
 
     private long tutorialId = -1L;
     private String title, description, category, fileUrl, uploaderUsername;
+
+    private boolean isLiked = false;
+    private long currentLikeCount = 0;
+
+    private String loggedInUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +55,15 @@ public class TutorialDetailActivity extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBack);
         btnEdit = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
+        btnSave = findViewById(R.id.btnSaveTutorial);
+
+        btnLikeTutorial = findViewById(R.id.btnLikeTutorial);
+        textTutorialLikes = findViewById(R.id.textTutorialLikes);
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
+
+        loggedInUser = SessionManager.getInstance().getLoggedInUsername();
 
         tutorialId = getIntent().getLongExtra("id", -1L);
         title = getIntent().getStringExtra("title");
@@ -70,28 +82,40 @@ public class TutorialDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         enforceEditDeletePermissions();
+        setupWebView();
 
-        btnEdit.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EditTutorialActivity.class);
-            intent.putExtra("tutorialId", tutorialId);
-            intent.putExtra("title", title);
-            intent.putExtra("description", description);
-            intent.putExtra("category", category);
-            startActivity(intent);
+        // Save to Board
+        btnSave.setOnClickListener(v -> {
+            SelectBoardDialog dialog = new SelectBoardDialog(TutorialDetailActivity.this,
+                    board -> addTutorialToBoard(board.getId(), tutorialId));
+            dialog.show();
         });
 
         btnDelete.setOnClickListener(v -> showDeleteDialog());
 
-        setupWebView();
+        // Like button
+        btnLikeTutorial.setOnClickListener(v -> toggleLike());
+
+        // Fetch current likes from backend
+        fetchTutorialLikes();
     }
 
-    /**
-     * Only show Edit/Delete buttons when the logged-in user is the uploader.
-     */
+    private void addTutorialToBoard(long boardId, long tutorialId) {
+        String url = BASE_URL + "/board/" + boardId + "/tutorial/" + tutorialId;
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                response -> Toast.makeText(this, "Tutorial saved", Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(this, "Failed to save", Toast.LENGTH_SHORT).show()
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
     private void enforceEditDeletePermissions() {
         String loggedInUser = SessionManager.getInstance().getLoggedInUsername();
-
-        Log.d(TAG, "loggedInUser=" + loggedInUser + " | uploader=" + uploaderUsername);
 
         if (loggedInUser == null || uploaderUsername == null) {
             btnEdit.setVisibility(android.view.View.GONE);
@@ -108,7 +132,6 @@ public class TutorialDetailActivity extends AppCompatActivity {
         }
     }
 
-    /** Displays both YouTube and MP4 tutorials properly */
     private void setupWebView() {
         if (fileUrl == null || fileUrl.isEmpty()) {
             webView.setVisibility(android.view.View.GONE);
@@ -116,66 +139,33 @@ public class TutorialDetailActivity extends AppCompatActivity {
         }
 
         webView.setVisibility(android.view.View.VISIBLE);
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        WebSettings ws = webView.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
 
-        String normalizedUrl = fileUrl.trim();
-        Log.d(TAG, "Loading tutorial URL: " + normalizedUrl);
+        String url = fileUrl;
 
-        if (normalizedUrl.contains("youtube.com") || normalizedUrl.contains("youtu.be")) {
-            String videoId = null;
-            try {
-                if (normalizedUrl.contains("watch?v=")) {
-                    videoId = normalizedUrl.substring(normalizedUrl.indexOf("watch?v=") + 8);
-                } else if (normalizedUrl.contains("shorts/")) {
-                    videoId = normalizedUrl.substring(normalizedUrl.indexOf("shorts/") + 7);
-                } else if (normalizedUrl.contains("youtu.be/")) {
-                    videoId = normalizedUrl.substring(normalizedUrl.indexOf("youtu.be/") + 9);
-                }
-                if (videoId != null && videoId.contains("&")) {
-                    videoId = videoId.substring(0, videoId.indexOf("&"));
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to extract YouTube video ID", e);
-            }
-
-            String thumbnail = videoId != null
-                    ? "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg"
-                    : "https://www.youtube.com";
-
-            String html = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#000;'>"
-                    + "<div style='position:relative;text-align:center;'>"
-                    + "<img src='" + thumbnail + "' style='width:100%;max-height:250px;object-fit:cover;'/>"
-                    + "<a href='" + normalizedUrl + "' "
-                    + "style='position:absolute;top:0;left:0;width:100%;height:100%;display:flex;"
-                    + "align-items:center;justify-content:center;color:white;"
-                    + "background:rgba(0,0,0,0.3);text-decoration:none;font-size:18px;'>"
-                    + "▶ Watch on YouTube</a>"
-                    + "</div></body></html>";
-
-            webView.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
+        if (url.contains("youtube.com") || url.contains("youtu.be")) {
+            String html = "<html><body><iframe width='100%' height='250' "
+                    + "src='" + url + "' frameborder='0' allowfullscreen></iframe></body></html>";
+            webView.loadData(html, "text/html", "utf-8");
             return;
         }
 
-        if (normalizedUrl.startsWith("/tutorial/")) {
-            String fullPath = BASE_URL + normalizedUrl;
-            Log.d(TAG, "Playing MP4: " + fullPath);
+        if (url.startsWith("/tutorial/")) {
+            String full = BASE_URL + url;
 
-            String html = "<!DOCTYPE html><html><body style='margin:0;padding:0;background-color:black;'>"
+            String html = "<html><body>"
                     + "<video width='100%' height='250' controls>"
-                    + "<source src='" + fullPath + "' type='video/mp4'>"
-                    + "Your browser does not support video playback."
+                    + "<source src='" + full + "' type='video/mp4'>"
                     + "</video></body></html>";
 
-            webView.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
+            webView.loadData(html, "text/html", "utf-8");
             return;
         }
 
-        if (normalizedUrl.startsWith("http")) {
-            webView.loadUrl(normalizedUrl);
-        }
+        webView.loadUrl(url);
     }
 
     private void showDeleteDialog() {
@@ -210,6 +200,66 @@ public class TutorialDetailActivity extends AppCompatActivity {
                     Log.e(TAG, "Delete error", error);
                 }
         );
+
         VolleySingleton.getInstance(this).addToRequestQueue(deleteRequest);
+    }
+
+    // ------------------------------------------------------------
+    // LIKE SYSTEM
+    // ------------------------------------------------------------
+
+    private void fetchTutorialLikes() {
+        if (tutorialId <= 0) return;
+
+        String url = BASE_URL + "/tutorial/" + tutorialId + "/totalLikes";
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                resp -> {
+                    currentLikeCount = resp.optLong("totalLikes", 0);
+                    textTutorialLikes.setText(currentLikeCount + " likes");
+                },
+                err -> Log.e(TAG, "Failed to fetch likes", err)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
+    }
+
+    private void toggleLike() {
+        if (tutorialId <= 0 || loggedInUser == null) return;
+
+        String url;
+
+        if (isLiked) {
+            // Dislike
+            url = BASE_URL + "/tutorial/" + loggedInUser + "/dislike/" + tutorialId;
+        } else {
+            // Like
+            url = BASE_URL + "/tutorial/" + loggedInUser + "/like/" + tutorialId;
+        }
+
+        JsonObjectRequest req = new JsonObjectRequest(
+                isLiked ? Request.Method.DELETE : Request.Method.POST,
+                url,
+                null,
+                resp -> {
+                    isLiked = !isLiked;
+
+                    if (isLiked) {
+                        currentLikeCount++;
+                        btnLikeTutorial.setImageResource(R.drawable.ic_heart_filled);
+                    } else {
+                        if (currentLikeCount > 0) currentLikeCount--;
+                        btnLikeTutorial.setImageResource(R.drawable.ic_heart_outline);
+                    }
+
+                    textTutorialLikes.setText(currentLikeCount + " likes");
+                },
+                err -> Log.e(TAG, "Toggle tutorial like failed", err)
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(req);
     }
 }

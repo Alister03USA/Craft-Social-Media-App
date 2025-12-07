@@ -7,7 +7,7 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.example.androidexample.SelectBoardDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -67,11 +67,31 @@ public class PatternDetailActivity extends AppCompatActivity {
             addReviewIntent.putExtra("patternName", patternTitle);
             addReviewIntent.putExtra("ownerUsername", ownerUsername);
             startActivity(addReviewIntent);
-        });
 
+        });
+        Button btnSave = findViewById(R.id.btnSavePattern);
+        btnSave.setOnClickListener(v -> {
+            SelectBoardDialog dialog = new SelectBoardDialog(PatternDetailActivity.this, board -> {
+                addPatternToBoard(board.getId(), patternTitle);
+            });
+            dialog.show();
+        });
         fetchPatternDetails(ownerUsername);
     }
+    private void addPatternToBoard(long boardId, String patternName) {
 
+        String url = BASE_URL + "/board/" + boardId + "/pattern/" + ownerUsername + "/" + patternName;
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                null,
+                response -> Toast.makeText(this, "Pattern saved", Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(this, "Failed to save", Toast.LENGTH_SHORT).show()
+        );
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
+    }
     private void fetchPatternDetails(String ownerUsername) {
         String url = BASE_URL + "/patterns/" + ownerUsername + "/" + patternTitle;
 

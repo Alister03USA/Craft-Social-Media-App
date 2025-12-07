@@ -13,7 +13,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <!-- Reply preview -->
+        <!-- WHATSAPP STYLE REPLY PREVIEW -->
+        <LinearLayout
+            android:id="@+id/replyBox"
+            android:orientation="vertical"
+            android:padding="6dp"
+            android:background="#DDDDDD"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvReplySender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textColor="#333"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvReplySnippet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#666"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Old reply field, kept but hidden -->
         <TextView
             android:id="@+id/tvReply"
             android:visibility="gone"
@@ -27,10 +55,11 @@
             android:id="@+id/tvMsg"
             android:textColor="@android:color/black"
             android:textSize="16sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:layout_marginBottom="2dp" />
+            android:layout_marginBottom="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
         <!-- Image preview -->
         <ImageView
             android:id="@+id/imgContent"
@@ -40,6 +69,7 @@
             android:layout_marginTop="6dp"
             android:layout_marginBottom="6dp"
             android:visibility="gone" />
+
         <!-- Timestamp -->
         <TextView
             android:id="@+id/tvMeta"
@@ -49,7 +79,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- Reactions line -->
+        <!-- Reactions -->
         <TextView
             android:id="@+id/tvReacts"
             android:visibility="gone"
@@ -59,7 +89,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- Actions row -->
+        <!-- Action row -->
         <LinearLayout
             android:orientation="horizontal"
             android:gravity="end"
@@ -70,7 +100,6 @@
             <ImageButton
                 android:id="@+id/btnReply"
                 android:src="@drawable/ic_reply"
-                android:contentDescription="Reply"
                 android:background="@android:color/transparent"
                 android:layout_width="28dp"
                 android:layout_height="28dp" />
@@ -78,10 +107,11 @@
             <ImageButton
                 android:id="@+id/btnReact"
                 android:src="@drawable/ic_react"
-                android:contentDescription="React"
                 android:background="@android:color/transparent"
                 android:layout_width="28dp"
                 android:layout_height="28dp" />
+
         </LinearLayout>
+
     </LinearLayout>
 </LinearLayout>

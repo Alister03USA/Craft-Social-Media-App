@@ -36,7 +36,7 @@ public class TutorialFeedActivity extends AppCompatActivity {
     private static final String BASE_URL =
             "http://coms-3090-028.class.las.iastate.edu:8080/tutorial/search?query=";
     private static final String USER_URL =
-            "http://coms-3090-028.class.las.iastate.edu:8080/users/"; // ✅ adjust if different
+            "http://coms-3090-028.class.las.iastate.edu:8080/users/"; // adjust if different
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;

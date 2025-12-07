@@ -1,156 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
     android:background="@color/craftsy_background">
 
-    <!-- Back button -->
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_arrow_back"
-        app:tint="@color/dark_text"
-        android:contentDescription="@string/back"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <!-- CardView wrapping the main tutorial content -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardTutorialDetail"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="8dp"
-        android:background="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/btnBack"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/bottomButtonsLayout"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp">
+        <!-- Back button -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            app:tint="@color/dark_text"
+            android:layout_marginBottom="12dp" />
 
-        <ScrollView
-            android:id="@+id/tutorialScroll"
+        <!-- Tutorial Card -->
+        <LinearLayout
+            android:id="@+id/cardTutorialDetail"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:padding="16dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:elevation="4dp"
+            android:background="@drawable/rounded_white_card"
+            android:clipToOutline="true">
 
-            <LinearLayout
+            <!-- Title -->
+            <TextView
+                android:id="@+id/detailTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_horizontal">
+                android:text="Tutorial Title"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/black" />
 
-                <!-- Title, Author, Category Container -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingBottom="12dp">
+            <!-- Username -->
+            <TextView
+                android:id="@+id/detailUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="username"
+                android:textSize="14sp"
+                android:textColor="@color/medium_text"
+                android:layout_marginTop="2dp" />
 
-                    <TextView
-                        android:id="@+id/detailTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tutorial_title"
-                        android:textColor="@color/dark_text"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:lineSpacingExtra="4dp" />
+            <!-- Category -->
+            <TextView
+                android:id="@+id/detailCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Category: Sewing"
+                android:textSize="14sp"
+                android:textColor="@color/medium_text"
+                android:layout_marginTop="2dp" />
 
-                    <TextView
-                        android:id="@+id/detailUsername"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/by_user"
-                        android:textColor="@color/craftsy_accent"
-                        android:textSize="14sp"
-                        android:layout_marginTop="4dp" />
+            <!-- Video or Web content -->
+            <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginTop="12dp"
+                android:background="@android:color/white" />
 
-                    <TextView
-                        android:id="@+id/detailCategory"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/category"
-                        android:textColor="@color/text_gray"
-                        android:textSize="14sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+            <VideoView
+                android:id="@+id/videoView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginTop="12dp"
+                android:background="@android:color/black" />
 
-                <!-- Video or Web Preview -->
-                <WebView
-                    android:id="@+id/webView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/white"
-                    android:visibility="gone"
-                    android:layout_marginBottom="16dp" />
+            <!-- Description -->
+            <TextView
+                android:id="@+id/detailDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tutorial description..."
+                android:textSize="16sp"
+                android:textColor="@color/dark_text_strong"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="4dp" />
 
-                <VideoView
-                    android:id="@+id/videoView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/black"
-                    android:visibility="gone"
-                    android:layout_marginBottom="16dp" />
+            <!-- Like Row -->
+            <LinearLayout
+                android:id="@+id/tutorialLikeRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="14dp">
 
-                <!-- Description -->
+                <ImageButton
+                    android:id="@+id/btnLikeTutorial"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_heart"
+                    android:contentDescription="Like tutorial" />
+
                 <TextView
-                    android:id="@+id/detailDescription"
-                    android:layout_width="match_parent"
+                    android:id="@+id/textTutorialLikes"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/tutorial_description"
-                    android:textColor="@color/dark_text"
-                    android:textSize="16sp"
-                    android:lineSpacingExtra="4dp"
-                    android:paddingBottom="8dp" />
-
+                    android:text="0 likes"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:layout_marginStart="8dp" />
             </LinearLayout>
-        </ScrollView>
-    </androidx.cardview.widget.CardView>
 
-    <!-- Bottom Button Bar (Edit & Delete) -->
-    <LinearLayout
-        android:id="@+id/bottomButtonsLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:weightSum="2">
+            <!-- Save to Board -->
+            <Button
+                android:id="@+id/btnSaveTutorial"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save to Board"
+                android:textAllCaps="false"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/craftsy_accent"
+                android:textColor="@color/white"
+                android:background="@drawable/rounded_button" />
 
-        <Button
-            android:id="@+id/btnEdit"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:text="@string/edit_button"
-            android:backgroundTint="@color/craftsy_accent"
-            android:textColor="@color/white"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/rounded_button" />
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/btnDelete"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:text="@string/delete_button"
-            android:backgroundTint="@color/red_error"
-            android:textColor="@color/white"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/rounded_button" />
+        <!-- Edit and Delete row -->
+        <LinearLayout
+            android:id="@+id/bottomButtonsLayout"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:weightSum="2"
+            android:layout_marginTop="10dp">
+
+            <Button
+                android:id="@+id/btnEdit"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Edit"
+                android:backgroundTint="@color/craftsy_accent"
+                android:textColor="@color/white"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/rounded_button" />
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Delete"
+                android:backgroundTint="@color/red_error"
+                android:textColor="@color/white"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/rounded_button" />
+        </LinearLayout>
+
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

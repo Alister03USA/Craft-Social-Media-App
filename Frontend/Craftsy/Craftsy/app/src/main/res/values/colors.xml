@@ -15,6 +15,9 @@
     <color name="text_white">#FFFFFF</color>          <!-- White Text (on buttons, cards) -->
     <color name="text_gray">#777777</color>           <!-- Secondary Info Text -->
     <color name="text_light_gray">#BDBDBD</color>     <!-- Hint / Placeholder Text -->
+    <color name="subtle_text">#777777</color>
+    <color name="dark_text_strong">#2E2E2E</color>
+    <color name="medium_text">#4A4A4A</color>
 
     <!-- Structural / Layout Backgrounds -->
     <color name="card_background">#FFFFFF</color>     <!-- Card Background (Feed Items, Tutorials) -->
@@ -25,6 +28,7 @@
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
 
     <!-- Light/Dark Contrast Mappings -->
     <color name="blue_on_primary">@color/text_white</color>       <!-- Text color on blue buttons -->

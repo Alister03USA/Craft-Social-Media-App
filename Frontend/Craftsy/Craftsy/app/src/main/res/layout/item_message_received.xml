@@ -3,94 +3,138 @@
     android:paddingHorizontal="12dp"
     android:paddingVertical="6dp"
     android:gravity="start"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <LinearLayout
-        android:background="@drawable/bubble_left"
-        android:padding="10dp"
-        android:orientation="vertical"
+    <!-- Sender name for group chats -->
+    <TextView
+        android:id="@+id/tvSenderName"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#555"
+        android:textStyle="bold"
+        android:textSize="13sp"
+        android:layout_marginBottom="2dp"
+        android:visibility="visible" />
+
+    <!-- Message Row -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="start"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Reply preview -->
-        <TextView
-            android:id="@+id/tvReply"
-            android:visibility="gone"
-            android:textColor="#666"
-            android:textSize="12sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <!-- Sender name (only visible in group chat) -->
-        <TextView
-            android:id="@+id/tvSender"
-            android:visibility="gone"
-            android:textColor="#1565C0"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp" />
-        <!-- Message text -->
-        <TextView
-            android:id="@+id/tvMsg"
-            android:textColor="@android:color/black"
-            android:textSize="16sp"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="2dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <!-- Image preview -->
-        <ImageView
-            android:id="@+id/imgContent"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="6dp"
-            android:visibility="gone" />
-        <!-- Timestamp -->
-        <TextView
-            android:id="@+id/tvMeta"
-            android:textColor="#888"
-            android:textSize="11sp"
-            android:layout_marginTop="2dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <!-- Reactions line -->
-        <TextView
-            android:id="@+id/tvReacts"
-            android:visibility="gone"
-            android:textColor="#FF9800"
-            android:textSize="13sp"
-            android:layout_marginTop="4dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <!-- Actions row -->
+        <!-- Message bubble -->
         <LinearLayout
-            android:orientation="horizontal"
-            android:gravity="start"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp">
+            android:background="@drawable/bubble_left"
+            android:padding="10dp"
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-            <ImageButton
-                android:id="@+id/btnReply"
-                android:src="@drawable/ic_reply"
-                android:contentDescription="Reply"
-                android:background="@android:color/transparent"
-                android:layout_width="28dp"
-                android:layout_height="28dp" />
+            <!-- WHATSAPP STYLE REPLY PREVIEW -->
+            <LinearLayout
+                android:id="@+id/replyBox"
+                android:orientation="vertical"
+                android:padding="6dp"
+                android:background="#EEEEEE"
+                android:layout_marginBottom="4dp"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-            <ImageButton
-                android:id="@+id/btnReact"
-                android:src="@drawable/ic_react"
-                android:contentDescription="React"
-                android:background="@android:color/transparent"
-                android:layout_width="28dp"
-                android:layout_height="28dp" />
+                <TextView
+                    android:id="@+id/tvReplySender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textColor="#333"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvReplySnippet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#666"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <!-- Reply preview (old) hidden but kept for compatibility -->
+            <TextView
+                android:id="@+id/tvReply"
+                android:visibility="gone"
+                android:textColor="#666"
+                android:textSize="12sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <!-- Message text -->
+            <TextView
+                android:id="@+id/tvMsg"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <!-- Image preview -->
+            <ImageView
+                android:id="@+id/imgContent"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
+                android:visibility="gone" />
+
+            <!-- Timestamp -->
+            <TextView
+                android:id="@+id/tvMeta"
+                android:textColor="#888"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <!-- Reactions -->
+            <TextView
+                android:id="@+id/tvReacts"
+                android:visibility="gone"
+                android:textColor="#FF9800"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <!-- Action row -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:gravity="start"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp">
+
+                <ImageButton
+                    android:id="@+id/btnReply"
+                    android:src="@drawable/ic_reply"
+                    android:contentDescription="Reply"
+                    android:background="@android:color/transparent"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp" />
+
+                <ImageButton
+                    android:id="@+id/btnReact"
+                    android:src="@drawable/ic_react"
+                    android:contentDescription="React"
+                    android:background="@android:color/transparent"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp" />
+            </LinearLayout>
         </LinearLayout>
+
     </LinearLayout>
+
 </LinearLayout>

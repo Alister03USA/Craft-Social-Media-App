@@ -9,8 +9,16 @@ public class TutorialItem {
     private String filePath;
     private String username;
 
-    public TutorialItem(long id, String title, String description, String category,
-                        String fileURL, String filePath, String username) {
+    // New: like count (for leaderboard / sorting)
+    private long likeCount;
+
+    public TutorialItem(long id,
+                        String title,
+                        String description,
+                        String category,
+                        String fileURL,
+                        String filePath,
+                        String username) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -18,19 +26,49 @@ public class TutorialItem {
         this.fileURL = fileURL;
         this.filePath = filePath;
         this.username = username;
+        this.likeCount = 0; // default when not provided
     }
 
-    public long getId() { return id; }
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public String getCategory() { return category; }
-    public String getFileURL() { return fileURL; }
-    public String getFilePath() { return filePath; }
-    public String getUsername() { return username; }
+    public long getId() {
+        return id;
+    }
 
-    // Added setter for dynamic username fetch
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getFileURL() {
+        return fileURL;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    // Setter for dynamic username fetch
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    // New: likeCount getter / setter
+    public long getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(long likeCount) {
+        this.likeCount = likeCount;
     }
 
     @Override
@@ -40,6 +78,7 @@ public class TutorialItem {
                 ", title='" + title + '\'' +
                 ", category='" + category + '\'' +
                 ", username='" + username + '\'' +
+                ", likeCount=" + likeCount +
                 '}';
     }
 }
