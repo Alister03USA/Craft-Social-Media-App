@@ -255,6 +255,34 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
             Long imgId = null;
             String imgUrl = null;
 
+            // ---------------------------------------------------------
+            // BACKEND DOES NOT STORE image_id, SO WE FIX IT HERE
+            // ---------------------------------------------------------
+            if (text != null && text.startsWith("#image:")) {
+                imgId = Long.parseLong(text.substring(7).trim());
+
+                final long fId = id;
+                final String fSender = sender;
+                final String fTs = ts;
+                final Long fParent = parent;
+                final Long fImgId = imgId;
+
+                // FULL URL lookup
+                resolveImageIdToUrl(imgId, full -> {
+                    if (full != null) {
+                        messages.add(new MessageItem(
+                                fId, fSender, "", fTs, fParent, fImgId, full
+                        ));
+
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+                return; // image handled
+            }
+
+            // ---------------------------------------------------------
+            // IF BACKEND RETURNS image object (normally null)
+            // ---------------------------------------------------------
             JSONObject imgObj = o.optJSONObject("image");
             if (imgObj != null) {
                 imgId = imgObj.optLong("id", -1);
@@ -265,9 +293,18 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
                 }
             }
 
-            MessageItem m = new MessageItem(id, sender,
-                    imgId != null ? "" : text, ts, parent, imgId, imgUrl);
+            // Normal text OR automatic fallback
+            MessageItem m = new MessageItem(
+                    id,
+                    sender,
+                    (imgId != null ? "" : text),
+                    ts,
+                    parent,
+                    imgId,
+                    imgUrl
+            );
 
+            // reactions
             JSONObject react = o.optJSONObject("reactions");
             if (react != null) {
                 Iterator<String> keys = react.keys();
@@ -279,6 +316,7 @@ public abstract class BaseMessagingActivity extends AppCompatActivity implements
 
             messages.add(m);
 
+            // replies
             JSONArray replies = o.optJSONArray("replies");
             if (replies != null) {
                 for (int i = 0; i < replies.length(); i++)
