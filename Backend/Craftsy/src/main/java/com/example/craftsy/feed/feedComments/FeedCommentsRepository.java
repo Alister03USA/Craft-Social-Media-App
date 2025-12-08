@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface FeedCommentsRepository extends JpaRepository<FeedComments, Long> {
     List<FeedComments> findByFeedOrderByLikesDesc(Feed feed);
-
+    void deleteAllByFeed(Feed feed);
 }

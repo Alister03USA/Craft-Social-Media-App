@@ -291,7 +291,7 @@ public class ConversationController {
      */
     @Operation(
             summary = "Delete a message",
-            description = "Deletes a single message by its message ID."
+            description =   "Deletes a single message by its message ID."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Message deleted"),

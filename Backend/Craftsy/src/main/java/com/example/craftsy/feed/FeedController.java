@@ -198,6 +198,7 @@ public class FeedController {
             return "Post not found";
         }
         Feed project = projectOpt.orElseThrow(() -> new RuntimeException("Post not found"));
+        feedCommentsRepository.deleteAllByFeed(project);
         feedRepository.delete(project);
         return "Post deleted";
     }
