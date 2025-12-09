@@ -459,6 +459,59 @@ public class ChallengeController {
         }
     }
 
+    /**
+     * Get image file for a challenge post
+     */
+    @Operation(summary = "Get image for a challenge post",
+            description = "Retrieve the uploaded image associated with a specific challenge post.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns the image bytes"),
+            @ApiResponse(responseCode = "400", description = "Post does not contain an image"),
+            @ApiResponse(responseCode = "404", description = "Image file not found"),
+            @ApiResponse(responseCode = "500", description = "Error reading the image file")
+    })
+    @GetMapping("/challenge/post/image/{postId}")
+    public ResponseEntity<?> getChallengePostImage(@PathVariable Long postId) {
+        try {
+            // Find the post
+            ChallengePost post = challengePostRepository.findById(postId)
+                    .orElseThrow(() -> new RuntimeException("Post not found"));
+
+            // Validate media URL
+            if (post.getMediaUrl() == null || post.getMediaUrl().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "This post does not contain an image"));
+            }
+
+            // Convert stored URL → real file path
+            // Example stored value: "/uploads/challenge-posts/abc123.png"
+            String storedPath = post.getMediaUrl();
+            Path path = Paths.get("." + storedPath); // prepend "." for local filesystem
+
+            if (!Files.exists(path)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Read file bytes
+            byte[] imageBytes = Files.readAllBytes(path);
+
+            // Detect content type
+            String contentType = Files.probeContentType(path);
+            if (contentType == null) {
+                contentType = "image/jpeg";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(imageBytes);
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Failed to read image"));
+        }
+    }
+
+
 
     /**
      * Get all the posts from a challenge
