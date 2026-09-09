@@ -81,7 +81,7 @@ public class TutorialController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "isPrivate", required = false, defaultValue = "false") boolean isPrivate
     ) { // MultipartFile is a spring class representing an uploaded file
-        // Extracts the title, desc, and file from the request
+
         try {
 
             // Find user
